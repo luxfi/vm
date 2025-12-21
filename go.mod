@@ -1,6 +1,6 @@
 module github.com/luxfi/vm
 
-go 1.24.5
+go 1.25.5
 
 require github.com/luxfi/ids v1.0.0
 
