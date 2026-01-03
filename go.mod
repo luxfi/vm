@@ -36,7 +36,7 @@ require (
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/luxfi/crypto v1.17.31 // indirect
+	github.com/luxfi/crypto v1.17.34 // indirect
 	github.com/luxfi/math v1.2.0 // indirect
 	github.com/luxfi/p2p v1.4.6 // indirect
 	github.com/luxfi/sampler v1.0.0 // indirect
