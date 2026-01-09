@@ -6,7 +6,7 @@ package signer
 import (
 	"encoding/json"
 	"errors"
-	"github.com/luxfi/formatting"
+	"github.com/luxfi/crypto/address/formatting"
 
 	"github.com/luxfi/crypto/bls"
 )

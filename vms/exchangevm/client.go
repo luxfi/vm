@@ -7,7 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/luxfi/formatting"
+	"github.com/luxfi/crypto/address/formatting"
 	"time"
 
 	"github.com/luxfi/crypto/address"

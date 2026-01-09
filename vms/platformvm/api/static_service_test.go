@@ -4,7 +4,7 @@
 package api
 
 import (
-	"github.com/luxfi/formatting"
+	"github.com/luxfi/crypto/address/formatting"
 	"testing"
 
 	"github.com/stretchr/testify/require"

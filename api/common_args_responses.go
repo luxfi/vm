@@ -5,7 +5,7 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/luxfi/formatting"
+	"github.com/luxfi/crypto/address/formatting"
 
 	"github.com/luxfi/ids"
 
