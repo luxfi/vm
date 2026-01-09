@@ -4,7 +4,7 @@
 package admin
 
 import (
-	"github.com/luxfi/address/formatting"
+	"github.com/luxfi/formatting"
 	"net/http"
 	"testing"
 
