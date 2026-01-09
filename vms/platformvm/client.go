@@ -5,7 +5,7 @@ package platformvm
 
 import (
 	"context"
-	"github.com/luxfi/address/formatting"
+	"github.com/luxfi/formatting"
 	"time"
 
 	"github.com/luxfi/address"

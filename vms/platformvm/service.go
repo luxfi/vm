@@ -14,8 +14,8 @@ import (
 	"slices"
 	"time"
 
-	"github.com/luxfi/address/formatting"
 	"github.com/luxfi/cache/lru"
+	"github.com/luxfi/formatting"
 	"github.com/luxfi/log"
 
 	validators "github.com/luxfi/consensus/validator"

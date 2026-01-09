@@ -11,7 +11,7 @@ import (
 	gethcommon "github.com/luxfi/geth/common"
 
 	"github.com/luxfi/crypto/secp256k1"
-	"github.com/luxfi/address/formatting"
+	"github.com/luxfi/formatting"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/keychain"
 	"github.com/luxfi/math/set"
