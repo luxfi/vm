@@ -6,7 +6,7 @@ package summary
 import (
 	"fmt"
 
-	"github.com/luxfi/vm/utils/hashing"
+	"github.com/luxfi/crypto/hash"
 )
 
 func Build(
@@ -25,7 +25,7 @@ func Build(
 		return nil, fmt.Errorf("cannot marshal proposer summary due to: %w", err)
 	}
 
-	summary.id = hashing.ComputeHash256Array(bytes)
+	summary.id = hash.ComputeHash256Array(bytes)
 	summary.bytes = bytes
 	return &summary, nil
 }

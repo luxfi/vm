@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/luxfi/crypto/secp256k1"
+	"github.com/luxfi/crypto/hash"
 	"github.com/luxfi/vm/components/verify"
-	"github.com/luxfi/vm/utils/hashing"
 )
 
 const defaultCacheSize = 256
@@ -210,7 +210,7 @@ func (fx *Fx) VerifyCredentials(utx UnsignedTx, in *Input, cred *Credential, out
 		return nil
 	}
 
-	txHash := hashing.ComputeHash256(utx.Bytes())
+	txHash := hash.ComputeHash256(utx.Bytes())
 	for i, index := range in.SigIndices {
 		// Make sure the input references an address that exists
 		if index >= uint32(len(out.Addrs)) {
@@ -225,7 +225,7 @@ func (fx *Fx) VerifyCredentials(utx UnsignedTx, in *Input, cred *Credential, out
 		}
 		// Convert pk to Lux address
 		pkBytes := pk.Bytes()
-		addressBytes := hashing.PubkeyBytesToAddress(pkBytes)
+		addressBytes := hash.PubkeyBytesToAddress(pkBytes)
 		pkAddr, err := ids.ToShortID(addressBytes)
 		if err != nil {
 			return err

@@ -6,7 +6,7 @@ package secp256k1fx
 import (
 	"github.com/luxfi/codec"
 	"github.com/luxfi/log"
-	"github.com/luxfi/vm/utils/timer/mockable"
+	"github.com/luxfi/timer/mockable"
 )
 
 // VM that this Fx must be run by

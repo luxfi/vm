@@ -10,8 +10,8 @@ import (
 
 	"github.com/luxfi/ids"
 	"github.com/luxfi/staking"
-	"github.com/luxfi/vm/utils/hashing"
-	"github.com/luxfi/vm/utils/wrappers"
+	"github.com/luxfi/crypto/hash"
+	"github.com/luxfi/utils/wrappers"
 )
 
 var (
@@ -94,7 +94,7 @@ func (b *statelessBlock) initialize(bytes []byte) error {
 	// signature as well as it's length prefix to get the unsigned bytes.
 	lenUnsignedBytes := len(bytes) - wrappers.IntLen - len(b.Signature)
 	unsignedBytes := bytes[:lenUnsignedBytes]
-	b.id = hashing.ComputeHash256Array(unsignedBytes)
+	b.id = hash.ComputeHash256Array(unsignedBytes)
 
 	b.timestamp = time.Unix(b.StatelessBlock.Timestamp, 0)
 	if len(b.StatelessBlock.Certificate) == 0 {

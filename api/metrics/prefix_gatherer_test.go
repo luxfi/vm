@@ -4,13 +4,10 @@
 package metrics
 
 import (
-	"github.com/luxfi/metric"
 	"testing"
 
+	"github.com/luxfi/metric"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
-
-	dto "github.com/prometheus/client_model/go"
 )
 
 func TestPrefixGatherer_Gather(t *testing.T) {
@@ -41,41 +38,22 @@ func TestPrefixGatherer_Gather(t *testing.T) {
 	metrics, err := gatherer.Gather()
 	require.NoError(err)
 
-	// Strip timestamps from metrics to avoid comparison issues
-	for _, mf := range metrics {
-		for _, m := range mf.Metric {
-			if m.Counter != nil {
-				m.Counter.CreatedTimestamp = nil
-			}
-		}
-	}
-
 	require.Equal(
-		[]*dto.MetricFamily{
+		[]*metric.MetricFamily{
 			{
-				Name: proto.String("a_counter"),
-				Help: proto.String(counterOpts.Help),
-				Type: dto.MetricType_COUNTER.Enum(),
-				Metric: []*dto.Metric{
-					{
-						Label: []*dto.LabelPair{},
-						Counter: &dto.Counter{
-							Value: proto.Float64(0),
-						},
-					},
+				Name: "a_counter",
+				Help: counterOpts.Help,
+				Type: metric.MetricTypeCounter,
+				Metrics: []metric.Metric{
+					{Value: metric.MetricValue{Value: 0}},
 				},
 			},
 			{
-				Name: proto.String("b_counter"),
-				Help: proto.String(counterOpts.Help),
-				Type: dto.MetricType_COUNTER.Enum(),
-				Metric: []*dto.Metric{
-					{
-						Label: []*dto.LabelPair{},
-						Counter: &dto.Counter{
-							Value: proto.Float64(1),
-						},
-					},
+				Name: "b_counter",
+				Help: counterOpts.Help,
+				Type: metric.MetricTypeCounter,
+				Metrics: []metric.Metric{
+					{Value: metric.MetricValue{Value: 1}},
 				},
 			},
 		},
@@ -109,7 +87,7 @@ func TestPrefixGatherer_Register(t *testing.T) {
 		prefix:    secondPrefix,
 		prefixPtr: secondPrefixPtr,
 		gatherer: &testGatherer{
-			mfs: []*dto.MetricFamily{{}},
+			mfs: []*metric.MetricFamily{{}},
 		},
 	}
 	secondPrefixGatherer := &prefixGatherer{

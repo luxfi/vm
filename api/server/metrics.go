@@ -17,26 +17,9 @@ type serverMetrics struct {
 
 func newMetrics(registerer metric.Registerer) (*serverMetrics, error) {
 	m := &serverMetrics{
-		requests: metric.NewCounterVec(
-			metric.CounterOpts{
-				Name: "api_requests_total",
-				Help: "Total number of API requests",
-			},
-			[]string{"method", "endpoint"},
-		),
-		duration: metric.NewHistogramVec(
-			metric.HistogramOpts{
-				Name: "api_request_duration_seconds",
-				Help: "API request duration in seconds",
-			},
-			[]string{"method", "endpoint"},
-		),
-		inflight: metric.NewGauge(
-			metric.GaugeOpts{
-				Name: "api_requests_inflight",
-				Help: "Number of inflight API requests",
-			},
-		),
+		requests: registerer.NewCounterVec("api_requests_total", "Total number of API requests", []string{"method", "endpoint"}),
+		duration: registerer.NewHistogramVec("api_request_duration_seconds", "API request duration in seconds", []string{"method", "endpoint"}, nil),
+		inflight: registerer.NewGauge("api_requests_inflight", "Number of inflight API requests"),
 	}
 
 	if err := registerer.Register(metric.AsCollector(m.requests)); err != nil {

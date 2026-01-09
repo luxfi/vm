@@ -18,8 +18,8 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/metric"
 	"github.com/luxfi/staking"
+	"github.com/luxfi/timer/mockable"
 	"github.com/luxfi/upgrade"
-	"github.com/luxfi/vm/utils/timer/mockable"
 
 	"github.com/luxfi/consensus"
 	"github.com/luxfi/consensus/core/interfaces"

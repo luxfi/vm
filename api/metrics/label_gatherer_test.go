@@ -4,13 +4,10 @@
 package metrics
 
 import (
-	"github.com/luxfi/metric"
 	"testing"
 
+	"github.com/luxfi/metric"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
-
-	dto "github.com/prometheus/client_model/go"
 )
 
 func TestLabelGatherer_Gather(t *testing.T) {
@@ -25,42 +22,26 @@ func TestLabelGatherer_Gather(t *testing.T) {
 	tests := []struct {
 		name            string
 		labelName       string
-		expectedMetrics []*dto.Metric
+		expectedMetrics []metric.Metric
 		expectErr       bool
 	}{
 		{
 			name:      "no overlap",
 			labelName: customLabelName,
-			expectedMetrics: []*dto.Metric{
+			expectedMetrics: []metric.Metric{
 				{
-					Label: []*dto.LabelPair{
-						{
-							Name:  proto.String(labelName),
-							Value: proto.String(labelValueB),
-						},
-						{
-							Name:  proto.String(customLabelName),
-							Value: proto.String(customLabelValueB),
-						},
+					Labels: []metric.LabelPair{
+						{Name: labelName, Value: labelValueB},
+						{Name: customLabelName, Value: customLabelValueB},
 					},
-					Counter: &dto.Counter{
-						Value: proto.Float64(1),
-					},
+					Value: metric.MetricValue{Value: 1},
 				},
 				{
-					Label: []*dto.LabelPair{
-						{
-							Name:  proto.String(labelName),
-							Value: proto.String(labelValueA),
-						},
-						{
-							Name:  proto.String(customLabelName),
-							Value: proto.String(customLabelValueA),
-						},
+					Labels: []metric.LabelPair{
+						{Name: labelName, Value: labelValueA},
+						{Name: customLabelName, Value: customLabelValueA},
 					},
-					Counter: &dto.Counter{
-						Value: proto.Float64(0),
-					},
+					Value: metric.MetricValue{Value: 0},
 				},
 			},
 			expectErr: false,
@@ -68,21 +49,13 @@ func TestLabelGatherer_Gather(t *testing.T) {
 		{
 			name:      "has overlap",
 			labelName: labelName,
-			expectedMetrics: []*dto.Metric{
+			expectedMetrics: []metric.Metric{
 				{
-					Label: []*dto.LabelPair{
-						{
-							Name:  proto.String(labelName),
-							Value: proto.String(labelValueB),
-						},
-						{
-							Name:  proto.String(customLabelName),
-							Value: proto.String(customLabelValueB),
-						},
+					Labels: []metric.LabelPair{
+						{Name: labelName, Value: labelValueB},
+						{Name: customLabelName, Value: customLabelValueB},
 					},
-					Counter: &dto.Counter{
-						Value: proto.Float64(1),
-					},
+					Value: metric.MetricValue{Value: 1},
 				},
 			},
 			expectErr: true,
@@ -128,20 +101,13 @@ func TestLabelGatherer_Gather(t *testing.T) {
 				require.NoError(err)
 			}
 
-			// Strip timestamps from metrics to avoid comparison issues
-			for _, mf := range metrics {
-				for _, m := range mf.Metric {
-					m.Counter.CreatedTimestamp = nil
-				}
-			}
-
 			require.Equal(
-				[]*dto.MetricFamily{
+				[]*metric.MetricFamily{
 					{
-						Name:   proto.String(counterOpts.Name),
-						Help:   proto.String(counterOpts.Help),
-						Type:   dto.MetricType_COUNTER.Enum(),
-						Metric: test.expectedMetrics,
+						Name:    counterOpts.Name,
+						Help:    counterOpts.Help,
+						Type:    metric.MetricTypeCounter,
+						Metrics: test.expectedMetrics,
 					},
 				},
 				metrics,
@@ -172,7 +138,7 @@ func TestLabelGatherer_Registration(t *testing.T) {
 	secondLabeledGatherer := &labeledGatherer{
 		labelValue: secondName,
 		gatherer: &testGatherer{
-			mfs: []*dto.MetricFamily{{}},
+			mfs: []*metric.MetricFamily{{}},
 		},
 	}
 	secondLabelGatherer := func() *labelGatherer {

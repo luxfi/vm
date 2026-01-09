@@ -14,7 +14,7 @@ import (
 
 	"github.com/luxfi/database"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/vm/utils"
+	"github.com/luxfi/utils"
 
 	rpcdbpb "github.com/luxfi/vm/proto/pb/rpcdb"
 )

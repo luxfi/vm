@@ -31,7 +31,7 @@ func newMetrics(registerer metric.Registerer) (*indexMetrics, error) {
 
 	// If not available, create noop metrics
 	return &indexMetrics{
-		numObjects:    metric.NewNoopGauge("index_num_objects"),
-		numTxsIndexed: metric.NewNoopCounter("index_txs_indexed"),
+		numObjects:    metric.NewNoopGauge(),
+		numTxsIndexed: metric.NewNoopCounter(),
 	}, nil
 }

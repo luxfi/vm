@@ -32,13 +32,13 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
+	"github.com/luxfi/timer/mockable"
+	"github.com/luxfi/utils"
+	"github.com/luxfi/utils/json"
 	"github.com/luxfi/version"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/platformvm/fx"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/json"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/block"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/network"
@@ -602,7 +602,7 @@ func (vm *VM) checkExistingChains() error {
 		// Check if this chain is already known
 		chains, err := vm.state.GetChains(netID)
 		if err != nil {
-			vm.log.Warn("failed to get chains for subnet",
+			vm.log.Warn("failed to get chains for chain",
 				"netID", netID.String(),
 				"error", err,
 			)
@@ -689,7 +689,7 @@ func (vm *VM) initBlockchains() error {
 	}
 
 	// When TrackAllChains is enabled OR SybilProtection is disabled,
-	// create chains for ALL subnets in state
+	// create chains for ALL chains in state
 	if vm.TrackAllChains || !vm.SybilProtectionEnabled {
 		netIDs, err := vm.state.GetNetIDs()
 		if err != nil {
@@ -701,7 +701,7 @@ func (vm *VM) initBlockchains() error {
 			}
 		}
 	} else if vm.SybilProtectionEnabled {
-		// Only create chains for explicitly tracked subnets
+		// Only create chains for explicitly tracked chains
 		for chainID := range vm.TrackedChains {
 			if err := vm.createNet(chainID); err != nil {
 				return err
@@ -840,8 +840,8 @@ func (vm *VM) onReady() error {
 	// vm.Validators.RegisterSetCallbackListener(constants.PrimaryNetworkID, vl)
 
 	// for chainID := range vm.TrackedChains {
-	// 	vl := validators.NewLogger(vm.log, subnetID, vm.ctx.NodeID)
-	// 	vm.Validators.RegisterSetCallbackListener(subnetID, vl)
+	// 	vl := validators.NewLogger(vm.log, chainID, vm.ctx.NodeID)
+	// 	vm.Validators.RegisterSetCallbackListener(chainID, vl)
 	// }
 
 	// Commit state BEFORE starting background goroutines to avoid race conditions

@@ -10,11 +10,11 @@ import (
 
 	"github.com/luxfi/address"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/utils"
+	"github.com/luxfi/utils/math"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/platformvm/signer"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/math"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 	"github.com/luxfi/vm/vms/platformvm/txs/txheap"

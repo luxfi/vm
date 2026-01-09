@@ -5,7 +5,7 @@ package block
 
 import (
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/hashing"
+	"github.com/luxfi/crypto/hash"
 )
 
 type option struct {
@@ -33,7 +33,7 @@ func (b *option) Bytes() []byte {
 }
 
 func (b *option) initialize(bytes []byte) error {
-	b.id = hashing.ComputeHash256Array(bytes)
+	b.id = hash.ComputeHash256Array(bytes)
 	b.bytes = bytes
 	return nil
 }

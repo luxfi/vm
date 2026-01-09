@@ -10,8 +10,8 @@ import (
 
 	"github.com/luxfi/log"
 	"github.com/luxfi/metric"
+	"github.com/luxfi/utils/resource"
 	"github.com/luxfi/vm/rpcchainvm/grpcutils"
-	"github.com/luxfi/vm/utils/resource"
 	"github.com/luxfi/vm/vms"
 	"github.com/luxfi/vm/vms/rpcchainvm/runtime"
 	"github.com/luxfi/vm/vms/rpcchainvm/runtime/subprocess"

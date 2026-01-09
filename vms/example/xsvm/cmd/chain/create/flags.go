@@ -15,7 +15,7 @@ import (
 
 const (
 	URIKey        = "uri"
-	NetIDKey      = "subnet-id"
+	NetIDKey      = "chain-id"
 	AddressKey    = "address"
 	BalanceKey    = "balance"
 	NameKey       = "name"

@@ -17,7 +17,7 @@ import (
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/crypto/bls/signer/localsigner"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils"
+	"github.com/luxfi/utils"
 
 	"github.com/luxfi/crypto/hash"
 	"github.com/luxfi/vm/components/lux"
@@ -67,7 +67,7 @@ func TestConvertChainToL1TxSerialization(t *testing.T) {
 			0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88,
 			0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88,
 		}
-		subnetID = ids.ID{
+		chainID = ids.ID{
 			0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
 			0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
 			0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
@@ -125,7 +125,7 @@ func TestConvertChainToL1TxSerialization(t *testing.T) {
 						Memo: types.JSONByteSlice{},
 					},
 				},
-				Chain:          subnetID,
+				Chain:          chainID,
 				ManagerChainID: managerChainID,
 				Address:        managerAddress,
 				Validators:     []*ConvertChainToL1Validator{},
@@ -172,7 +172,7 @@ func TestConvertChainToL1TxSerialization(t *testing.T) {
 				0x00, 0x00, 0x00, 0x05,
 				// length of memo
 				0x00, 0x00, 0x00, 0x00,
-				// subnetID to modify
+				// chainID to modify
 				0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
 				0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
 				0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
@@ -295,7 +295,7 @@ func TestConvertChainToL1TxSerialization(t *testing.T) {
 						Memo: types.JSONByteSlice("😅\nwell that's\x01\x23\x45!"),
 					},
 				},
-				Chain:          subnetID,
+				Chain:          chainID,
 				ManagerChainID: managerChainID,
 				Address:        managerAddress,
 				Validators: []*ConvertChainToL1Validator{
@@ -455,7 +455,7 @@ func TestConvertChainToL1TxSerialization(t *testing.T) {
 				0xf0, 0x9f, 0x98, 0x85, 0x0a, 0x77, 0x65, 0x6c,
 				0x6c, 0x20, 0x74, 0x68, 0x61, 0x74, 0x27, 0x73,
 				0x01, 0x23, 0x45, 0x21,
-				// subnetID to modify
+				// chainID to modify
 				0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
 				0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
 				0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
@@ -612,7 +612,7 @@ func TestConvertChainToL1TxSyntacticVerify(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "invalid subnetID",
+			name: "invalid chainID",
 			tx: &ConvertChainToL1Tx{
 				BaseTx:     validBaseTx,
 				Chain:      constants.PrimaryNetworkID,
@@ -790,7 +790,7 @@ func TestConvertChainToL1TxSyntacticVerify(t *testing.T) {
 			expectedErr: lux.ErrWrongNetworkID,
 		},
 		{
-			name: "invalid subnetAuth",
+			name: "invalid chainAuth",
 			tx: &ConvertChainToL1Tx{
 				BaseTx:     validBaseTx,
 				Chain:      validNetID,

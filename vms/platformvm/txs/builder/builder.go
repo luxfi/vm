@@ -11,12 +11,12 @@ import (
 	consensusctx "github.com/luxfi/consensus/context"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/timer/mockable"
+	"github.com/luxfi/utils"
+	"github.com/luxfi/utils/math"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/platformvm/fx"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/math"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/state"
 	"github.com/luxfi/vm/vms/platformvm/txs"
@@ -82,11 +82,11 @@ type DecisionTxBuilder interface {
 		changeAddr ids.ShortID,
 	) (*txs.Tx, error)
 
-	// threshold: [threshold] of [ownerAddrs] needed to manage this subnet
-	// ownerAddrs: control addresses for the new subnet
+	// threshold: [threshold] of [ownerAddrs] needed to manage this chain
+	// ownerAddrs: control addresses for the new chain
 	// keys: keys to pay the fee
 	// changeAddr: address to send change to, if there is any
-	NewCreateSubnetTx(
+	NewCreateChainTx(
 		threshold uint32,
 		ownerAddrs []ids.ShortID,
 		keys []*secp256k1.PrivateKey,
@@ -171,9 +171,9 @@ type ProposalTxBuilder interface {
 	) (*txs.Tx, error)
 
 	// Creates a transaction that transfers ownership of [netID]
-	// threshold: [threshold] of [ownerAddrs] needed to manage this subnet
-	// ownerAddrs: control addresses for the new subnet
-	// keys: keys to use for modifying the subnet
+	// threshold: [threshold] of [ownerAddrs] needed to manage this chain
+	// ownerAddrs: control addresses for the new chain
+	// keys: keys to use for modifying the chain
 	// changeAddr: address to send change to, if there is any
 	NewTransferChainOwnershipTx(
 		netID ids.ID,
@@ -381,17 +381,17 @@ func (b *builder) NewCreateChainTx(
 	keys []*secp256k1.PrivateKey,
 	changeAddr ids.ShortID,
 ) (*txs.Tx, error) {
-	createBlockchainTxFee := b.cfg.CreateBlockchainTxFee
+	createBlockchainTxFee := b.cfg.CreateChainTxFee
 	ins, outs, _, signers, err := b.Spend(b.state, keys, 0, createBlockchainTxFee, changeAddr)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't generate tx inputs/outputs: %w", err)
 	}
 
-	subnetAuth, subnetSigners, err := b.Authorize(b.state, netID, keys)
+	chainAuth, chainSigners, err := b.Authorize(b.state, netID, keys)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't authorize tx's net restrictions: %w", err)
 	}
-	signers = append(signers, subnetSigners)
+	signers = append(signers, chainSigners)
 
 	// Sort the provided fxIDs
 	utils.Sort(fxIDs)
@@ -409,7 +409,7 @@ func (b *builder) NewCreateChainTx(
 		VMID:           vmID,
 		FxIDs:          fxIDs,
 		GenesisData:    genesisData,
-		ChainAuth:      subnetAuth,
+		ChainAuth:      chainAuth,
 	}
 	tx, err := txs.NewSigned(utx, txs.Codec, signers)
 	if err != nil {
@@ -418,14 +418,14 @@ func (b *builder) NewCreateChainTx(
 	return tx, tx.SyntacticVerify(b.ctx)
 }
 
-func (b *builder) NewCreateSubnetTx(
+func (b *builder) NewCreateChainTx(
 	threshold uint32,
 	ownerAddrs []ids.ShortID,
 	keys []*secp256k1.PrivateKey,
 	changeAddr ids.ShortID,
 ) (*txs.Tx, error) {
-	createSubnetTxFee := b.cfg.CreateNetTxFee
-	ins, outs, _, signers, err := b.Spend(b.state, keys, 0, createSubnetTxFee, changeAddr)
+	createChainTxFee := b.cfg.CreateNetTxFee
+	ins, outs, _, signers, err := b.Spend(b.state, keys, 0, createChainTxFee, changeAddr)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't generate tx inputs/outputs: %w", err)
 	}
@@ -434,7 +434,7 @@ func (b *builder) NewCreateSubnetTx(
 	utils.Sort(ownerAddrs)
 
 	// Create the tx
-	utx := &txs.CreateSubnetTx{
+	utx := &txs.CreateChainTx{
 		BaseTx: txs.BaseTx{BaseTx: lux.BaseTx{
 			NetworkID:    b.NetworkID,
 			BlockchainID: b.ChainID,
@@ -551,11 +551,11 @@ func (b *builder) NewAddChainValidatorTx(
 		return nil, fmt.Errorf("couldn't generate tx inputs/outputs: %w", err)
 	}
 
-	subnetAuth, subnetSigners, err := b.Authorize(b.state, netID, keys)
+	chainAuth, chainSigners, err := b.Authorize(b.state, netID, keys)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't authorize tx's net restrictions: %w", err)
 	}
-	signers = append(signers, subnetSigners)
+	signers = append(signers, chainSigners)
 
 	// Create the tx
 	utx := &txs.AddChainValidatorTx{
@@ -574,7 +574,7 @@ func (b *builder) NewAddChainValidatorTx(
 			},
 			Chain: netID,
 		},
-		ChainAuth: subnetAuth,
+		ChainAuth: chainAuth,
 	}
 	tx, err := txs.NewSigned(utx, txs.Codec, signers)
 	if err != nil {
@@ -594,11 +594,11 @@ func (b *builder) NewRemoveChainValidatorTx(
 		return nil, fmt.Errorf("couldn't generate tx inputs/outputs: %w", err)
 	}
 
-	subnetAuth, subnetSigners, err := b.Authorize(b.state, netID, keys)
+	chainAuth, chainSigners, err := b.Authorize(b.state, netID, keys)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't authorize tx's net restrictions: %w", err)
 	}
-	signers = append(signers, subnetSigners)
+	signers = append(signers, chainSigners)
 
 	// Create the tx
 	utx := &txs.RemoveChainValidatorTx{
@@ -610,7 +610,7 @@ func (b *builder) NewRemoveChainValidatorTx(
 		}},
 		Chain:     netID,
 		NodeID:    nodeID,
-		ChainAuth: subnetAuth,
+		ChainAuth: chainAuth,
 	}
 	tx, err := txs.NewSigned(utx, txs.Codec, signers)
 	if err != nil {
@@ -650,11 +650,11 @@ func (b *builder) NewTransferChainOwnershipTx(
 		return nil, fmt.Errorf("couldn't generate tx inputs/outputs: %w", err)
 	}
 
-	subnetAuth, subnetSigners, err := b.Authorize(b.state, netID, keys)
+	chainAuth, chainSigners, err := b.Authorize(b.state, netID, keys)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't authorize tx's net restrictions: %w", err)
 	}
-	signers = append(signers, subnetSigners)
+	signers = append(signers, chainSigners)
 
 	utx := &txs.TransferChainOwnershipTx{
 		BaseTx: txs.BaseTx{BaseTx: lux.BaseTx{
@@ -664,7 +664,7 @@ func (b *builder) NewTransferChainOwnershipTx(
 			Outs:         outs,
 		}},
 		Chain:     netID,
-		ChainAuth: subnetAuth,
+		ChainAuth: chainAuth,
 		Owner: &secp256k1fx.OutputOwners{
 			Threshold: threshold,
 			Addrs:     ownerAddrs,

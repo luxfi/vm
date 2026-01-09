@@ -12,7 +12,7 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/vm/utils/timer/mockable"
+	"github.com/luxfi/timer/mockable"
 	"github.com/luxfi/vm/vms/exchangevm/block"
 	"github.com/luxfi/vm/vms/exchangevm/state"
 	"github.com/luxfi/vm/vms/exchangevm/txs"

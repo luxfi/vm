@@ -18,9 +18,9 @@ import (
 	"github.com/gorilla/rpc/v2"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/vm/utils/json"
-	"github.com/luxfi/vm/utils/password"
-	"github.com/luxfi/vm/utils/timer/mockable"
+	"github.com/luxfi/timer/mockable"
+	"github.com/luxfi/utils/json"
+	"github.com/luxfi/utils/password"
 )
 
 const (

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/luxfi/constants"
-	"github.com/luxfi/vm/utils"
+	"github.com/luxfi/utils"
 )
 
 func TestTx(t *testing.T) {

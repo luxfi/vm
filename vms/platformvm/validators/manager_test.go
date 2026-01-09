@@ -15,8 +15,8 @@ import (
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/crypto/bls/signer/localsigner"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/timer/mockable"
 	"github.com/luxfi/upgrade/upgradetest"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/block"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
@@ -42,7 +42,7 @@ func TestGetValidatorSet_AfterEtna(t *testing.T) {
 	sk, err := localsigner.New()
 	require.NoError(err)
 	var (
-		subnetID      = ids.GenerateTestID()
+		chainID       = ids.GenerateTestID()
 		startTime     = genesistest.DefaultValidatorStartTime
 		endTime       = startTime.Add(24 * time.Hour)
 		pk            = sk.PublicKey()
@@ -56,18 +56,18 @@ func TestGetValidatorSet_AfterEtna(t *testing.T) {
 			EndTime:         endTime,
 			PotentialReward: 1,
 		}
-		subnetStaker = &state.Staker{
+		chainStaker = &state.Staker{
 			TxID:      ids.GenerateTestID(),
 			NodeID:    primaryStaker.NodeID,
 			PublicKey: nil, // inherited from primaryStaker
-			ChainID:   subnetID,
+			ChainID:   chainID,
 			Weight:    1,
 			StartTime: upgradeTime,
 			EndTime:   endTime,
 		}
 	)
 
-	// Add a subnet staker during the Etna upgrade
+	// Add a chain staker during the Etna upgrade
 	{
 		blk, err := block.NewBanffStandardBlock(upgradeTime, s.GetLastAccepted(), 1, nil)
 		require.NoError(err)
@@ -78,12 +78,12 @@ func TestGetValidatorSet_AfterEtna(t *testing.T) {
 		s.SetLastAccepted(blk.ID())
 
 		require.NoError(s.PutCurrentValidator(primaryStaker))
-		require.NoError(s.PutCurrentValidator(subnetStaker))
+		require.NoError(s.PutCurrentValidator(chainStaker))
 
 		require.NoError(s.Commit())
 	}
 
-	// Remove a subnet staker
+	// Remove a chain staker
 	{
 		blk, err := block.NewBanffStandardBlock(s.GetTimestamp(), s.GetLastAccepted(), 2, nil)
 		require.NoError(err)
@@ -93,7 +93,7 @@ func TestGetValidatorSet_AfterEtna(t *testing.T) {
 		s.AddStatelessBlock(blk)
 		s.SetLastAccepted(blk.ID())
 
-		s.DeleteCurrentValidator(subnetStaker)
+		s.DeleteCurrentValidator(chainStaker)
 
 		require.NoError(s.Commit())
 	}
@@ -110,18 +110,18 @@ func TestGetValidatorSet_AfterEtna(t *testing.T) {
 	expectedValidators := []map[ids.NodeID]*validators.GetValidatorOutput{
 		{}, // Net staker didn't exist at genesis
 		{
-			subnetStaker.NodeID: {
-				NodeID:    subnetStaker.NodeID,
+			chainStaker.NodeID: {
+				NodeID:    chainStaker.NodeID,
 				PublicKey: bls.PublicKeyToUncompressedBytes(pk),
-				Light:     subnetStaker.Weight, // Light is kept in sync with Weight
-				Weight:    subnetStaker.Weight,
-				TxID:      subnetStaker.TxID,
+				Light:     chainStaker.Weight, // Light is kept in sync with Weight
+				Weight:    chainStaker.Weight,
+				TxID:      chainStaker.TxID,
 			},
 		}, // Net staker was added at height 1
 		{}, // Net staker was removed at height 2
 	}
 	for height, expected := range expectedValidators {
-		actual, err := m.GetValidatorSet(context.Background(), uint64(height), subnetID)
+		actual, err := m.GetValidatorSet(context.Background(), uint64(height), chainID)
 		require.NoError(err)
 		require.Equal(expected, actual)
 	}

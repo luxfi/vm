@@ -6,10 +6,8 @@ package metrics
 import (
 	"testing"
 
+	"github.com/luxfi/metric"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
-
-	dto "github.com/prometheus/client_model/go"
 )
 
 var (
@@ -67,15 +65,11 @@ func TestMultiGathererNoAddedPrefix(t *testing.T) {
 	g := NewMultiGatherer()
 
 	tg := &testGatherer{
-		mfs: []*dto.MetricFamily{{
-			Name: &hello,
-			Type: dto.MetricType_COUNTER.Enum(),
-			Metric: []*dto.Metric{
-				{
-					Counter: &dto.Counter{
-						Value: proto.Float64(0),
-					},
-				},
+		mfs: []*metric.MetricFamily{{
+			Name: hello,
+			Type: metric.MetricTypeCounter,
+			Metrics: []metric.Metric{
+				{Value: metric.MetricValue{Value: 0}},
 			},
 		}},
 	}
@@ -85,7 +79,7 @@ func TestMultiGathererNoAddedPrefix(t *testing.T) {
 	mfs, err := g.Gather()
 	require.NoError(err)
 	require.Len(mfs, 1)
-	require.Equal(&hello, mfs[0].Name)
+	require.Equal(hello, mfs[0].Name)
 }
 
 func TestMultiGathererAddedPrefix(t *testing.T) {
@@ -94,15 +88,11 @@ func TestMultiGathererAddedPrefix(t *testing.T) {
 	g := NewMultiGatherer()
 
 	tg := &testGatherer{
-		mfs: []*dto.MetricFamily{{
-			Name: &world,
-			Type: dto.MetricType_COUNTER.Enum(),
-			Metric: []*dto.Metric{
-				{
-					Counter: &dto.Counter{
-						Value: proto.Float64(0),
-					},
-				},
+		mfs: []*metric.MetricFamily{{
+			Name: world,
+			Type: metric.MetricTypeCounter,
+			Metrics: []metric.Metric{
+				{Value: metric.MetricValue{Value: 0}},
 			},
 		}},
 	}
@@ -113,7 +103,7 @@ func TestMultiGathererAddedPrefix(t *testing.T) {
 	require.NoError(err)
 	require.Len(mfs, 1)
 	// The prefix gatherer combines "hello" + "_" + "world" = "hello_world"
-	require.Equal(helloWorld, *mfs[0].Name)
+	require.Equal(helloWorld, mfs[0].Name)
 }
 
 func TestMultiGathererJustPrefix(t *testing.T) {
@@ -123,15 +113,11 @@ func TestMultiGathererJustPrefix(t *testing.T) {
 
 	emptyName := ""
 	tg := &testGatherer{
-		mfs: []*dto.MetricFamily{{
-			Name: &emptyName,
-			Type: dto.MetricType_COUNTER.Enum(),
-			Metric: []*dto.Metric{
-				{
-					Counter: &dto.Counter{
-						Value: proto.Float64(0),
-					},
-				},
+		mfs: []*metric.MetricFamily{{
+			Name: emptyName,
+			Type: metric.MetricTypeCounter,
+			Metrics: []metric.Metric{
+				{Value: metric.MetricValue{Value: 0}},
 			},
 		}},
 	}
@@ -141,7 +127,7 @@ func TestMultiGathererJustPrefix(t *testing.T) {
 	mfs, err := g.Gather()
 	require.NoError(err)
 	require.Len(mfs, 1)
-	require.Equal(&hello, mfs[0].Name)
+	require.Equal(hello, mfs[0].Name)
 }
 
 func TestMultiGathererSorted(t *testing.T) {
@@ -153,27 +139,19 @@ func TestMultiGathererSorted(t *testing.T) {
 	name1 := "z"
 	// Create metrics with proper structure
 	tg := &testGatherer{
-		mfs: []*dto.MetricFamily{
+		mfs: []*metric.MetricFamily{
 			{
-				Name: &name1,
-				Type: dto.MetricType_COUNTER.Enum(),
-				Metric: []*dto.Metric{
-					{
-						Counter: &dto.Counter{
-							Value: proto.Float64(0),
-						},
-					},
+				Name: name1,
+				Type: metric.MetricTypeCounter,
+				Metrics: []metric.Metric{
+					{Value: metric.MetricValue{Value: 0}},
 				},
 			},
 			{
-				Name: &name0,
-				Type: dto.MetricType_COUNTER.Enum(),
-				Metric: []*dto.Metric{
-					{
-						Counter: &dto.Counter{
-							Value: proto.Float64(0),
-						},
-					},
+				Name: name0,
+				Type: metric.MetricTypeCounter,
+				Metrics: []metric.Metric{
+					{Value: metric.MetricValue{Value: 0}},
 				},
 			},
 		},
@@ -185,6 +163,6 @@ func TestMultiGathererSorted(t *testing.T) {
 	require.NoError(err)
 	require.Len(mfs, 2)
 	// Check that metrics are sorted by name
-	require.Equal(name0, *mfs[0].Name)
-	require.Equal(name1, *mfs[1].Name)
+	require.Equal(name0, mfs[0].Name)
+	require.Equal(name1, mfs[1].Name)
 }

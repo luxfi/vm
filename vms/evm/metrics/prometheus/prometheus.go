@@ -11,8 +11,6 @@ import (
 
 	"github.com/luxfi/metric"
 	. "github.com/luxfi/vm/vms/evm/metrics"
-
-	dto "github.com/prometheus/client_model/go"
 )
 
 var (
@@ -22,7 +20,6 @@ var (
 	errMetricTypeNotSupported = errors.New("metric type is not supported")
 	quantiles                 = []float64{.5, .75, .95, .99, .999, .9999}
 	pvShortPercent            = []float64{50, 95, 99}
-	helpText                  = ""
 )
 
 // Gatherer implements the [metric.Gatherer] interface by gathering all
@@ -33,7 +30,7 @@ type Gatherer struct {
 
 // Gather gathers metrics from the registry and converts them to
 // a slice of metric families.
-func (g *Gatherer) Gather() ([]*dto.MetricFamily, error) {
+func (g *Gatherer) Gather() ([]*metric.MetricFamily, error) {
 	// Gather and pre-sort the metrics to avoid random listings
 	var names []string
 	g.registry.Each(func(name string, _ any) {
@@ -42,7 +39,7 @@ func (g *Gatherer) Gather() ([]*dto.MetricFamily, error) {
 	slices.Sort(names)
 
 	var (
-		mfs  = make([]*dto.MetricFamily, 0, len(names))
+		mfs  = make([]*metric.MetricFamily, 0, len(names))
 		errs []error
 	)
 	for _, name := range names {
@@ -65,138 +62,128 @@ func NewGatherer(registry Registry) *Gatherer {
 	}
 }
 
-func metricFamily(registry Registry, name string) (mf *dto.MetricFamily, err error) {
-	metric := registry.Get(name)
+func metricFamily(registry Registry, name string) (mf *metric.MetricFamily, err error) {
+	m := registry.Get(name)
 	name = strings.ReplaceAll(name, "/", "_")
 
-	switch m := metric.(type) {
+	switch mt := m.(type) {
 	case Counter:
-		return &dto.MetricFamily{
-			Name: &name,
-			Help: &helpText,
-			Type: dto.MetricType_COUNTER.Enum(),
-			Metric: []*dto.Metric{{
-				Counter: &dto.Counter{
-					Value: ptrTo(float64(m.Snapshot().Count())),
+		return &metric.MetricFamily{
+			Name: name,
+			Type: metric.MetricTypeCounter,
+			Metrics: []metric.Metric{{
+				Value: metric.MetricValue{
+					Value: float64(mt.Snapshot().Count()),
 				},
 			}},
 		}, nil
 	case CounterFloat64:
-		return &dto.MetricFamily{
-			Name: &name,
-			Help: &helpText,
-			Type: dto.MetricType_COUNTER.Enum(),
-			Metric: []*dto.Metric{{
-				Counter: &dto.Counter{
-					Value: ptrTo(m.Snapshot().Count()),
+		return &metric.MetricFamily{
+			Name: name,
+			Type: metric.MetricTypeCounter,
+			Metrics: []metric.Metric{{
+				Value: metric.MetricValue{
+					Value: mt.Snapshot().Count(),
 				},
 			}},
 		}, nil
 	case Gauge:
-		return &dto.MetricFamily{
-			Name: &name,
-			Help: &helpText,
-			Type: dto.MetricType_GAUGE.Enum(),
-			Metric: []*dto.Metric{{
-				Gauge: &dto.Gauge{
-					Value: ptrTo(float64(m.Snapshot().Value())),
+		return &metric.MetricFamily{
+			Name: name,
+			Type: metric.MetricTypeGauge,
+			Metrics: []metric.Metric{{
+				Value: metric.MetricValue{
+					Value: float64(mt.Snapshot().Value()),
 				},
 			}},
 		}, nil
 	case GaugeFloat64:
-		return &dto.MetricFamily{
-			Name: &name,
-			Help: &helpText,
-			Type: dto.MetricType_GAUGE.Enum(),
-			Metric: []*dto.Metric{{
-				Gauge: &dto.Gauge{
-					Value: ptrTo(m.Snapshot().Value()),
+		return &metric.MetricFamily{
+			Name: name,
+			Type: metric.MetricTypeGauge,
+			Metrics: []metric.Metric{{
+				Value: metric.MetricValue{
+					Value: mt.Snapshot().Value(),
 				},
 			}},
 		}, nil
 	case GaugeInfo:
 		return nil, fmt.Errorf("%w: %q is a %T", errMetricSkip, name, m)
 	case Histogram:
-		snapshot := m.Snapshot()
+		snapshot := mt.Snapshot()
 		thresholds := snapshot.Percentiles(quantiles)
-		dtoQuantiles := make([]*dto.Quantile, len(quantiles))
+		nativeQuantiles := make([]metric.Quantile, len(quantiles))
 		for i := range thresholds {
-			dtoQuantiles[i] = &dto.Quantile{
-				Quantile: ptrTo(quantiles[i]),
-				Value:    ptrTo(thresholds[i]),
+			nativeQuantiles[i] = metric.Quantile{
+				Quantile: quantiles[i],
+				Value:    thresholds[i],
 			}
 		}
-		return &dto.MetricFamily{
-			Name: &name,
-			Help: &helpText,
-			Type: dto.MetricType_SUMMARY.Enum(),
-			Metric: []*dto.Metric{{
-				Summary: &dto.Summary{
-					SampleCount: ptrTo(uint64(snapshot.Count())),
-					SampleSum:   ptrTo(float64(snapshot.Sum())),
-					Quantile:    dtoQuantiles,
+		return &metric.MetricFamily{
+			Name: name,
+			Type: metric.MetricTypeSummary,
+			Metrics: []metric.Metric{{
+				Value: metric.MetricValue{
+					SampleCount: uint64(snapshot.Count()),
+					SampleSum:   float64(snapshot.Sum()),
+					Quantiles:   nativeQuantiles,
 				},
 			}},
 		}, nil
 	case Meter:
-		return &dto.MetricFamily{
-			Name: &name,
-			Help: &helpText,
-			Type: dto.MetricType_GAUGE.Enum(),
-			Metric: []*dto.Metric{{
-				Gauge: &dto.Gauge{
-					Value: ptrTo(float64(m.Snapshot().Count())),
+		return &metric.MetricFamily{
+			Name: name,
+			Type: metric.MetricTypeGauge,
+			Metrics: []metric.Metric{{
+				Value: metric.MetricValue{
+					Value: float64(mt.Snapshot().Count()),
 				},
 			}},
 		}, nil
 	case Timer:
-		snapshot := m.Snapshot()
+		snapshot := mt.Snapshot()
 		thresholds := snapshot.Percentiles(quantiles)
-		dtoQuantiles := make([]*dto.Quantile, len(quantiles))
+		nativeQuantiles := make([]metric.Quantile, len(quantiles))
 		for i := range thresholds {
-			dtoQuantiles[i] = &dto.Quantile{
-				Quantile: ptrTo(quantiles[i]),
-				Value:    ptrTo(thresholds[i]),
+			nativeQuantiles[i] = metric.Quantile{
+				Quantile: quantiles[i],
+				Value:    thresholds[i],
 			}
 		}
-		return &dto.MetricFamily{
-			Name: &name,
-			Help: &helpText,
-			Type: dto.MetricType_SUMMARY.Enum(),
-			Metric: []*dto.Metric{{
-				Summary: &dto.Summary{
-					SampleCount: ptrTo(uint64(snapshot.Count())),
-					SampleSum:   ptrTo(float64(snapshot.Sum())),
-					Quantile:    dtoQuantiles,
+		return &metric.MetricFamily{
+			Name: name,
+			Type: metric.MetricTypeSummary,
+			Metrics: []metric.Metric{{
+				Value: metric.MetricValue{
+					SampleCount: uint64(snapshot.Count()),
+					SampleSum:   float64(snapshot.Sum()),
+					Quantiles:   nativeQuantiles,
 				},
 			}},
 		}, nil
 	case ResettingTimer:
-		snapshot := m.Snapshot()
+		snapshot := mt.Snapshot()
 		thresholds := snapshot.Percentiles(pvShortPercent)
-		dtoQuantiles := make([]*dto.Quantile, len(pvShortPercent))
+		nativeQuantiles := make([]metric.Quantile, len(pvShortPercent))
 		for i := range pvShortPercent {
-			dtoQuantiles[i] = &dto.Quantile{
-				Quantile: ptrTo(pvShortPercent[i]),
-				Value:    ptrTo(thresholds[i]),
+			nativeQuantiles[i] = metric.Quantile{
+				Quantile: pvShortPercent[i],
+				Value:    thresholds[i],
 			}
 		}
 		count := snapshot.Count()
-		return &dto.MetricFamily{
-			Name: &name,
-			Help: &helpText,
-			Type: dto.MetricType_SUMMARY.Enum(),
-			Metric: []*dto.Metric{{
-				Summary: &dto.Summary{
-					SampleCount: ptrTo(uint64(count)),
-					SampleSum:   ptrTo(float64(count) * snapshot.Mean()),
-					Quantile:    dtoQuantiles,
+		return &metric.MetricFamily{
+			Name: name,
+			Type: metric.MetricTypeSummary,
+			Metrics: []metric.Metric{{
+				Value: metric.MetricValue{
+					SampleCount: uint64(count),
+					SampleSum:   float64(count) * snapshot.Mean(),
+					Quantiles:   nativeQuantiles,
 				},
 			}},
 		}, nil
 	default:
-		return nil, fmt.Errorf("%w: metric %q type %T", errMetricTypeNotSupported, name, metric)
+		return nil, fmt.Errorf("%w: metric %q type %T", errMetricTypeNotSupported, name, m)
 	}
 }
-
-func ptrTo[T any](x T) *T { return &x }

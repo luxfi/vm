@@ -15,8 +15,8 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/upgrade/upgradetest"
+	"github.com/luxfi/crypto/hash"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils/hashing"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/state"
 	"github.com/luxfi/vm/vms/platformvm/txs"
@@ -29,13 +29,13 @@ func TestCreateChainTxInsufficientControlSigs(t *testing.T) {
 	env.ctx.Lock.Lock()
 	defer env.ctx.Lock.Unlock()
 
-	subnetID := testNet1.ID()
+	chainID := testNet1.ID()
 	wallet := newWallet(t, env, walletConfig{
-		netIDs: []ids.ID{subnetID},
+		netIDs: []ids.ID{chainID},
 	})
 
 	tx, err := wallet.IssueCreateChainTx(
-		subnetID,
+		chainID,
 		nil,
 		constants.XVMID,
 		nil,
@@ -43,8 +43,8 @@ func TestCreateChainTxInsufficientControlSigs(t *testing.T) {
 	)
 	require.NoError(err)
 
-	// Remove a signature from the subnet authorization (last credential)
-	// The last credential is for subnet authorization, earlier ones are for input UTXOs
+	// Remove a signature from the chain authorization (last credential)
+	// The last credential is for chain authorization, earlier ones are for input UTXOs
 	lastCredIdx := len(tx.Creds) - 1
 	tx.Creds[lastCredIdx].(*secp256k1fx.Credential).Sigs = tx.Creds[lastCredIdx].(*secp256k1fx.Credential).Sigs[1:]
 
@@ -68,13 +68,13 @@ func TestCreateChainTxWrongControlSig(t *testing.T) {
 	env.ctx.Lock.Lock()
 	defer env.ctx.Lock.Unlock()
 
-	subnetID := testNet1.ID()
+	chainID := testNet1.ID()
 	wallet := newWallet(t, env, walletConfig{
-		netIDs: []ids.ID{subnetID},
+		netIDs: []ids.ID{chainID},
 	})
 
 	tx, err := wallet.IssueCreateChainTx(
-		subnetID,
+		chainID,
 		nil,
 		constants.XVMID,
 		nil,
@@ -87,8 +87,8 @@ func TestCreateChainTxWrongControlSig(t *testing.T) {
 	require.NoError(err)
 
 	// Replace a valid signature with one from another key
-	// Modify the subnet authorization credential (last credential)
-	sig, err := key.SignHash(hashing.ComputeHash256(tx.Unsigned.Bytes()))
+	// Modify the chain authorization credential (last credential)
+	sig, err := key.SignHash(hash.ComputeHash256(tx.Unsigned.Bytes()))
 	require.NoError(err)
 	lastCredIdx := len(tx.Creds) - 1
 	copy(tx.Creds[lastCredIdx].(*secp256k1fx.Credential).Sigs[0][:], sig)
@@ -114,13 +114,13 @@ func TestCreateChainTxNoSuchNet(t *testing.T) {
 	env.ctx.Lock.Lock()
 	defer env.ctx.Lock.Unlock()
 
-	subnetID := testNet1.ID()
+	chainID := testNet1.ID()
 	wallet := newWallet(t, env, walletConfig{
-		netIDs: []ids.ID{subnetID},
+		netIDs: []ids.ID{chainID},
 	})
 
 	tx, err := wallet.IssueCreateChainTx(
-		subnetID,
+		chainID,
 		nil,
 		constants.XVMID,
 		nil,
@@ -153,13 +153,13 @@ func TestCreateChainTxValid(t *testing.T) {
 	env.ctx.Lock.Lock()
 	defer env.ctx.Lock.Unlock()
 
-	subnetID := testNet1.ID()
+	chainID := testNet1.ID()
 	wallet := newWallet(t, env, walletConfig{
-		netIDs: []ids.ID{subnetID},
+		netIDs: []ids.ID{chainID},
 	})
 
 	tx, err := wallet.IssueCreateChainTx(
-		subnetID,
+		chainID,
 		nil,
 		constants.XVMID,
 		nil,
@@ -219,14 +219,14 @@ func TestCreateChainTxAP3FeeChange(t *testing.T) {
 			env.state.SetTimestamp(test.time) // to duly set fee
 
 			config := *env.config
-			subnetID := testNet1.ID()
+			chainID := testNet1.ID()
 			wallet := newWallet(t, env, walletConfig{
 				config: &config,
-				netIDs: []ids.ID{subnetID},
+				netIDs: []ids.ID{chainID},
 			})
 
 			tx, err := wallet.IssueCreateChainTx(
-				subnetID,
+				chainID,
 				nil,
 				ids.GenerateTestID(),
 				nil,
@@ -257,13 +257,13 @@ func TestEtnaCreateChainTxInvalidWithManagedNet(t *testing.T) {
 	env.ctx.Lock.Lock()
 	defer env.ctx.Lock.Unlock()
 
-	subnetID := testNet1.ID()
+	chainID := testNet1.ID()
 	wallet := newWallet(t, env, walletConfig{
-		netIDs: []ids.ID{subnetID},
+		netIDs: []ids.ID{chainID},
 	})
 
 	tx, err := wallet.IssueCreateChainTx(
-		subnetID,
+		chainID,
 		nil,
 		constants.XVMID,
 		nil,
@@ -278,7 +278,7 @@ func TestEtnaCreateChainTxInvalidWithManagedNet(t *testing.T) {
 	require.NoError(err)
 
 	stateDiff.SetNetToL1Conversion(
-		subnetID,
+		chainID,
 		state.NetToL1Conversion{
 			ConversionID: ids.GenerateTestID(),
 			ChainID:      ids.GenerateTestID(),

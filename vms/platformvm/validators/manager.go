@@ -16,8 +16,8 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/timer/mockable"
-	"github.com/luxfi/vm/utils/window"
+	"github.com/luxfi/timer/mockable"
+	"github.com/luxfi/container/window"
 	"github.com/luxfi/vm/vms/platformvm/block"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/metrics"
@@ -96,10 +96,10 @@ type State interface {
 		validators map[ids.NodeID]*validators.GetValidatorOutput,
 		startHeight uint64,
 		endHeight uint64,
-		subnetID ids.ID,
+		chainID ids.ID,
 	) error
 
-	GetCurrentValidators(ctx context.Context, subnetID ids.ID) ([]*state.Staker, []state.L1Validator, uint64, error)
+	GetCurrentValidators(ctx context.Context, chainID ids.ID) ([]*state.Staker, []state.L1Validator, uint64, error)
 }
 
 func NewManager(

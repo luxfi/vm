@@ -4,16 +4,13 @@
 package metrics
 
 import (
-	"github.com/luxfi/metric"
-	"sort"
-
 	"fmt"
 	"slices"
+	"sort"
 	"sync"
 
-	"github.com/luxfi/vm/utils"
-
-	dto "github.com/prometheus/client_model/go"
+	"github.com/luxfi/metric"
+	"github.com/luxfi/utils"
 )
 
 // MultiGatherer extends the Gatherer interface by allowing additional gatherers
@@ -44,11 +41,11 @@ func NewMultiGatherer() MultiGatherer {
 	return NewPrefixGatherer()
 }
 
-func (g *multiGatherer) Gather() ([]*dto.MetricFamily, error) {
+func (g *multiGatherer) Gather() ([]*metric.MetricFamily, error) {
 	g.lock.RLock()
 	defer g.lock.RUnlock()
 
-	var allFamilies []*dto.MetricFamily
+	var allFamilies []*metric.MetricFamily
 	for _, gatherer := range g.gatherers {
 		families, err := gatherer.Gather()
 		if err != nil {
@@ -59,7 +56,7 @@ func (g *multiGatherer) Gather() ([]*dto.MetricFamily, error) {
 
 	// Sort metrics by name for consistent ordering
 	sort.Slice(allFamilies, func(i, j int) bool {
-		return *allFamilies[i].Name < *allFamilies[j].Name
+		return allFamilies[i].Name < allFamilies[j].Name
 	})
 
 	return allFamilies, nil

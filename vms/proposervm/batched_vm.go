@@ -9,7 +9,7 @@ import (
 
 	chainblock "github.com/luxfi/consensus/engine/chain/block"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/wrappers"
+	"github.com/luxfi/utils/wrappers"
 
 	statelessblock "github.com/luxfi/vm/vms/proposervm/block"
 )

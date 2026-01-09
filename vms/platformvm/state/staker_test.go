@@ -206,7 +206,7 @@ func generateStakerTx(require *require.Assertions) *txs.AddPermissionlessValidat
 	require.NoError(err)
 	pop, err := signer.NewProofOfPossession(sk)
 	require.NoError(err)
-	subnetID := ids.GenerateTestID()
+	chainID := ids.GenerateTestID()
 	weight := uint64(12345)
 	startTime := time.Now().Truncate(time.Second)
 	endTime := startTime.Add(time.Hour)
@@ -219,6 +219,6 @@ func generateStakerTx(require *require.Assertions) *txs.AddPermissionlessValidat
 			Wght:   weight,
 		},
 		Signer: pop,
-		Chain:  subnetID,
+		Chain:  chainID,
 	}
 }

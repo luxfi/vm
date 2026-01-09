@@ -8,7 +8,7 @@ import (
 
 	"github.com/luxfi/metric"
 
-	"github.com/luxfi/vm/utils/wrappers"
+	"github.com/luxfi/utils/wrappers"
 	"github.com/luxfi/vm/vms/exchangevm/block"
 	"github.com/luxfi/vm/vms/exchangevm/txs"
 )

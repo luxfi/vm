@@ -15,8 +15,8 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/rpc"
+	"github.com/luxfi/utils/json"
 	"github.com/luxfi/vm/api"
-	"github.com/luxfi/vm/utils/json"
 )
 
 var ErrRejected = errors.New("rejected")

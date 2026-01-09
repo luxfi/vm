@@ -29,7 +29,7 @@ type ExecutionConfig struct {
 	Network                   NetworkConfig `json:"network"`
 	BlockCacheSize            int           `json:"block-cache-size"`
 	TxCacheSize               int           `json:"tx-cache-size"`
-	TransformedNetTxCacheSize int           `json:"transformed-subnet-tx-cache-size"`
+	TransformedNetTxCacheSize int           `json:"transformed-chain-tx-cache-size"`
 	RewardUTXOsCacheSize      int           `json:"reward-utxos-cache-size"`
 	ChainCacheSize            int           `json:"chain-cache-size"`
 	ChainDBCacheSize          int           `json:"chain-db-cache-size"`

@@ -15,10 +15,10 @@ import (
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/iterator"
-	"github.com/luxfi/vm/utils/math"
-	"github.com/luxfi/vm/utils/maybe"
+	"github.com/luxfi/utils"
+	"github.com/luxfi/container/iterator"
+	"github.com/luxfi/utils/math"
+	"github.com/luxfi/utils/maybe"
 	"github.com/luxfi/vm/vms/platformvm/block"
 )
 
@@ -27,8 +27,8 @@ var (
 	_ utils.Sortable[L1Validator] = L1Validator{}
 
 	ErrMutatedL1Validator     = errors.New("L1 validator contains mutated constant fields")
-	ErrConflictingL1Validator = errors.New("L1 validator contains conflicting subnetID + nodeID pair")
-	ErrDuplicateL1Validator   = errors.New("L1 validator contains duplicate subnetID + nodeID pair")
+	ErrConflictingL1Validator = errors.New("L1 validator contains conflicting chainID + nodeID pair")
+	ErrDuplicateL1Validator   = errors.New("L1 validator contains duplicate chainID + nodeID pair")
 )
 
 type L1Validators interface {
@@ -47,15 +47,15 @@ type L1Validators interface {
 	NumActiveL1Validators() int
 
 	// WeightOfL1Validators returns the total active and inactive weight of L1
-	// validators on [subnetID].
-	WeightOfL1Validators(subnetID ids.ID) (uint64, error)
+	// validators on [chainID].
+	WeightOfL1Validators(chainID ids.ID) (uint64, error)
 
 	// GetL1Validator returns the validator with [validationID] if it exists. If
 	// the validator does not exist, [err] will equal [database.ErrNotFound].
 	GetL1Validator(validationID ids.ID) (L1Validator, error)
 
 	// HasL1Validator returns the validator with [validationID] if it exists.
-	HasL1Validator(subnetID ids.ID, nodeID ids.NodeID) (bool, error)
+	HasL1Validator(chainID ids.ID, nodeID ids.NodeID) (bool, error)
 
 	// PutL1Validator inserts [l1Validator] as a validator. If the weight of the
 	// validator is 0, the validator is removed.
@@ -64,10 +64,10 @@ type L1Validators interface {
 	// of the L1 validator struct, an error will be returned.
 	//
 	// If inserting this validator would cause the total weight of L1 validators
-	// on a subnet to overflow MaxUint64, an error will be returned.
+	// on a chain to overflow MaxUint64, an error will be returned.
 	//
 	// If inserting this validator would cause there to be multiple validators
-	// with the same subnetID and nodeID pair to exist at the same time, an
+	// with the same chainID and nodeID pair to exist at the same time, an
 	// error will be returned.
 	//
 	// If an L1 validator is added with the same validationID as a previously
@@ -260,9 +260,9 @@ func deleteL1Validator(
 
 type l1ValidatorsDiff struct {
 	netAddedActive      int               // May be negative
-	modifiedTotalWeight map[ids.ID]uint64 // subnetID -> totalWeight
+	modifiedTotalWeight map[ids.ID]uint64 // chainID -> totalWeight
 	modified            map[ids.ID]L1Validator
-	modifiedHasNodeIDs  map[subnetIDNodeID]bool
+	modifiedHasNodeIDs  map[chainIDNodeID]bool
 	active              *btree.BTreeG[L1Validator]
 }
 
@@ -270,7 +270,7 @@ func newL1ValidatorsDiff() *l1ValidatorsDiff {
 	return &l1ValidatorsDiff{
 		modifiedTotalWeight: make(map[ids.ID]uint64),
 		modified:            make(map[ids.ID]L1Validator),
-		modifiedHasNodeIDs:  make(map[subnetIDNodeID]bool),
+		modifiedHasNodeIDs:  make(map[chainIDNodeID]bool),
 		active:              btree.NewG(defaultTreeDegree, L1Validator.Less),
 	}
 }
@@ -288,12 +288,12 @@ func (d *l1ValidatorsDiff) getActiveL1ValidatorsIterator(parentIterator iterator
 	)
 }
 
-func (d *l1ValidatorsDiff) hasL1Validator(subnetID ids.ID, nodeID ids.NodeID) (bool, bool) {
-	subnetIDNodeID := subnetIDNodeID{
-		subnetID: subnetID,
-		nodeID:   nodeID,
+func (d *l1ValidatorsDiff) hasL1Validator(chainID ids.ID, nodeID ids.NodeID) (bool, bool) {
+	chainIDNodeID := chainIDNodeID{
+		chainID: chainID,
+		nodeID:  nodeID,
 	}
-	has, modified := d.modifiedHasNodeIDs[subnetIDNodeID]
+	has, modified := d.modifiedHasNodeIDs[chainIDNodeID]
 	return has, modified
 }
 
@@ -312,8 +312,8 @@ func (d *l1ValidatorsDiff) putL1Validator(state Chain, l1Validator L1Validator) 
 		prevWeight = priorL1Validator.Weight
 		prevActive = priorL1Validator.IsActive()
 	case database.ErrNotFound:
-		// Verify that there is not a legacy subnet validator with the same
-		// subnetID+nodeID as this L1 validator.
+		// Verify that there is not a legacy chain validator with the same
+		// chainID+nodeID as this L1 validator.
 		_, err := state.GetCurrentValidator(l1Validator.ChainID, l1Validator.NodeID)
 		if err == nil {
 			return ErrConflictingL1Validator
@@ -363,11 +363,11 @@ func (d *l1ValidatorsDiff) putL1Validator(state Chain, l1Validator L1Validator) 
 	}
 	d.modified[l1Validator.ValidationID] = l1Validator
 
-	subnetIDNodeID := subnetIDNodeID{
-		subnetID: l1Validator.ChainID,
-		nodeID:   l1Validator.NodeID,
+	chainIDNodeID := chainIDNodeID{
+		chainID: l1Validator.ChainID,
+		nodeID:  l1Validator.NodeID,
 	}
-	d.modifiedHasNodeIDs[subnetIDNodeID] = !l1Validator.isDeleted()
+	d.modifiedHasNodeIDs[chainIDNodeID] = !l1Validator.isDeleted()
 	if l1Validator.IsActive() {
 		d.active.ReplaceOrInsert(l1Validator)
 	}

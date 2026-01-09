@@ -104,8 +104,8 @@ func TestVerifyWarpMessages(t *testing.T) {
 			tx:   &txs.CreateChainTx{},
 		},
 		{
-			name: "CreateSubnetTx",
-			tx:   &txs.CreateSubnetTx{},
+			name: "CreateChainTx",
+			tx:   &txs.CreateChainTx{},
 		},
 		{
 			name: "ImportTx",

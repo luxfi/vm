@@ -36,12 +36,12 @@ type ValidatorStateClient interface {
 	GetMinimumHeight(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetMinimumHeightResponse, error)
 	// GetCurrentHeight returns the current height of the P-chain.
 	GetCurrentHeight(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetCurrentHeightResponse, error)
-	// GetNetID returns the subnetID of the provided chain.
+	// GetNetID returns the chainID of the provided chain.
 	GetNetID(ctx context.Context, in *GetNetIDRequest, opts ...grpc.CallOption) (*GetNetIDResponse, error)
 	// GetValidatorSet returns the weights of the nodeIDs for the provided
-	// subnet at the requested P-chain height.
+	// chain at the requested P-chain height.
 	GetValidatorSet(ctx context.Context, in *GetValidatorSetRequest, opts ...grpc.CallOption) (*GetValidatorSetResponse, error)
-	// GetCurrentValidatorSet returns the validator set for the provided subnet at
+	// GetCurrentValidatorSet returns the validator set for the provided chain at
 	// the current P-chain height.
 	GetCurrentValidatorSet(ctx context.Context, in *GetCurrentValidatorSetRequest, opts ...grpc.CallOption) (*GetCurrentValidatorSetResponse, error)
 }
@@ -108,12 +108,12 @@ type ValidatorStateServer interface {
 	GetMinimumHeight(context.Context, *emptypb.Empty) (*GetMinimumHeightResponse, error)
 	// GetCurrentHeight returns the current height of the P-chain.
 	GetCurrentHeight(context.Context, *emptypb.Empty) (*GetCurrentHeightResponse, error)
-	// GetNetID returns the subnetID of the provided chain.
+	// GetNetID returns the chainID of the provided chain.
 	GetNetID(context.Context, *GetNetIDRequest) (*GetNetIDResponse, error)
 	// GetValidatorSet returns the weights of the nodeIDs for the provided
-	// subnet at the requested P-chain height.
+	// chain at the requested P-chain height.
 	GetValidatorSet(context.Context, *GetValidatorSetRequest) (*GetValidatorSetResponse, error)
-	// GetCurrentValidatorSet returns the validator set for the provided subnet at
+	// GetCurrentValidatorSet returns the validator set for the provided chain at
 	// the current P-chain height.
 	GetCurrentValidatorSet(context.Context, *GetCurrentValidatorSetRequest) (*GetCurrentValidatorSetResponse, error)
 	mustEmbedUnimplementedValidatorStateServer()

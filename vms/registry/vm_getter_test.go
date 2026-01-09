@@ -14,9 +14,9 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/metric"
-	"github.com/luxfi/vm/utils/filesystem"
-	"github.com/luxfi/vm/utils/filesystem/filesystemmock"
-	"github.com/luxfi/vm/utils/resource"
+	"github.com/luxfi/utils/filesystem"
+	"github.com/luxfi/utils/filesystem/filesystemmock"
+	"github.com/luxfi/utils/resource"
 	"github.com/luxfi/vm/vms"
 	"github.com/luxfi/vm/vms/vmsmock"
 )

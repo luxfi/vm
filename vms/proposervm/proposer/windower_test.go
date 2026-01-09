@@ -21,7 +21,7 @@ import (
 
 var (
 	netID         = ids.GenerateTestID()
-	subnetID      = ids.GenerateTestID()
+	chainID       = ids.GenerateTestID()
 	randomChainID = ids.GenerateTestID()
 	fixedChainID  = ids.ID{0, 2}
 )
@@ -47,7 +47,7 @@ func TestWindowerNoValidators(t *testing.T) {
 
 			w := New(
 				makeValidatorState(t, test.validators),
-				subnetID,
+				chainID,
 				randomChainID,
 			)
 

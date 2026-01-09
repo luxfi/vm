@@ -9,7 +9,7 @@ import (
 
 	"github.com/luxfi/codec"
 	"github.com/luxfi/codec/linearcodec"
-	"github.com/luxfi/vm/utils/wrappers"
+	"github.com/luxfi/utils/wrappers"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 )
 

@@ -15,7 +15,7 @@ import (
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/metric"
-	"github.com/luxfi/vm/utils"
+	"github.com/luxfi/utils"
 )
 
 var (

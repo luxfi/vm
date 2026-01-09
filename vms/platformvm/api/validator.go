@@ -5,8 +5,8 @@ package api
 
 import (
 	"github.com/luxfi/ids"
+	"github.com/luxfi/utils/json"
 	"github.com/luxfi/vm/types"
-	"github.com/luxfi/vm/utils/json"
 )
 
 // APIL1Validator is the representation of a L1 validator sent over APIs.

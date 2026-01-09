@@ -9,7 +9,7 @@ import (
 	"github.com/luxfi/consensus/config"
 )
 
-// POAConfig provides Proof of Authority configuration for subnets
+// POAConfig provides Proof of Authority configuration for chains
 type POAConfig struct {
 	// Enabled indicates if POA mode is active
 	Enabled bool `json:"enabled" yaml:"enabled"`

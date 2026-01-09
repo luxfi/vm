@@ -8,9 +8,9 @@ import (
 
 	"github.com/luxfi/codec"
 	"github.com/luxfi/log"
+	"github.com/luxfi/timer/mockable"
+	"github.com/luxfi/utils/wrappers"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils/timer/mockable"
-	"github.com/luxfi/vm/utils/wrappers"
 )
 
 var (

@@ -7,9 +7,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/luxfi/metric"
 	"github.com/stretchr/testify/require"
-
-	dto "github.com/prometheus/client_model/go"
 )
 
 var (
@@ -59,8 +58,8 @@ func TestMultiGathererAdded(t *testing.T) {
 	g := NewOptionalGatherer()
 
 	tg := &testGatherer{
-		mfs: []*dto.MetricFamily{{
-			Name: &hello,
+		mfs: []*metric.MetricFamily{{
+			Name: hello,
 		}},
 	}
 
@@ -69,5 +68,5 @@ func TestMultiGathererAdded(t *testing.T) {
 	mfs, err := g.Gather()
 	require.NoError(err)
 	require.Len(mfs, 1)
-	require.Equal(&hello, mfs[0].Name)
+	require.Equal(hello, mfs[0].Name)
 }

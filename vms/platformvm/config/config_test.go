@@ -112,7 +112,7 @@ func TestConfigUnmarshal(t *testing.T) {
 			TxFee:                         14,
 			CreateAssetTxFee:              15,
 			CreateNetTxFee:                16,
-			CreateBlockchainTxFee:         17,
+			CreateChainTxFee:         17,
 			AddPrimaryNetworkValidatorFee: 18,
 			AddPrimaryNetworkDelegatorFee: 19,
 		}

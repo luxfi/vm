@@ -14,9 +14,9 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/timer/mockable"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils/timer/mockable"
 )
 
 // Note: Consider refactoring to use table tests for better test organization
@@ -70,7 +70,7 @@ func TestAddChainValidatorTxSyntacticVerify(t *testing.T) {
 			},
 		},
 	}}
-	subnetAuth := &secp256k1fx.Input{
+	chainAuth := &secp256k1fx.Input{
 		SigIndices: []uint32{0, 1},
 	}
 	addNetValidatorTx = &AddChainValidatorTx{
@@ -90,7 +90,7 @@ func TestAddChainValidatorTxSyntacticVerify(t *testing.T) {
 			},
 			Chain: netID,
 		},
-		ChainAuth: subnetAuth,
+		ChainAuth: chainAuth,
 	}
 
 	// Case: valid tx
@@ -188,7 +188,7 @@ func TestAddNetValidatorMarshal(t *testing.T) {
 			},
 		},
 	}}
-	subnetAuth := &secp256k1fx.Input{
+	chainAuth := &secp256k1fx.Input{
 		SigIndices: []uint32{0, 1},
 	}
 	addNetValidatorTx = &AddChainValidatorTx{
@@ -208,7 +208,7 @@ func TestAddNetValidatorMarshal(t *testing.T) {
 			},
 			Chain: netID,
 		},
-		ChainAuth: subnetAuth,
+		ChainAuth: chainAuth,
 	}
 
 	// Case: valid tx

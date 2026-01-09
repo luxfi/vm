@@ -7,7 +7,7 @@ import (
 	"errors"
 	"math"
 
-	"github.com/luxfi/vm/utils/json"
+	"github.com/luxfi/utils/json"
 )
 
 type Height json.Uint64

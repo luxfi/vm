@@ -12,7 +12,7 @@ import (
 	"github.com/luxfi/address"
 	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/json"
+	"github.com/luxfi/utils/json"
 )
 
 var addrStrArray = []string{

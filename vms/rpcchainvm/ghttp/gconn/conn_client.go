@@ -14,7 +14,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/luxfi/vm/utils/wrappers"
+	"github.com/luxfi/utils/wrappers"
 
 	connpb "github.com/luxfi/vm/proto/pb/net/conn"
 )

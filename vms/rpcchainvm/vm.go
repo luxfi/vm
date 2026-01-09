@@ -16,9 +16,9 @@ import (
 
 	"github.com/luxfi/consensus/engine/chain/block"
 	"github.com/luxfi/log"
+	"github.com/luxfi/utils"
 	"github.com/luxfi/version"
 	"github.com/luxfi/vm/rpcchainvm/grpcutils"
-	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/vms/rpcchainvm/gruntime"
 	"github.com/luxfi/vm/vms/rpcchainvm/runtime"
 

@@ -3,11 +3,7 @@
 
 package metrics
 
-import (
-	"github.com/luxfi/metric"
-
-	dto "github.com/prometheus/client_model/go"
-)
+import "github.com/luxfi/metric"
 
 var counterOpts = metric.CounterOpts{
 	Name: "counter",
@@ -15,10 +11,10 @@ var counterOpts = metric.CounterOpts{
 }
 
 type testGatherer struct {
-	mfs []*dto.MetricFamily
+	mfs []*metric.MetricFamily
 	err error
 }
 
-func (g *testGatherer) Gather() ([]*dto.MetricFamily, error) {
+func (g *testGatherer) Gather() ([]*metric.MetricFamily, error) {
 	return g.mfs, g.err
 }

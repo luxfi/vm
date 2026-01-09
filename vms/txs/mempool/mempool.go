@@ -14,9 +14,9 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/vm/utils/linked"
-	"github.com/luxfi/vm/utils/lock"
-	"github.com/luxfi/vm/utils/setmap"
+	"github.com/luxfi/utils/linked"
+	"github.com/luxfi/utils/lock"
+	"github.com/luxfi/container/setmap"
 )
 
 const (

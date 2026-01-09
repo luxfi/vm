@@ -97,28 +97,28 @@ func (s signatureRequestVerifier) verifyChainToL1Conversion(
 	msg *message.ChainToL1Conversion,
 	justification []byte,
 ) error {
-	subnetID, err := ids.ToID(justification)
+	chainID, err := ids.ToID(justification)
 	if err != nil {
 		return &p2p.Error{
 			Code:    ErrFailedToParseJustification,
-			Message: "failed to parse justification: " + err.Error(),
+			Message: "failed to parse chainID justification: " + err.Error(),
 		}
 	}
 
 	s.stateLock.Lock()
 	defer s.stateLock.Unlock()
 
-	conversion, err := s.state.GetNetToL1Conversion(subnetID)
+	conversion, err := s.state.GetNetToL1Conversion(chainID)
 	if err == database.ErrNotFound {
 		return &p2p.Error{
 			Code:    ErrConversionDoesNotExist,
-			Message: fmt.Sprintf("subnet %q has not been converted", subnetID),
+			Message: fmt.Sprintf("chain %q has not been converted", chainID),
 		}
 	}
 	if err != nil {
 		return &p2p.Error{
 			Code:    0,
-			Message: "failed to get subnet conversionID: " + err.Error(),
+			Message: "failed to get chain conversionID: " + err.Error(),
 		}
 	}
 
@@ -150,9 +150,9 @@ func (s signatureRequestVerifier) verifyL1ValidatorRegistration(
 
 	switch preimage := justification.GetPreimage().(type) {
 	case *platformvm.L1ValidatorRegistrationJustification_ConvertChainToL1TxData:
-		return s.verifyNetValidatorNotCurrentlyRegistered(msg.ValidationID, preimage.ConvertChainToL1TxData)
+		return s.verifyValidatorNotCurrentlyRegistered(msg.ValidationID, preimage.ConvertChainToL1TxData)
 	case *platformvm.L1ValidatorRegistrationJustification_RegisterL1ValidatorMessage:
-		return s.verifyNetValidatorCanNotValidate(msg.ValidationID, preimage.RegisterL1ValidatorMessage)
+		return s.verifyValidatorCanNotValidate(msg.ValidationID, preimage.RegisterL1ValidatorMessage)
 	default:
 		return &p2p.Error{
 			Code:    ErrInvalidJustificationType,
@@ -186,22 +186,22 @@ func (s signatureRequestVerifier) verifyL1ValidatorRegistered(
 	return nil
 }
 
-// verifyNetValidatorNotCurrentlyRegistered verifies that the validationID
+// verifyValidatorNotCurrentlyRegistered verifies that the validationID
 // could only correspond to a validator from a ConvertChainToL1Tx and that it
 // is not currently a validator.
-func (s signatureRequestVerifier) verifyNetValidatorNotCurrentlyRegistered(
+func (s signatureRequestVerifier) verifyValidatorNotCurrentlyRegistered(
 	validationID ids.ID,
-	justification *platformvm.NetIDIndex,
+	justification *platformvm.ChainIDIndex,
 ) error {
-	subnetID, err := ids.ToID(justification.GetNetId())
+	chainID, err := ids.ToID(justification.GetChainId())
 	if err != nil {
 		return &p2p.Error{
 			Code:    ErrFailedToParseNetID,
-			Message: "failed to parse subnetID: " + err.Error(),
+			Message: "failed to parse chainID: " + err.Error(),
 		}
 	}
 
-	justificationID := subnetID.Append(justification.GetIndex())
+	justificationID := chainID.Append(justification.GetIndex())
 	if validationID != justificationID {
 		return &p2p.Error{
 			Code:    ErrMismatchedValidationID,
@@ -212,18 +212,18 @@ func (s signatureRequestVerifier) verifyNetValidatorNotCurrentlyRegistered(
 	s.stateLock.Lock()
 	defer s.stateLock.Unlock()
 
-	// Verify that the provided subnetID has been converted.
-	_, err = s.state.GetNetToL1Conversion(subnetID)
+	// Verify that the provided chainID has been converted.
+	_, err = s.state.GetNetToL1Conversion(chainID)
 	if err == database.ErrNotFound {
 		return &p2p.Error{
 			Code:    ErrConversionDoesNotExist,
-			Message: fmt.Sprintf("subnet %q has not been converted", subnetID),
+			Message: fmt.Sprintf("chain %q has not been converted", chainID),
 		}
 	}
 	if err != nil {
 		return &p2p.Error{
 			Code:    0,
-			Message: "failed to get subnet conversionID: " + err.Error(),
+			Message: "failed to get chain conversionID: " + err.Error(),
 		}
 	}
 
@@ -243,13 +243,13 @@ func (s signatureRequestVerifier) verifyNetValidatorNotCurrentlyRegistered(
 	}
 
 	// Either the validator was removed or it was never registered as part of
-	// the subnet conversion.
+	// the chain conversion.
 	return nil
 }
 
-// verifyNetValidatorCanNotValidate verifies that the validationID is not
+// verifyValidatorCanNotValidate verifies that the validationID is not
 // currently and can never become a validator.
-func (s signatureRequestVerifier) verifyNetValidatorCanNotValidate(
+func (s signatureRequestVerifier) verifyValidatorCanNotValidate(
 	validationID ids.ID,
 	justificationBytes []byte,
 ) error {

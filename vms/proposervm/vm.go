@@ -26,8 +26,8 @@ import (
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/database/versiondb"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/math"
-	"github.com/luxfi/vm/utils/timer/mockable"
+	"github.com/luxfi/timer/mockable"
+	"github.com/luxfi/utils/math"
 	"github.com/luxfi/vm/vms"
 
 	"github.com/luxfi/vm/vms/proposervm/proposer"

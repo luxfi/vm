@@ -82,11 +82,11 @@ func TestSkipBootstrapTracker(t *testing.T) {
 func TestQueueChainCreation(t *testing.T) {
 	require := require.New(t)
 
-	// Create subnets with primary network config
-	subnetConfigs := map[ids.ID]nets.Config{
+	// Create chains with primary network config
+	chainConfigs := map[ids.ID]nets.Config{
 		constants.PrimaryNetworkID: {},
 	}
-	subnets, err := NewNets(ids.GenerateTestNodeID(), subnetConfigs)
+	chains, err := NewNets(ids.GenerateTestNodeID(), chainConfigs)
 	require.NoError(err)
 
 	config := &ManagerConfig{
@@ -94,7 +94,7 @@ func TestQueueChainCreation(t *testing.T) {
 		Metrics:      metric.NewMultiGatherer(),
 		VMManager:    vms.NewManager(nil, ids.NewAliaser()),
 		ChainDataDir: t.TempDir(),
-		Nets:         subnets,
+		Nets:         chains,
 	}
 
 	m, err := New(config)
