@@ -12,7 +12,7 @@ import (
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/crypto/bls/signer/localsigner"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/sdk/constants"
+	"github.com/luxfi/constants"
 	luxtls "github.com/luxfi/tls"
 )
 

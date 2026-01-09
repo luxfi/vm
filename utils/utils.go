@@ -10,7 +10,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/luxfi/sdk/constants"
+	"github.com/luxfi/constants"
 )
 
 // Unique returns a new slice containing only the unique elements from the input slice.

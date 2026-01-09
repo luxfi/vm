@@ -18,49 +18,48 @@ import (
 	"sync"
 	"time"
 
+	"github.com/luxfi/database"
 	"github.com/luxfi/vm/api/health"
 	"github.com/luxfi/vm/api/metrics"
 	"github.com/luxfi/vm/api/server"
 	"github.com/luxfi/vm/chains/atomic"
-	"github.com/luxfi/database"
 	// "github.com/luxfi/database/badgerdb" // Unused
-	dbmanager "github.com/luxfi/database/manager"
 	consensusctx "github.com/luxfi/consensus/context"
+	dbmanager "github.com/luxfi/database/manager"
 	// "github.com/luxfi/database/meterdb" // Unused
 	// "github.com/luxfi/database/prefixdb" // Unused
 	"github.com/luxfi/consensus"
 	"github.com/luxfi/consensus/engine"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/warp"
 	"github.com/luxfi/metric"
 	"github.com/luxfi/p2p/message"
 	"github.com/luxfi/p2p/proto/pb/p2p"
+	"github.com/luxfi/warp"
 	// "github.com/luxfi/consensus/engine/dag/bootstrap/queue" // Unused
 	// "github.com/luxfi/consensus/engine/dag/state" // Unused
 	// "github.com/luxfi/consensus/engine/vertex" // Unused
 	"github.com/luxfi/consensus/engine/interfaces"
 	// "github.com/luxfi/consensus/core/tracker"
-	consensuschain "github.com/luxfi/consensus/engine/chain"
 	consensusconfig "github.com/luxfi/consensus/config"
-	consensusdag "github.com/luxfi/consensus/engine/dag"
+	consensuschain "github.com/luxfi/consensus/engine/chain"
 	"github.com/luxfi/consensus/engine/chain/block"
+	consensusdag "github.com/luxfi/consensus/engine/dag"
 	// "github.com/luxfi/consensus/engine/chain/syncer"
 	"github.com/luxfi/consensus/networking/handler"
 	// "github.com/luxfi/consensus/core/router" // Deprecated - using local ChainRouter interface instead
 	// "github.com/luxfi/consensus/networking/sender" // Unused after dead code cleanup
 	"github.com/luxfi/consensus/networking/timeout"
 	validators "github.com/luxfi/consensus/validator"
-	"github.com/luxfi/staking"
-	"github.com/luxfi/vm/nets"
-	"github.com/luxfi/trace"
-	"github.com/luxfi/upgrade"
-	"github.com/luxfi/vm/utils/buffer"
 	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/log"
-	utilmetric "github.com/luxfi/vm/utils/metric"
-	"github.com/luxfi/vm/utils/perms"
 	"github.com/luxfi/math/set"
+	"github.com/luxfi/staking"
+	"github.com/luxfi/trace"
+	"github.com/luxfi/upgrade"
+	"github.com/luxfi/vm/nets"
+	"github.com/luxfi/vm/utils/buffer"
+	"github.com/luxfi/vm/utils/perms"
 	"github.com/luxfi/vm/vms"
 	"github.com/luxfi/vm/vms/fx"
 	// "github.com/luxfi/vm/vms/metervm" // Temporarily disabled - needs consensus package updates
@@ -88,14 +87,14 @@ const (
 	defaultChannelSize = 1
 	initialQueueSize   = 3
 
-	luxNamespace    = constants.PlatformName + utilmetric.NamespaceSeparator + "lux"
-	handlerNamespace      = constants.PlatformName + utilmetric.NamespaceSeparator + "handler"
-	meterchainvmNamespace = constants.PlatformName + utilmetric.NamespaceSeparator + "meterchainvm"
-	meterdagvmNamespace   = constants.PlatformName + utilmetric.NamespaceSeparator + "meterdagvm"
-	proposervmNamespace   = constants.PlatformName + utilmetric.NamespaceSeparator + "proposervm"
-	p2pNamespace          = constants.PlatformName + utilmetric.NamespaceSeparator + "p2p"
-	chainNamespace      = constants.PlatformName + utilmetric.NamespaceSeparator + "consensusman"
-	stakeNamespace        = constants.PlatformName + utilmetric.NamespaceSeparator + "stake"
+	luxNamespace          = metric.AppendNamespace(constants.PlatformName, "lux")
+	handlerNamespace      = metric.AppendNamespace(constants.PlatformName, "handler")
+	meterchainvmNamespace = metric.AppendNamespace(constants.PlatformName, "meterchainvm")
+	meterdagvmNamespace   = metric.AppendNamespace(constants.PlatformName, "meterdagvm")
+	proposervmNamespace   = metric.AppendNamespace(constants.PlatformName, "proposervm")
+	p2pNamespace          = metric.AppendNamespace(constants.PlatformName, "p2p")
+	chainNamespace        = metric.AppendNamespace(constants.PlatformName, "consensusman")
+	stakeNamespace        = metric.AppendNamespace(constants.PlatformName, "stake")
 )
 
 // ChainRouter is the interface for routing messages to chains.
@@ -211,7 +210,6 @@ type Engine interface {
 	Context() context.Context
 }
 
-
 // validatorStateWrapper wraps validators.State to implement interfaces.ValidatorState
 
 // noopValidatorState provides a no-op implementation of validators.State for non-staking nodes
@@ -270,7 +268,6 @@ func createWarpSigner(sk bls.Signer, networkID uint32, chainID ids.ID) warp.Sign
 	return warp.NewSigner(sk, networkID, chainID)
 }
 
-
 // ChainConfig is configuration settings for the current execution.
 // [Config] is the user-provided config blob for the chain.
 // [Upgrade] is a chain-specific blob for coordinating upgrades.
@@ -296,14 +293,14 @@ type ManagerConfig struct {
 	DB                        database.Database
 	MsgCreator                message.OutboundMsgBuilder // message creator, shared with network
 	Router                    ChainRouter                // Routes incoming messages to the appropriate chain
-	Net                       Network            // Sends consensus messages to other validators
+	Net                       Network                    // Sends consensus messages to other validators
 	Validators                validators.Manager         // Validators validating on this chain
 	NodeID                    ids.NodeID                 // The ID of this node
 	NetworkID                 uint32                     // ID of the network this node is connected to
 	PartialSyncPrimaryNetwork bool
 	Server                    server.Server // Handles HTTP API calls
 	AtomicMemory              *atomic.Memory
-	XAssetID                ids.ID
+	XAssetID                  ids.ID
 	SkipBootstrap             bool            // Skip bootstrapping and start processing immediately
 	EnableAutomining          bool            // Enable automining in POA mode
 	XChainID                  ids.ID          // ID of the X-Chain,
@@ -312,8 +309,8 @@ type ManagerConfig struct {
 	CriticalChains            set.Set[ids.ID] // Chains that can't exit gracefully
 	TimeoutManager            timeout.Manager // Manages request timeouts when sending messages to other validators
 	Health                    health.Registerer
-	NetConfigs             map[ids.ID]nets.Config // ID -> NetConfig
-	ChainConfigs              map[string]ChainConfig    // alias -> ChainConfig
+	NetConfigs                map[ids.ID]nets.Config // ID -> NetConfig
+	ChainConfigs              map[string]ChainConfig // alias -> ChainConfig
 	// ShutdownNodeFunc allows the chain manager to issue a request to shutdown the node
 	ShutdownNodeFunc func(exitCode int)
 	MeterVMEnabled   bool // Should each VM be wrapped with a MeterVM
@@ -529,7 +526,10 @@ func (m *manager) createChain(chainParams ChainParameters) {
 	// the chain is registered in the manager. This ensures that no message generated by handler
 	// upon start is dropped.
 	chain, err := m.buildChain(chainParams, sb)
-	if chain == nil && err == nil { m.Log.Info("chain skipped", log.Stringer("chainID", chainParams.ID)); return }
+	if chain == nil && err == nil {
+		m.Log.Info("chain skipped", log.Stringer("chainID", chainParams.ID))
+		return
+	}
 
 	if err != nil {
 		// Special handling for X-Chain in single validator mode
@@ -808,10 +808,10 @@ func (m *manager) buildChain(chainParams ChainParameters, sb nets.Net) (*chainIn
 	warpSigner := createWarpSigner(m.StakingBLSKey, m.NetworkID, chainParams.ID)
 
 	chainCtx := &consensusctx.Context{
-		NetworkID:    m.NetworkID,
-		ChainID:      chainParams.ID,
-		NodeID:       m.NodeID,
-		PublicKey:    pubKeyBytes,
+		NetworkID: m.NetworkID,
+		ChainID:   chainParams.ID,
+		NodeID:    m.NodeID,
+		PublicKey: pubKeyBytes,
 
 		XChainID:     m.XChainID,
 		CChainID:     m.CChainID,
@@ -898,7 +898,7 @@ func (m *manager) buildChain(chainParams ChainParameters, sb nets.Net) (*chainIn
 
 		// Create simple linear chain with basic consensus engine
 		m.Log.Info("creating linear chain", log.Stringer("chainID", chainCtx.ChainID))
-		
+
 		// Initialize the VM before creating the chain
 		// Get chain configuration
 		chainConfig, err := m.getChainConfig(chainParams.ID)
@@ -1071,7 +1071,7 @@ func (m *manager) buildChain(chainParams ChainParameters, sb nets.Net) (*chainIn
 		chain = &chainInfo{
 			Name:    chainCtx.ChainID.String(),
 			Context: chainCtx,
-			VM:      vm, // Use the real VM directly
+			VM:      vm,              // Use the real VM directly
 			Engine:  consensusEngine, // Use real consensus engine directly
 			Handler: newBlockHandler(vm, m.Log, consensusEngine, m.Net, m.MsgCreator, chainParams.ID),
 		}
@@ -1300,7 +1300,9 @@ func (m *manager) createDAG(
 
 	// Get and start the DAG engine
 	dagEngine := dagVM.GetEngine()
-	if starter, ok := dagEngine.(interface{ Start(context.Context, uint32) error }); ok {
+	if starter, ok := dagEngine.(interface {
+		Start(context.Context, uint32) error
+	}); ok {
 		if err := starter.Start(context.Background(), 0); err != nil {
 			return nil, fmt.Errorf("failed to start DAG engine: %w", err)
 		}
@@ -1763,17 +1765,17 @@ func (e *emptyValidatorManager) GetCurrentValidators(ctx context.Context, height
 type blockHandler struct {
 	vm         block.ChainVM
 	logger     log.Logger
-	engine     *consensuschain.Runtime // Consensus engine for proper block handling
-	net        Network                  // Network for sending Qbit responses
-	msgCreator message.OutboundMsgBuilder       // Message creator for Qbit responses
-	chainID    ids.ID                           // Chain ID for message routing
+	engine     *consensuschain.Runtime    // Consensus engine for proper block handling
+	net        Network                    // Network for sending Qbit responses
+	msgCreator message.OutboundMsgBuilder // Message creator for Qbit responses
+	chainID    ids.ID                     // Chain ID for message routing
 
 	// Context sync support - when a block fails verification due to missing context,
 	// we request the prerequisite blocks from the peer to catch up
-	pendingContext    map[ids.ID]contextRequest // Map from blockID to pending context request
-	requestIDCounter  uint32                    // Counter for generating unique request IDs
-	maxContextBlocks  int                       // Max context blocks to request/serve (default: 256)
-	contextRequestMu  sync.Mutex                // Protects pendingContext and requestIDCounter
+	pendingContext   map[ids.ID]contextRequest // Map from blockID to pending context request
+	requestIDCounter uint32                    // Counter for generating unique request IDs
+	maxContextBlocks int                       // Max context blocks to request/serve (default: 256)
+	contextRequestMu sync.Mutex                // Protects pendingContext and requestIDCounter
 
 	// Qbit event buffering - when we receive a Qbit for a block we don't have yet,
 	// buffer the event and drain when the block arrives
@@ -1998,13 +2000,14 @@ func (b *blockHandler) requestContext(ctx context.Context, nodeID ids.NodeID, bl
 		log.Int("sentTo", sentTo.Len()))
 }
 
-func (b *blockHandler) Context() *consensusctx.Context                 { return nil }
+func (b *blockHandler) Context() *consensusctx.Context                { return nil }
 func (b *blockHandler) Start(ctx context.Context, startReqID uint32)  {}
 func (b *blockHandler) Push(ctx context.Context, msg handler.Message) {}
 func (b *blockHandler) Len() int                                      { return 0 }
 func (b *blockHandler) Get(ctx context.Context, nodeID ids.NodeID, requestID uint32, deadline time.Time, msg []byte) error {
 	return nil
 }
+
 // GetContext responds to a request for verification context (parent chain blocks)
 // starting from containerID. We respond with up to maxAncestors blocks in
 // chronological order (oldest first) so the requester can attach the missing context.
@@ -2432,7 +2435,7 @@ func (b *blockHandler) HandleOutbound(ctx context.Context, msg handler.Message) 
 // placeholderHandler implements handler.Handler interface
 type placeholderHandler struct{}
 
-func (p *placeholderHandler) Context() *consensusctx.Context                 { return nil }
+func (p *placeholderHandler) Context() *consensusctx.Context                { return nil }
 func (p *placeholderHandler) Start(ctx context.Context, startReqID uint32)  {}
 func (p *placeholderHandler) Push(ctx context.Context, msg handler.Message) {}
 func (p *placeholderHandler) Len() int                                      { return 0 }
