@@ -8,7 +8,7 @@ import (
 	"errors"
 
 	"github.com/luxfi/crypto/bls"
-	"github.com/luxfi/crypto/address/formatting"
+	"github.com/luxfi/crypto/address"
 )
 
 var (
