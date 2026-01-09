@@ -1,6 +1,3 @@
-//go:build node
-// +build node
-
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
@@ -29,11 +26,10 @@ import (
 	"github.com/luxfi/vm/chains/atomic"
 	"github.com/luxfi/vm/utils"
 
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/log"
 	"github.com/luxfi/vm/utils/timer/mockable"
-	"github.com/luxfi/vm/utils/units"
 	"github.com/luxfi/vm/vms/platformvm/config"
 
 	"github.com/luxfi/vm/vms/platformvm/fx"
@@ -54,12 +50,12 @@ import (
 )
 
 const (
-	defaultMinValidatorStake = 5 * units.MilliLux
+	defaultMinValidatorStake = 5 * constants.MilliLux
 
 	defaultMinStakingDuration = 24 * time.Hour
 	defaultMaxStakingDuration = 365 * 24 * time.Hour
 
-	defaultTxFee = 100 * units.NanoLux
+	defaultTxFee = 100 * constants.NanoLux
 )
 
 var (
@@ -241,10 +237,10 @@ func newWallet(t testing.TB, e *environment, c walletConfig) wallet.Wallet {
 	}
 	// Create a basic Config for wallet
 	walletConfig := &config.Config{
-		TxFee:                 units.MilliLux,
-		CreateAssetTxFee:      units.MilliLux,
-		CreateNetTxFee:        units.Lux,
-		CreateBlockchainTxFee: units.Lux,
+		TxFee:                 constants.MilliLux,
+		CreateAssetTxFee:      constants.MilliLux,
+		CreateNetTxFee:        constants.Lux,
+		CreateBlockchainTxFee: constants.Lux,
 	}
 	return txstest.NewWallet(
 		t,
@@ -311,16 +307,16 @@ func defaultConfig(f upgradetest.Fork) *config.Internal {
 		UptimeLockedCalculator: consensusuptime.NewLockedCalculator(),
 		Validators:             validators.NewManager(),
 		TrackedChains:          set.Of(constants.PrimaryNetworkID),
-		MinValidatorStake:      5 * units.MilliLux,
-		MaxValidatorStake:      500 * units.MilliLux,
-		MinDelegatorStake:      1 * units.MilliLux,
+		MinValidatorStake:      5 * constants.MilliLux,
+		MaxValidatorStake:      500 * constants.MilliLux,
+		MinDelegatorStake:      1 * constants.MilliLux,
 		MinStakeDuration:       defaultMinStakingDuration,
 		MaxStakeDuration:       defaultMaxStakingDuration,
 		RewardConfig: reward.Config{
 			MaxConsumptionRate: .12 * reward.PercentDenominator,
 			MinConsumptionRate: .10 * reward.PercentDenominator,
 			MintingPeriod:      365 * 24 * time.Hour,
-			SupplyCap:          720 * units.MegaLux,
+			SupplyCap:          720 * constants.MegaLux,
 		},
 		UpgradeConfig: upgrades,
 	}

@@ -11,11 +11,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/units"
-	"github.com/luxfi/vm/vms/components/lux"
+	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
 	"github.com/luxfi/vm/vms/secp256k1fx"
 	"github.com/luxfi/vm/vms/types"
@@ -62,7 +61,7 @@ func TestBaseTxSerialization(t *testing.T) {
 						ID: luxAssetID,
 					},
 					In: &secp256k1fx.TransferInput{
-						Amt: units.MilliLux,
+						Amt: constants.MilliLux,
 						Input: secp256k1fx.Input{
 							SigIndices: []uint32{5},
 						},
@@ -176,7 +175,7 @@ func TestBaseTxSerialization(t *testing.T) {
 						ID: luxAssetID,
 					},
 					In: &secp256k1fx.TransferInput{
-						Amt: units.Lux,
+						Amt: constants.Lux,
 						Input: secp256k1fx.Input{
 							SigIndices: []uint32{2, 5},
 						},

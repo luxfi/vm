@@ -12,14 +12,13 @@ import (
 
 	consensusctx "github.com/luxfi/consensus/context"
 	validators "github.com/luxfi/consensus/validator"
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/memdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/upgrade"
 	"github.com/luxfi/upgrade/upgradetest"
-	"github.com/luxfi/vm/utils/units"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/metrics"
@@ -77,7 +76,7 @@ func New(t testing.TB, c Config) state.State {
 			MaxConsumptionRate: .12 * reward.PercentDenominator,
 			MinConsumptionRate: .1 * reward.PercentDenominator,
 			MintingPeriod:      365 * 24 * time.Hour,
-			SupplyCap:          720 * units.MegaLux,
+			SupplyCap:          720 * constants.MegaLux,
 		})
 	}
 

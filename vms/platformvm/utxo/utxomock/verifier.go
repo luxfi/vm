@@ -13,8 +13,8 @@ import (
 	reflect "reflect"
 
 	ids "github.com/luxfi/ids"
-	lux "github.com/luxfi/vm/vms/components/lux"
-	verify "github.com/luxfi/vm/vms/components/verify"
+	lux "github.com/luxfi/vm/components/lux"
+	verify "github.com/luxfi/vm/components/verify"
 	txs "github.com/luxfi/vm/vms/platformvm/txs"
 	gomock "go.uber.org/mock/gomock"
 )

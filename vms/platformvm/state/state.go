@@ -25,7 +25,7 @@ import (
 	"github.com/luxfi/consensus"
 	validators "github.com/luxfi/consensus/validator"
 	"github.com/luxfi/consensus/validator/uptime"
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/linkeddb"
@@ -39,8 +39,8 @@ import (
 	"github.com/luxfi/vm/utils/maybe"
 	"github.com/luxfi/vm/utils/timer"
 	"github.com/luxfi/vm/utils/wrappers"
-	"github.com/luxfi/vm/vms/components/gas"
-	"github.com/luxfi/vm/vms/components/lux"
+	"github.com/luxfi/vm/components/gas"
+	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/vms/platformvm/block"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/fx"
@@ -254,7 +254,7 @@ type State interface {
 	Close() error
 }
 
-// Prior to https://github.com/luxfi/vm/pull/1719, blocks were
+// Prior to https://github.com/luxfi/node/pull/1719, blocks were
 // stored as a map from blkID to stateBlk. Nodes synced prior to this PR may
 // still have blocks partially stored using this legacy format.
 //

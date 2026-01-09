@@ -9,12 +9,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/upgrade"
-	"github.com/luxfi/vm/utils/units"
-	"github.com/luxfi/vm/vms/components/lux"
+	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/vms/platformvm/reward"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 	"github.com/luxfi/vm/vms/secp256k1fx"
@@ -24,12 +23,12 @@ import (
 
 const (
 	DefaultValidatorDuration = 28 * 24 * time.Hour
-	DefaultValidatorWeight   = 5 * units.MilliLux
-	DefaultInitialBalance    = 110 * units.MegaLux // Increased to 110M LUX to cover all executor test fees (L1 validators, conversions, etc.)
+	DefaultValidatorWeight   = 5 * constants.MilliLux
+	DefaultInitialBalance    = 110 * constants.MegaLux // Increased to 110M LUX to cover all executor test fees (L1 validators, conversions, etc.)
 
 	ValidatorDelegationShares = reward.PercentDenominator
 	XChainName                = "x"
-	InitialSupply             = 360 * units.MegaLux
+	InitialSupply             = 360 * constants.MegaLux
 )
 
 var (

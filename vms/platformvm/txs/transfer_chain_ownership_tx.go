@@ -10,9 +10,9 @@ import (
 
 	"errors"
 
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/vms/components/verify"
+	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/vms/platformvm/fx"
 	"github.com/luxfi/vm/vms/secp256k1fx"
 )

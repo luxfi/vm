@@ -3,7 +3,8 @@
 
 package utils
 
-// Returns a new instance of a T.
-func Zero[T any]() (_ T) {
-	return
+// Zero returns the zero value of any type T.
+func Zero[T any]() T {
+	var zero T
+	return zero
 }

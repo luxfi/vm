@@ -7,8 +7,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/luxfi/constantsants"
-	"github.com/luxfi/formatting"
+	"github.com/luxfi/constants"
+	"github.com/luxfi/crypto/address/formatting"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/rpc"
 	"github.com/luxfi/vm/api"
