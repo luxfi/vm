@@ -16,7 +16,7 @@ import (
 	ids "github.com/luxfi/ids"
 	set "github.com/luxfi/math/set"
 	gomock "github.com/luxfi/mock/gomock"
-	lux "github.com/luxfi/vm/vms/components/lux"
+	lux "github.com/luxfi/vm/components/lux"
 )
 
 // MockUnsignedTx is a mock of UnsignedTx interface.

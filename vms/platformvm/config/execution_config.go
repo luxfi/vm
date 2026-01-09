@@ -7,19 +7,19 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/luxfi/vm/utils/units"
+	"github.com/luxfi/constants"
 )
 
 var DefaultExecutionConfig = ExecutionConfig{
 	Network:                   DefaultNetworkConfig,
-	BlockCacheSize:            64 * units.MiB,
-	TxCacheSize:               128 * units.MiB,
-	TransformedNetTxCacheSize: 4 * units.MiB,
+	BlockCacheSize:            64 * constants.MiB,
+	TxCacheSize:               128 * constants.MiB,
+	TransformedNetTxCacheSize: 4 * constants.MiB,
 	RewardUTXOsCacheSize:      2048,
 	ChainCacheSize:            2048,
 	ChainDBCacheSize:          2048,
 	BlockIDCacheSize:          8192,
-	FxOwnerCacheSize:          4 * units.MiB,
+	FxOwnerCacheSize:          4 * constants.MiB,
 	ChecksumsEnabled:          false,
 	MempoolPruneFrequency:     30 * time.Minute,
 }

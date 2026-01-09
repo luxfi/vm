@@ -2,14 +2,13 @@
 // See the file LICENSE for licensing terms.
 
 //go:build freebsd
+// +build freebsd
 
 package ulimit
 
 import (
 	"fmt"
 	"syscall"
-
-	"github.com/luxfi/log"
 
 	"github.com/luxfi/log"
 )
@@ -50,8 +49,8 @@ func Set(limit uint64, log log.Logger) error {
 
 	if rLimit.Cur < DefaultFDLimit {
 		log.Warn("fd-limit is less than recommended and could result in reduced performance",
-			log.Uint64("currentLimit", rLimit.Cur),
-			log.Uint64("recommendedLimit", DefaultFDLimit),
+			"currentLimit", rLimit.Cur,
+			"recommendedLimit", DefaultFDLimit,
 		)
 	}
 

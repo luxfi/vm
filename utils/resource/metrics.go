@@ -56,11 +56,11 @@ func newMetrics(registerer metric.Registerer) (*metricsImpl, error) {
 		),
 	}
 	err := errors.Join(
-		// registerer.Register(m.numCPUCycles),
-		// registerer.Register(m.numDiskReads),
-		// registerer.Register(m.numDiskReadBytes),
-		// registerer.Register(m.numDiskWrites),
-		// registerer.Register(m.numDiskWritesBytes),
+	// registerer.Register(m.numCPUCycles),
+	// registerer.Register(m.numDiskReads),
+	// registerer.Register(m.numDiskReadBytes),
+	// registerer.Register(m.numDiskWrites),
+	// registerer.Register(m.numDiskWritesBytes),
 	)
 	return m, err
 }

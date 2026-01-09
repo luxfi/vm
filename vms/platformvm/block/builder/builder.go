@@ -16,11 +16,11 @@ import (
 
 	consensuscore "github.com/luxfi/consensus/core"
 	validators "github.com/luxfi/consensus/validator"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/vm/utils/timer/mockable"
-	"github.com/luxfi/vm/utils/units"
-	"github.com/luxfi/vm/vms/components/gas"
+	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/vms/platformvm/state"
 	"github.com/luxfi/vm/vms/platformvm/status"
 	"github.com/luxfi/vm/vms/platformvm/txs"
@@ -114,7 +114,7 @@ func (a *validatorStateAdapter) GetWarpValidatorSets(ctx context.Context, height
 const (
 	// targetBlockSize is maximum number of transaction bytes to place into a
 	// StandardBlock
-	targetBlockSize = 128 * units.KiB
+	targetBlockSize = 128 * constants.KiB
 
 	// maxTimeToSleep is the maximum time to sleep between checking if a block
 	// should be produced.

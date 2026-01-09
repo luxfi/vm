@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/ids"
 	"github.com/luxfi/codec"
+	"github.com/luxfi/ids"
 )
 
 func TestAddressedCall(t *testing.T) {

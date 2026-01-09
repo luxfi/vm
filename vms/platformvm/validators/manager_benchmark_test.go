@@ -12,13 +12,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	validators "github.com/luxfi/consensus/validator"
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls/signer/localsigner"
 	"github.com/luxfi/database/badgerdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/utils/timer/mockable"
 
-	"github.com/luxfi/vm/utils/units"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/vm/vms/platformvm/block"
 
 	"github.com/luxfi/vm/vms/platformvm/config"
@@ -119,7 +119,7 @@ func addPrimaryValidator(
 		NodeID:          nodeID,
 		PublicKey:       sk.PublicKey(),
 		ChainID:         constants.PrimaryNetworkID,
-		Weight:          2 * units.MegaLux,
+		Weight:          2 * constants.MegaLux,
 		StartTime:       startTime,
 		EndTime:         endTime,
 		PotentialReward: 0,
@@ -151,7 +151,7 @@ func addNetValidator(
 		TxID:            ids.GenerateTestID(),
 		NodeID:          nodeID,
 		ChainID:         netID,
-		Weight:          1 * units.Lux,
+		Weight:          1 * constants.Lux,
 		StartTime:       startTime,
 		EndTime:         endTime,
 		PotentialReward: 0,
@@ -185,7 +185,7 @@ func addNetDelegator(
 		TxID:            ids.GenerateTestID(),
 		NodeID:          nodeID,
 		ChainID:         netID,
-		Weight:          1 * units.Lux,
+		Weight:          1 * constants.Lux,
 		StartTime:       startTime,
 		EndTime:         endTime,
 		PotentialReward: 0,

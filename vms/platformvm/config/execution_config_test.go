@@ -1,7 +1,6 @@
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-
 package config
 
 import (
@@ -64,16 +63,16 @@ func TestExecutionConfigUnmarshal(t *testing.T) {
 				ExpectedBloomFilterFalsePositiveProbability: 16,
 				MaxBloomFilterFalsePositiveProbability:      17,
 			},
-			BlockCacheSize:               1,
-			TxCacheSize:                  2,
+			BlockCacheSize:            1,
+			TxCacheSize:               2,
 			TransformedNetTxCacheSize: 3,
-			RewardUTXOsCacheSize:         5,
-			ChainCacheSize:               6,
-			ChainDBCacheSize:             7,
-			BlockIDCacheSize:             8,
-			FxOwnerCacheSize:             9,
-			ChecksumsEnabled:             true,
-			MempoolPruneFrequency:        time.Minute,
+			RewardUTXOsCacheSize:      5,
+			ChainCacheSize:            6,
+			ChainDBCacheSize:          7,
+			BlockIDCacheSize:          8,
+			FxOwnerCacheSize:          9,
+			ChecksumsEnabled:          true,
+			MempoolPruneFrequency:     time.Minute,
 		}
 		verifyInitializedStruct(t, *expected)
 		verifyInitializedStruct(t, expected.Network)

@@ -12,7 +12,7 @@ import (
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/p2p/gossip"
 	"github.com/luxfi/vm/utils/hashing"
-	"github.com/luxfi/vm/vms/components/lux"
+	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/vms/exchangevm/fxs"
 	"github.com/luxfi/vm/vms/nftfx"
 	"github.com/luxfi/vm/vms/propertyfx"

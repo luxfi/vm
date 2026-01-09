@@ -2,6 +2,7 @@
 // See the file LICENSE for licensing terms.
 
 //go:build windows
+// +build windows
 
 package ulimit
 

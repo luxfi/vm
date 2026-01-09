@@ -11,14 +11,14 @@ import (
 
 	"github.com/luxfi/log"
 
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/vm/chains/atomic"
 	"github.com/luxfi/vm/utils/math"
-	"github.com/luxfi/vm/vms/components/gas"
-	"github.com/luxfi/vm/vms/components/lux"
+	"github.com/luxfi/vm/components/gas"
+	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/vms/platformvm/signer"
 	"github.com/luxfi/vm/vms/platformvm/state"
 	"github.com/luxfi/vm/vms/platformvm/txs"

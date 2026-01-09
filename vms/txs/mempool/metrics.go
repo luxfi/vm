@@ -8,7 +8,7 @@ import (
 )
 
 type mempoolMetrics struct {
-	numTxs metric.Gauge
+	numTxs    metric.Gauge
 	bytesUsed metric.Gauge
 }
 

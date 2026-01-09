@@ -10,8 +10,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/ids"
 	consensuscore "github.com/luxfi/consensus/core"
+	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 )
 

@@ -9,10 +9,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/luxfi/constants"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/chains/atomic"
-	"github.com/luxfi/vm/utils/units"
 )
 
 // SharedMemoryTests is a list of all shared memory tests
@@ -48,9 +48,9 @@ func TestSharedMemoryLargePutGetAndRemove(t *testing.T, chainID0, chainID1 ids.I
 	require := require.New(t)
 	rand.Seed(0)
 
-	totalSize := 16 * units.MiB  // 16 MiB
-	elementSize := 4 * units.KiB // 4 KiB
-	pairSize := 2 * elementSize  // 8 KiB
+	totalSize := 16 * constants.MiB  // 16 MiB
+	elementSize := 4 * constants.KiB // 4 KiB
+	pairSize := 2 * elementSize      // 8 KiB
 
 	b := make([]byte, totalSize)
 	_, err := rand.Read(b) // #nosec G404
@@ -147,9 +147,9 @@ func TestSharedMemoryIndexed(t *testing.T, chainID0, chainID1 ids.ID, sm0, sm1 a
 func TestSharedMemoryLargeIndexed(t *testing.T, chainID0, chainID1 ids.ID, sm0, sm1 atomic.SharedMemory, _ database.Database) {
 	require := require.New(t)
 
-	totalSize := 8 * units.MiB   // 8 MiB
-	elementSize := 1 * units.KiB // 1 KiB
-	pairSize := 3 * elementSize  // 3 KiB
+	totalSize := 8 * constants.MiB   // 8 MiB
+	elementSize := 1 * constants.KiB // 1 KiB
+	pairSize := 3 * elementSize      // 3 KiB
 
 	b := make([]byte, totalSize)
 	_, err := rand.Read(b) // #nosec G404
@@ -307,9 +307,9 @@ func TestSharedMemoryLargeBatchSize(t *testing.T, _, chainID1 ids.ID, sm0, _ ato
 	require := require.New(t)
 	rand.Seed(0)
 
-	totalSize := 8 * units.MiB   // 8 MiB
-	elementSize := 4 * units.KiB // 4 KiB
-	pairSize := 2 * elementSize  // 8 KiB
+	totalSize := 8 * constants.MiB   // 8 MiB
+	elementSize := 4 * constants.KiB // 4 KiB
+	pairSize := 2 * elementSize      // 8 KiB
 
 	bytes := make([]byte, totalSize)
 	_, err := rand.Read(bytes) // #nosec G404

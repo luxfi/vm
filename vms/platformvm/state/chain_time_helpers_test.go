@@ -9,14 +9,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/database/memdb"
-	"github.com/luxfi/genesis/builder"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/node/genesis/builder"
 	"github.com/luxfi/upgrade/upgradetest"
 	"github.com/luxfi/vm/utils/timer/mockable"
-	"github.com/luxfi/vm/utils/units"
-	"github.com/luxfi/vm/vms/components/gas"
+	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/txs"
@@ -89,7 +88,7 @@ func TestGetNextStakerChangeTime(t *testing.T) {
 	config := validatorfee.Config{
 		Capacity:                 builder.LocalValidatorFeeConfig.Capacity,
 		Target:                   builder.LocalValidatorFeeConfig.Target,
-		MinPrice:                 gas.Price(2 * units.NanoLux), // Increase minimum price to test fractional seconds
+		MinPrice:                 gas.Price(2 * constants.NanoLux), // Increase minimum price to test fractional seconds
 		ExcessConversionConstant: builder.LocalValidatorFeeConfig.ExcessConversionConstant,
 	}
 
@@ -173,7 +172,7 @@ func TestGetNextStakerChangeTime(t *testing.T) {
 					ChainID:           ids.GenerateTestID(),
 					NodeID:            ids.GenerateTestNodeID(),
 					Weight:            1,
-					EndAccumulatedFee: 10 * units.Lux, // 10 LUX = 10M microLux, lasts ~58 days at 2 nanoLux/sec, well past the 28-day validator end time.
+					EndAccumulatedFee: 10 * constants.Lux, // 10 LUX = 10M microLux, lasts ~58 days at 2 nanoLux/sec, well past the 28-day validator end time.
 				},
 			},
 			maxTime:  mockable.MaxTime,

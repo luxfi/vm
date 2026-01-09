@@ -12,14 +12,13 @@ import (
 	"github.com/luxfi/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls/signer/localsigner"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/upgrade/upgradetest"
 	"github.com/luxfi/vm/chain"
 	"github.com/luxfi/vm/utils/iterator"
 	"github.com/luxfi/vm/utils/timer/mockable"
-	"github.com/luxfi/vm/utils/units"
 	"github.com/luxfi/vm/vms/platformvm/block"
 	"github.com/luxfi/vm/vms/platformvm/reward"
 	"github.com/luxfi/vm/vms/platformvm/signer"
@@ -107,7 +106,7 @@ func TestBuildBlockShouldReward(t *testing.T) {
 		now    = env.backend.Clk.Time()
 		nodeID = ids.GenerateTestNodeID()
 
-		defaultValidatorStake = 100 * units.MilliLux
+		defaultValidatorStake = 100 * constants.MilliLux
 		validatorStartTime    = now.Add(2 * txexecutor.SyncBound)
 		validatorEndTime      = validatorStartTime.Add(360 * 24 * time.Hour)
 	)
@@ -320,7 +319,7 @@ func TestBuildBlockInvalidStakingDurations(t *testing.T) {
 
 	var (
 		now                   = env.backend.Clk.Time()
-		defaultValidatorStake = 100 * units.MilliLux
+		defaultValidatorStake = 100 * constants.MilliLux
 
 		// Add a validator ending in [MaxStakeDuration]
 		validatorEndTime = now.Add(env.config.MaxStakeDuration)

@@ -13,7 +13,7 @@ import (
 
 	consensustest "github.com/luxfi/consensus/test/helpers"
 	"github.com/luxfi/consensus/validator/uptime"
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"

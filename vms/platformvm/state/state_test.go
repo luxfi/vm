@@ -23,7 +23,7 @@ import (
 	consensusctx "github.com/luxfi/consensus/context"
 	"github.com/luxfi/consensus/core/choices"
 	validators "github.com/luxfi/consensus/validator"
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/crypto/bls/signer/localsigner"
 	"github.com/luxfi/database"
@@ -34,12 +34,11 @@ import (
 	"github.com/luxfi/upgrade/upgradetest"
 	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/utils/iterator"
-	"github.com/luxfi/vm/utils/units"
 
 	"github.com/luxfi/vm/utils/wrappers"
 
-	"github.com/luxfi/vm/vms/components/gas"
-	"github.com/luxfi/vm/vms/components/lux"
+	"github.com/luxfi/vm/components/gas"
+	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/vms/platformvm/block"
 
 	"github.com/luxfi/vm/vms/platformvm/config"
@@ -83,7 +82,7 @@ func newTestState(t testing.TB, db database.Database) *state {
 			MaxConsumptionRate: .12 * reward.PercentDenominator,
 			MinConsumptionRate: .1 * reward.PercentDenominator,
 			MintingPeriod:      365 * 24 * time.Hour,
-			SupplyCap:          720 * units.MegaLux,
+			SupplyCap:          720 * constants.MegaLux,
 		}),
 	)
 	require.NoError(t, err)
@@ -591,7 +590,7 @@ func createPermissionlessValidatorTx(t testing.TB, subnetID ids.ID, validatorsDa
 							ID: ids.GenerateTestID(),
 						},
 						In: &secp256k1fx.TransferInput{
-							Amt: 2 * units.KiloLux,
+							Amt: 2 * constants.KiloLux,
 							Input: secp256k1fx.Input{
 								SigIndices: []uint32{1},
 							},
@@ -611,7 +610,7 @@ func createPermissionlessValidatorTx(t testing.TB, subnetID ids.ID, validatorsDa
 					ID: ids.GenerateTestID(),
 				},
 				Out: &secp256k1fx.TransferOutput{
-					Amt: 2 * units.KiloLux,
+					Amt: 2 * constants.KiloLux,
 					OutputOwners: secp256k1fx.OutputOwners{
 						Locktime:  0,
 						Threshold: 1,
@@ -657,7 +656,7 @@ func createPermissionlessDelegatorTx(netID ids.ID, delegatorData txs.Validator) 
 							ID: ids.GenerateTestID(),
 						},
 						In: &secp256k1fx.TransferInput{
-							Amt: 2 * units.KiloLux,
+							Amt: 2 * constants.KiloLux,
 							Input: secp256k1fx.Input{
 								SigIndices: []uint32{1},
 							},
@@ -676,7 +675,7 @@ func createPermissionlessDelegatorTx(netID ids.ID, delegatorData txs.Validator) 
 					ID: ids.GenerateTestID(),
 				},
 				Out: &secp256k1fx.TransferOutput{
-					Amt: 2 * units.KiloLux,
+					Amt: 2 * constants.KiloLux,
 					OutputOwners: secp256k1fx.OutputOwners{
 						Locktime:  0,
 						Threshold: 1,

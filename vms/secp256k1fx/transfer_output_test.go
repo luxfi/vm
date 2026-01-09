@@ -11,7 +11,7 @@ import (
 	"github.com/luxfi/codec"
 	"github.com/luxfi/codec/linearcodec"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/vms/components/verify"
+	"github.com/luxfi/vm/components/verify"
 )
 
 func TestOutputAmount(t *testing.T) {

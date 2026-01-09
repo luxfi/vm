@@ -7,18 +7,18 @@ In order to specify a configuration for the PlatformVM, you need to define a `Co
 | Option                   | Type     | Default |
 | ------------------------ | -------- | ------- |
 | `network`                          | `Network`       | `DefaultNetwork` |
-| `block-cache-size`                 | `int`          | `64 * units.MiB` |
-| `tx-cache-size`                    | `int`          | `128 * units.MiB` |
-| `transformed-subnet-tx-cache-size` | `int`          | `4 * units.MiB` |
+| `block-cache-size`                 | `int`          | `64 * constants.MiB` |
+| `tx-cache-size`                    | `int`          | `128 * constants.MiB` |
+| `transformed-subnet-tx-cache-size` | `int`          | `4 * constants.MiB` |
 | `reward-utxos-cache-size`         | `int`          | `2048` |
 | `chain-cache-size`                | `int`          | `2048` |
 | `chain-db-cache-size`             | `int`          | `2048` |
 | `block-id-cache-size`             | `int`          | `8192` |
-| `fx-owner-cache-size`             | `int`          | `4 * units.MiB` |
-| `subnet-to-l1-conversion-cache-size` | `int`          | `4 * units.MiB` |
-| `l1-weights-cache-size`           | `int`          | `16 * units.KiB` |
-| `l1-inactive-validators-cache-size` | `int`          | `256 * units.KiB` |
-| `l1-subnet-id-node-id-cache-size` | `int`          | `16 * units.KiB` |
+| `fx-owner-cache-size`             | `int`          | `4 * constants.MiB` |
+| `subnet-to-l1-conversion-cache-size` | `int`          | `4 * constants.MiB` |
+| `l1-weights-cache-size`           | `int`          | `16 * constants.KiB` |
+| `l1-inactive-validators-cache-size` | `int`          | `256 * constants.KiB` |
+| `l1-subnet-id-node-id-cache-size` | `int`          | `16 * constants.KiB` |
 | `checksums-enabled`               | `bool`         | `false` |
 | `mempool-prune-frequency`         | `time.Duration` | `30 * time.Minute` |
 
@@ -33,7 +33,7 @@ The Network configuration defines parameters that control the network's gossip a
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `max-validator-set-staleness` | `time.Duration` | `1 minute` | Maximum age of a validator set used for peer sampling and rate limiting |
-| `target-gossip-size` | `int` | `20 * units.KiB` | Target number of bytes to send when pushing transactions or responding to transaction pull requests |
+| `target-gossip-size` | `int` | `20 * constants.KiB` | Target number of bytes to send when pushing transactions or responding to transaction pull requests |
 | `push-gossip-percent-stake` | `float64` | `0.9` | Percentage of total stake to target in the initial gossip round. Higher stake nodes are prioritized to minimize network messages |
 | `push-gossip-num-validators` | `int` | `100` | Number of validators to push transactions to in the initial gossip round |
 | `push-gossip-num-peers` | `int` | `0` | Number of peers to push transactions to in the initial gossip round |

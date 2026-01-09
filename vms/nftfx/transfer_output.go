@@ -7,15 +7,15 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/luxfi/vm/utils/units"
-	"github.com/luxfi/vm/vms/components/verify"
+	"github.com/luxfi/constants"
+	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/vms/secp256k1fx"
 	"github.com/luxfi/vm/vms/types"
 )
 
 const (
 	// MaxPayloadSize is the maximum size that can be placed into a payload
-	MaxPayloadSize = units.KiB
+	MaxPayloadSize = constants.KiB
 )
 
 var (

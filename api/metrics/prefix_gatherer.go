@@ -6,9 +6,8 @@ package metrics
 import (
 	"errors"
 	"fmt"
-	"github.com/luxfi/metric"
-	utilmetric "github.com/luxfi/vm/utils/metric"
 
+	"github.com/luxfi/metric"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -86,7 +85,7 @@ func (g *prefixedGatherer) Gather() ([]*metric.MetricFamily, error) {
 			// When the original name is empty, just use the prefix pointer
 			metricFamily.Name = g.prefixPtr
 		} else {
-			metricFamily.Name = proto.String(utilmetric.AppendNamespace(
+			metricFamily.Name = proto.String(metric.AppendNamespace(
 				g.prefix,
 				originalName,
 			))
@@ -108,5 +107,5 @@ func eitherIsPrefix(a, b string) bool {
 	return a == b[:len(a)] && // a is a prefix of b
 		(len(a) == 0 || // a is empty
 			len(a) == len(b) || // a is equal to b
-			b[len(a)] == utilmetric.NamespaceSeparatorByte) // a ends at a namespace boundary of b
+			b[len(a)] == '_') // a ends at a namespace boundary of b
 }

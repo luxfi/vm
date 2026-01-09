@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/luxfi/address"
+	"github.com/luxfi/crypto/address"
 	"github.com/luxfi/consensus/core/choices"
-	"github.com/luxfi/constantsants"
-	"github.com/luxfi/formatting"
+	"github.com/luxfi/constants"
+	"github.com/luxfi/crypto/address/formatting"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/rpc"
 	"github.com/luxfi/vm/api"

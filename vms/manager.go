@@ -11,8 +11,8 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/luxfi/ids"
 	"github.com/luxfi/consensus/engine/interfaces"
+	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 )
 

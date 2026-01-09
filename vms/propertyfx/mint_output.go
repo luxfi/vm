@@ -6,7 +6,7 @@ package propertyfx
 import (
 	consensusctx "github.com/luxfi/consensus/context"
 
-	"github.com/luxfi/vm/vms/components/verify"
+	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 

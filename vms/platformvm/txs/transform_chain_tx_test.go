@@ -12,12 +12,11 @@ import (
 	"github.com/luxfi/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/units"
-	"github.com/luxfi/vm/vms/components/lux"
-	"github.com/luxfi/vm/vms/components/verify/verifymock"
+	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/components/verify/verifymock"
 	"github.com/luxfi/vm/vms/platformvm/reward"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
 	"github.com/luxfi/vm/vms/secp256k1fx"
@@ -72,7 +71,7 @@ func TestTransformChainTxSerialization(t *testing.T) {
 							ID: luxAssetID,
 						},
 						In: &secp256k1fx.TransferInput{
-							Amt: 10 * units.Lux,
+							Amt: 10 * constants.Lux,
 							Input: secp256k1fx.Input{
 								SigIndices: []uint32{5},
 							},
@@ -281,7 +280,7 @@ func TestTransformChainTxSerialization(t *testing.T) {
 							ID: luxAssetID,
 						},
 						In: &secp256k1fx.TransferInput{
-							Amt: units.KiloLux,
+							Amt: constants.KiloLux,
 							Input: secp256k1fx.Input{
 								SigIndices: []uint32{2, 5},
 							},

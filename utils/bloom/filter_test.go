@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/vm/utils/units"
+	"github.com/luxfi/constants"
 )
 
 func TestNewErrors(t *testing.T) {

@@ -17,11 +17,11 @@ import (
 
 	"github.com/luxfi/ids"
 
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 
 	"github.com/luxfi/crypto/secp256k1"
 
-	"github.com/luxfi/vm/utils/units"
+	"github.com/luxfi/constants"
 
 	"github.com/luxfi/vm/vms/exchangevm/block"
 
@@ -31,9 +31,9 @@ import (
 
 	"github.com/luxfi/vm/vms/exchangevm/txs"
 
-	"github.com/luxfi/vm/vms/components/lux"
+	"github.com/luxfi/vm/components/lux"
 
-	"github.com/luxfi/vm/vms/components/verify"
+	"github.com/luxfi/vm/components/verify"
 
 	"github.com/luxfi/vm/vms/secp256k1fx"
 )
@@ -71,7 +71,7 @@ func TestBaseTxExecutor(t *testing.T) {
 		UTXOID: utxoID,
 		Asset:  lux.Asset{ID: assetID},
 		Out: &secp256k1fx.TransferOutput{
-			Amt: 20 * units.KiloLux,
+			Amt: 20 * constants.KiloLux,
 			OutputOwners: secp256k1fx.OutputOwners{
 				Threshold: 1,
 				Addrs: []ids.ShortID{
@@ -92,7 +92,7 @@ func TestBaseTxExecutor(t *testing.T) {
 			UTXOID: utxoID,
 			Asset:  lux.Asset{ID: assetID},
 			In: &secp256k1fx.TransferInput{
-				Amt: 20 * units.KiloLux,
+				Amt: 20 * constants.KiloLux,
 				Input: secp256k1fx.Input{
 					SigIndices: []uint32{
 						0,
@@ -103,7 +103,7 @@ func TestBaseTxExecutor(t *testing.T) {
 		Outs: []*lux.TransferableOutput{{
 			Asset: lux.Asset{ID: assetID},
 			Out: &secp256k1fx.TransferOutput{
-				Amt: 10 * units.KiloLux,
+				Amt: 10 * constants.KiloLux,
 				OutputOwners: secp256k1fx.OutputOwners{
 					Threshold: 1,
 					Addrs:     []ids.ShortID{addr},
@@ -136,7 +136,7 @@ func TestBaseTxExecutor(t *testing.T) {
 			ID: assetID,
 		},
 		Out: &secp256k1fx.TransferOutput{
-			Amt: 10 * units.KiloLux,
+			Amt: 10 * constants.KiloLux,
 			OutputOwners: secp256k1fx.OutputOwners{
 				Threshold: 1,
 				Addrs:     []ids.ShortID{addr},
@@ -178,7 +178,7 @@ func TestCreateAssetTxExecutor(t *testing.T) {
 		UTXOID: utxoID,
 		Asset:  lux.Asset{ID: assetID},
 		Out: &secp256k1fx.TransferOutput{
-			Amt: 20 * units.KiloLux,
+			Amt: 20 * constants.KiloLux,
 			OutputOwners: secp256k1fx.OutputOwners{
 				Threshold: 1,
 				Addrs: []ids.ShortID{
@@ -200,7 +200,7 @@ func TestCreateAssetTxExecutor(t *testing.T) {
 				UTXOID: utxoID,
 				Asset:  lux.Asset{ID: assetID},
 				In: &secp256k1fx.TransferInput{
-					Amt: 20 * units.KiloLux,
+					Amt: 20 * constants.KiloLux,
 					Input: secp256k1fx.Input{
 						SigIndices: []uint32{
 							0,
@@ -211,7 +211,7 @@ func TestCreateAssetTxExecutor(t *testing.T) {
 			Outs: []*lux.TransferableOutput{{
 				Asset: lux.Asset{ID: assetID},
 				Out: &secp256k1fx.TransferOutput{
-					Amt: 10 * units.KiloLux,
+					Amt: 10 * constants.KiloLux,
 					OutputOwners: secp256k1fx.OutputOwners{
 						Threshold: 1,
 						Addrs:     []ids.ShortID{addr},
@@ -263,7 +263,7 @@ func TestCreateAssetTxExecutor(t *testing.T) {
 				ID: assetID,
 			},
 			Out: &secp256k1fx.TransferOutput{
-				Amt: 10 * units.KiloLux,
+				Amt: 10 * constants.KiloLux,
 				OutputOwners: secp256k1fx.OutputOwners{
 					Threshold: 1,
 					Addrs:     []ids.ShortID{addr},
@@ -328,7 +328,7 @@ func TestOperationTxExecutor(t *testing.T) {
 		UTXOID: utxoID,
 		Asset:  lux.Asset{ID: assetID},
 		Out: &secp256k1fx.TransferOutput{
-			Amt:          20 * units.KiloLux,
+			Amt:          20 * constants.KiloLux,
 			OutputOwners: outputOwners,
 		},
 	}
@@ -358,7 +358,7 @@ func TestOperationTxExecutor(t *testing.T) {
 				UTXOID: utxoID,
 				Asset:  lux.Asset{ID: assetID},
 				In: &secp256k1fx.TransferInput{
-					Amt: 20 * units.KiloLux,
+					Amt: 20 * constants.KiloLux,
 					Input: secp256k1fx.Input{
 						SigIndices: []uint32{
 							0,
@@ -369,7 +369,7 @@ func TestOperationTxExecutor(t *testing.T) {
 			Outs: []*lux.TransferableOutput{{
 				Asset: lux.Asset{ID: assetID},
 				Out: &secp256k1fx.TransferOutput{
-					Amt:          10 * units.KiloLux,
+					Amt:          10 * constants.KiloLux,
 					OutputOwners: outputOwners,
 				},
 			}},
@@ -428,7 +428,7 @@ func TestOperationTxExecutor(t *testing.T) {
 				ID: assetID,
 			},
 			Out: &secp256k1fx.TransferOutput{
-				Amt:          10 * units.KiloLux,
+				Amt:          10 * constants.KiloLux,
 				OutputOwners: outputOwners,
 			},
 		},

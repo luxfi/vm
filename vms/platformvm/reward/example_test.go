@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/luxfi/vm/utils/units"
+	"github.com/luxfi/constants"
 )
 
 func ExampleNewCalculator() {
@@ -16,18 +16,18 @@ func ExampleNewCalculator() {
 		week            = 7 * day
 		stakingDuration = 4 * week
 
-		stakeAmount = 100_000 * units.Lux // 100k LUX
+		stakeAmount = 100_000 * constants.Lux // 100k LUX
 
 		// The current supply can be fetched with the platform.getCurrentSupply API
 		// With 6 decimal precision, values are in microLUX (μLUX)
-		currentSupply = 447_903_490 * units.Lux // ~448m LUX
+		currentSupply = 447_903_490 * constants.Lux // ~448m LUX
 	)
 	var (
 		mainnetRewardConfig = Config{
 			MaxConsumptionRate: .12 * PercentDenominator,
 			MinConsumptionRate: .10 * PercentDenominator,
 			MintingPeriod:      365 * 24 * time.Hour,
-			SupplyCap:          720 * units.MegaLux,
+			SupplyCap:          720 * constants.MegaLux,
 		}
 		mainnetCalculator = NewCalculator(mainnetRewardConfig)
 	)

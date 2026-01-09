@@ -11,7 +11,7 @@ import (
 	"github.com/luxfi/codec"
 	"github.com/luxfi/codec/linearcodec"
 	"github.com/luxfi/crypto/secp256k1"
-	"github.com/luxfi/vm/vms/components/verify"
+	"github.com/luxfi/vm/components/verify"
 )
 
 func TestCredentialVerify(t *testing.T) {

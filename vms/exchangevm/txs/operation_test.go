@@ -13,8 +13,8 @@ import (
 	"github.com/luxfi/codec/linearcodec"
 	consensusctx "github.com/luxfi/consensus/context"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/vms/components/lux"
-	"github.com/luxfi/vm/vms/components/verify"
+	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/components/verify"
 )
 
 type testOperable struct {
