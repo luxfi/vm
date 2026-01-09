@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/luxfi/formatting"
+	"github.com/luxfi/crypto/address/formatting"
 	"github.com/luxfi/vm/vms/example/xsvm/genesis"
 )
 

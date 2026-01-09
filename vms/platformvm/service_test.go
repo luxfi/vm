@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/luxfi/formatting"
+	"github.com/luxfi/crypto/address/formatting"
 	"math"
 	"math/rand"
 	"net/http"
