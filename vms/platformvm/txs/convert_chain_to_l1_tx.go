@@ -9,10 +9,10 @@ import (
 	"bytes"
 	"errors"
 
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/vms/components/verify"
+	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/vms/platformvm/signer"
 	"github.com/luxfi/vm/vms/platformvm/warp/message"
 	"github.com/luxfi/vm/vms/secp256k1fx"

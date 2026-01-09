@@ -1,13 +1,12 @@
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-
 package secp256k1fx
 
 import (
 	"github.com/luxfi/ids"
-	"github.com/luxfi/math/set"
 	"github.com/luxfi/keychain"
+	"github.com/luxfi/math/set"
 )
 
 // Ensure Keychain implements keychain.Keychain interface

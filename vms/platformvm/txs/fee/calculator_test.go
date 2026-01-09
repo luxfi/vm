@@ -4,11 +4,11 @@
 package fee
 
 import (
-	"github.com/luxfi/vm/utils/units"
-	"github.com/luxfi/vm/vms/components/gas"
+	"github.com/luxfi/constants"
+	"github.com/luxfi/vm/components/gas"
 )
 
-const testDynamicPrice = gas.Price(units.NanoLux)
+const testDynamicPrice = gas.Price(constants.NanoLux)
 
 var (
 	testDynamicWeights = gas.Dimensions{
@@ -64,7 +64,7 @@ var (
 				gas.DBWrite:   IntrinsicAddPermissionlessValidatorTxComplexities[gas.DBWrite] + intrinsicInputDBWrite + 2*intrinsicOutputDBWrite,
 				gas.Compute:   intrinsicBLSPoPVerifyCompute + intrinsicSECP256k1FxSignatureCompute,
 			},
-			expectedDynamicFee: 137_191 * units.NanoLux,
+			expectedDynamicFee: 137_191 * constants.NanoLux,
 		},
 		{
 			name: "AddPermissionlessValidatorTx for subnet",
@@ -75,7 +75,7 @@ var (
 				gas.DBWrite:   IntrinsicAddPermissionlessValidatorTxComplexities[gas.DBWrite] + 2*intrinsicInputDBWrite + 3*intrinsicOutputDBWrite,
 				gas.Compute:   2 * intrinsicSECP256k1FxSignatureCompute,
 			},
-			expectedDynamicFee: 170_748 * units.NanoLux,
+			expectedDynamicFee: 170_748 * constants.NanoLux,
 		},
 		{
 			name: "AddPermissionlessDelegatorTx for primary network",
@@ -86,7 +86,7 @@ var (
 				gas.DBWrite:   IntrinsicAddPermissionlessDelegatorTxComplexities[gas.DBWrite] + 1*intrinsicInputDBWrite + 2*intrinsicOutputDBWrite,
 				gas.Compute:   intrinsicSECP256k1FxSignatureCompute,
 			},
-			expectedDynamicFee: 106_499 * units.NanoLux,
+			expectedDynamicFee: 106_499 * constants.NanoLux,
 		},
 		{
 			name: "AddPermissionlessDelegatorTx for subnet",
@@ -97,7 +97,7 @@ var (
 				gas.DBWrite:   IntrinsicAddPermissionlessDelegatorTxComplexities[gas.DBWrite] + 2*intrinsicInputDBWrite + 3*intrinsicOutputDBWrite,
 				gas.Compute:   2 * intrinsicSECP256k1FxSignatureCompute,
 			},
-			expectedDynamicFee: 150_720 * units.NanoLux,
+			expectedDynamicFee: 150_720 * constants.NanoLux,
 		},
 		{
 			name: "AddChainValidatorTx",
@@ -108,7 +108,7 @@ var (
 				gas.DBWrite:   IntrinsicAddChainValidatorTxComplexities[gas.DBWrite] + intrinsicInputDBWrite + intrinsicOutputDBWrite,
 				gas.Compute:   2 * intrinsicSECP256k1FxSignatureCompute,
 			},
-			expectedDynamicFee: 112_460 * units.NanoLux,
+			expectedDynamicFee: 112_460 * constants.NanoLux,
 		},
 		{
 			name: "BaseTx",
@@ -119,7 +119,7 @@ var (
 				gas.DBWrite:   IntrinsicBaseTxComplexities[gas.DBWrite] + intrinsicInputDBWrite + 2*intrinsicOutputDBWrite,
 				gas.Compute:   intrinsicSECP256k1FxSignatureCompute,
 			},
-			expectedDynamicFee: 64_399 * units.NanoLux,
+			expectedDynamicFee: 64_399 * constants.NanoLux,
 		},
 		{
 			name: "CreateChainTx",
@@ -130,7 +130,7 @@ var (
 				gas.DBWrite:   IntrinsicCreateChainTxComplexities[gas.DBWrite] + intrinsicInputDBWrite + intrinsicOutputDBWrite,
 				gas.Compute:   2 * intrinsicSECP256k1FxSignatureCompute,
 			},
-			expectedDynamicFee: 72_509 * units.NanoLux,
+			expectedDynamicFee: 72_509 * constants.NanoLux,
 		},
 		{
 			name: "CreateSubnetTx",
@@ -141,7 +141,7 @@ var (
 				gas.DBWrite:   IntrinsicCreateSubnetTxComplexities[gas.DBWrite] + intrinsicInputDBWrite + intrinsicOutputDBWrite,
 				gas.Compute:   intrinsicSECP256k1FxSignatureCompute,
 			},
-			expectedDynamicFee: 64_339 * units.NanoLux,
+			expectedDynamicFee: 64_339 * constants.NanoLux,
 		},
 		{
 			name: "ExportTx",
@@ -152,7 +152,7 @@ var (
 				gas.DBWrite:   IntrinsicExportTxComplexities[gas.DBWrite] + intrinsicInputDBWrite + 2*intrinsicOutputDBWrite,
 				gas.Compute:   intrinsicSECP256k1FxSignatureCompute,
 			},
-			expectedDynamicFee: 64_435 * units.NanoLux,
+			expectedDynamicFee: 64_435 * constants.NanoLux,
 		},
 		{
 			name: "ImportTx",
@@ -163,7 +163,7 @@ var (
 				gas.DBWrite:   IntrinsicImportTxComplexities[gas.DBWrite] + intrinsicInputDBWrite + intrinsicOutputDBWrite,
 				gas.Compute:   intrinsicSECP256k1FxSignatureCompute,
 			},
-			expectedDynamicFee: 44_335 * units.NanoLux,
+			expectedDynamicFee: 44_335 * constants.NanoLux,
 		},
 		{
 			name: "RemoveChainValidatorTx",
@@ -174,7 +174,7 @@ var (
 				gas.DBWrite:   IntrinsicRemoveChainValidatorTxComplexities[gas.DBWrite] + intrinsicInputDBWrite + intrinsicOutputDBWrite,
 				gas.Compute:   2 * intrinsicSECP256k1FxSignatureCompute,
 			},
-			expectedDynamicFee: 108_436 * units.NanoLux,
+			expectedDynamicFee: 108_436 * constants.NanoLux,
 		},
 		{
 			name:                  "TransformChainTx",
@@ -191,7 +191,7 @@ var (
 				gas.DBWrite:   IntrinsicTransferChainOwnershipTxComplexities[gas.DBWrite] + intrinsicInputDBWrite + intrinsicOutputDBWrite,
 				gas.Compute:   2 * intrinsicSECP256k1FxSignatureCompute,
 			},
-			expectedDynamicFee: 68_436 * units.NanoLux,
+			expectedDynamicFee: 68_436 * constants.NanoLux,
 		},
 		{
 			name:                 "ConvertChainToL1Tx",
@@ -203,7 +203,7 @@ var (
 				gas.DBWrite:   IntrinsicConvertChainToL1TxComplexities[gas.DBWrite] + intrinsicInputDBWrite + intrinsicOutputDBWrite + intrinsicConvertChainToL1ValidatorDBWrite,
 				gas.Compute:   2*intrinsicSECP256k1FxSignatureCompute + intrinsicBLSPoPVerifyCompute,
 			},
-			expectedDynamicFee: 183_156 * units.NanoLux,
+			expectedDynamicFee: 183_156 * constants.NanoLux,
 		},
 		{
 			name:                 "RegisterL1ValidatorTx",
@@ -215,7 +215,7 @@ var (
 				gas.DBWrite:   IntrinsicRegisterL1ValidatorTxComplexities[gas.DBWrite] + intrinsicInputDBWrite + intrinsicOutputDBWrite,
 				gas.Compute:   intrinsicSECP256k1FxSignatureCompute + intrinsicBLSPoPVerifyCompute + intrinsicBLSAggregateCompute + intrinsicBLSVerifyCompute,
 			},
-			expectedDynamicFee: 241_260 * units.NanoLux,
+			expectedDynamicFee: 241_260 * constants.NanoLux,
 		},
 		{
 			name:                 "SetL1ValidatorWeightTx",
@@ -227,7 +227,7 @@ var (
 				gas.DBWrite:   IntrinsicSetL1ValidatorWeightTxComplexities[gas.DBWrite] + intrinsicInputDBWrite + intrinsicOutputDBWrite,
 				gas.Compute:   intrinsicSECP256k1FxSignatureCompute + intrinsicBLSAggregateCompute + intrinsicBLSVerifyCompute,
 			},
-			expectedDynamicFee: 206_568 * units.NanoLux,
+			expectedDynamicFee: 206_568 * constants.NanoLux,
 		},
 		{
 			name:                 "IncreaseL1ValidatorBalanceTx",
@@ -239,7 +239,7 @@ var (
 				gas.DBWrite:   IntrinsicIncreaseL1ValidatorBalanceTxComplexities[gas.DBWrite] + intrinsicInputDBWrite + intrinsicOutputDBWrite,
 				gas.Compute:   intrinsicSECP256k1FxSignatureCompute,
 			},
-			expectedDynamicFee: 146_339 * units.NanoLux,
+			expectedDynamicFee: 146_339 * constants.NanoLux,
 		},
 		{
 			name:                 "DisableL1ValidatorTx",
@@ -251,7 +251,7 @@ var (
 				gas.DBWrite:   IntrinsicDisableL1ValidatorTxComplexities[gas.DBWrite] + intrinsicInputDBWrite + intrinsicOutputDBWrite,
 				gas.Compute:   intrinsicSECP256k1FxSignatureCompute,
 			},
-			expectedDynamicFee: 166_347 * units.NanoLux,
+			expectedDynamicFee: 166_347 * constants.NanoLux,
 		},
 	}
 )

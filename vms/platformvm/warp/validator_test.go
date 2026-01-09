@@ -13,15 +13,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/luxfi/ids"
 	"github.com/luxfi/consensus/validator"
 	"github.com/luxfi/consensus/validator/validatorsmock"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/crypto/bls/signer/localsigner"
+	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/metric"
 	"github.com/luxfi/upgrade"
-	"github.com/luxfi/constantsants"
 )
 
 var (
@@ -449,7 +449,7 @@ func TestCachedValidatorState(t *testing.T) {
 				vdrs1, err := cached.GetValidatorSet(ctx, height, subnet1)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs1)
-				
+
 				vdrs2, err := cached.GetValidatorSet(ctx, height, subnet1)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs2)
@@ -465,7 +465,7 @@ func TestCachedValidatorState(t *testing.T) {
 				vdrs1, err := cached.GetValidatorSet(ctx, height, subnet1)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs1)
-				
+
 				vdrs2, err := cached.GetValidatorSet(ctx, height, subnet1)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs2)
@@ -481,7 +481,7 @@ func TestCachedValidatorState(t *testing.T) {
 				vdrs1, err := cached.GetValidatorSet(ctx, height, subnet1)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs1)
-				
+
 				vdrs2, err := cached.GetValidatorSet(ctx, height+1, subnet1)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs2)
@@ -497,7 +497,7 @@ func TestCachedValidatorState(t *testing.T) {
 				vdrs1, err := cached.GetValidatorSet(ctx, height, subnet1)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs1)
-				
+
 				vdrs2, err := cached.GetValidatorSet(ctx, height, subnet2)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs2)

@@ -11,12 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	core "github.com/luxfi/consensus/core"
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/upgrade/upgradetest"
-	"github.com/luxfi/vm/utils/units"
-	"github.com/luxfi/vm/vms/components/lux"
+	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/vms/exchangevm/txs"
 	"github.com/luxfi/vm/vms/secp256k1fx"
 )
@@ -65,7 +64,7 @@ func TestSetsAndGets(t *testing.T) {
 			},
 			Asset: lux.Asset{ID: assetID},
 			In: &secp256k1fx.TransferInput{
-				Amt: 20 * units.KiloLux,
+				Amt: 20 * constants.KiloLux,
 				Input: secp256k1fx.Input{
 					SigIndices: []uint32{
 						0,

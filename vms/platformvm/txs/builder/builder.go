@@ -14,7 +14,7 @@ import (
 	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/utils/math"
 	"github.com/luxfi/vm/utils/timer/mockable"
-	"github.com/luxfi/vm/vms/components/lux"
+	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/fx"
 	"github.com/luxfi/vm/vms/platformvm/state"

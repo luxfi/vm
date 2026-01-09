@@ -1,9 +1,7 @@
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-
 package bloom
-
 
 // BloomFilter is the interface for bloom filter implementations that support
 // adding and checking raw byte slices

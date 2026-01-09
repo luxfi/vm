@@ -12,14 +12,14 @@ import (
 	"github.com/luxfi/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/upgrade/upgradetest"
 	"github.com/luxfi/vm/utils/iterator"
-	"github.com/luxfi/vm/vms/components/gas"
-	"github.com/luxfi/vm/vms/components/lux"
+	"github.com/luxfi/vm/components/gas"
+	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/vms/platformvm/block"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/state"
@@ -596,7 +596,7 @@ func TestBanffStandardBlockUpdateStakers(t *testing.T) {
 	}
 }
 
-// Regression test for https://github.com/luxfi/vm/pull/584
+// Regression test for https://github.com/luxfi/node/pull/584
 // that ensures it fixes a bug where net validators are not removed
 // when timestamp is advanced and there is a pending staker whose start time
 // is after the new timestamp

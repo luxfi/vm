@@ -1,6 +1,3 @@
-//go:build node
-// +build node
-
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
@@ -12,15 +9,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/crypto/bls/signer/localsigner"
-	"github.com/luxfi/genesis/builder"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/node/genesis/builder"
 	"github.com/luxfi/upgrade/upgradetest"
 	"github.com/luxfi/vm/utils/iterator"
 	"github.com/luxfi/vm/utils/timer/mockable"
-	"github.com/luxfi/vm/utils/units"
-	"github.com/luxfi/vm/vms/components/gas"
+	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/state"
@@ -269,7 +266,7 @@ func TestAdvanceTimeTo_UpdateL1Validators(t *testing.T) {
 		}
 
 		// Very high balance for validators that should NOT be evicted
-		keeperBalance = uint64(1000 * units.Lux)
+		keeperBalance = uint64(1000 * constants.Lux)
 
 		currentTime = genesistest.DefaultValidatorStartTime
 		newTime     = currentTime.Add(timeToAdvance)

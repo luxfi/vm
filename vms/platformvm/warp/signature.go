@@ -23,15 +23,15 @@ var (
 	_ Signature = (*RingtailSignature)(nil)
 	_ Signature = (*HybridBLSRTSignature)(nil) // Deprecated: use RingtailSignature
 
-	ErrInvalidBitSet        = errors.New("bitset is invalid")
-	ErrInsufficientWeight   = errors.New("signature weight is insufficient")
-	ErrInvalidSignature     = errors.New("signature is invalid")
-	ErrParseSignature       = errors.New("failed to parse signature")
-	ErrInvalidRTSignature   = errors.New("ringtail signature is invalid")
-	ErrMissingRTPublicKey   = errors.New("missing ringtail public key for validator")
-	ErrHybridVerifyFailed   = errors.New("hybrid signature verification failed")
-	ErrDecryptionFailed     = errors.New("ML-KEM decryption failed")
-	ErrInvalidCiphertext    = errors.New("invalid ciphertext")
+	ErrInvalidBitSet      = errors.New("bitset is invalid")
+	ErrInsufficientWeight = errors.New("signature weight is insufficient")
+	ErrInvalidSignature   = errors.New("signature is invalid")
+	ErrParseSignature     = errors.New("failed to parse signature")
+	ErrInvalidRTSignature = errors.New("ringtail signature is invalid")
+	ErrMissingRTPublicKey = errors.New("missing ringtail public key for validator")
+	ErrHybridVerifyFailed = errors.New("hybrid signature verification failed")
+	ErrDecryptionFailed   = errors.New("ML-KEM decryption failed")
+	ErrInvalidCiphertext  = errors.New("invalid ciphertext")
 )
 
 type Signature interface {
