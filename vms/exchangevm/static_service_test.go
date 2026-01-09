@@ -4,7 +4,7 @@
 package exchangevm
 
 import (
-	"github.com/luxfi/address/formatting"
+	"github.com/luxfi/formatting"
 	"testing"
 
 	"github.com/stretchr/testify/require"

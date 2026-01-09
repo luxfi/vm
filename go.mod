@@ -33,7 +33,7 @@ require (
 	github.com/luxfi/lattice/v7 v7.0.0
 	github.com/luxfi/log v1.2.1
 	github.com/luxfi/math v1.2.2
-	github.com/luxfi/metric v1.4.9
+	github.com/luxfi/metric v1.4.10
 	github.com/luxfi/mock v0.1.0
 	github.com/luxfi/p2p v1.18.7
 	github.com/luxfi/pubsub v1.0.0
@@ -128,18 +128,18 @@ require (
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/luxfi/const v1.4.1 // indirect
 	github.com/luxfi/evm v0.8.28 // indirect
+	github.com/luxfi/formatting v1.0.0
 	github.com/luxfi/go-bip32 v1.0.2 // indirect
 	github.com/luxfi/go-bip39 v1.1.2 // indirect
 	github.com/luxfi/gpu v0.30.0 // indirect
 	github.com/luxfi/math/big v0.1.0 // indirect
 	github.com/luxfi/math/safe v0.0.0-20260105093802-21b7243e9ffb // indirect
-	github.com/luxfi/node v1.22.81 // indirect
+	github.com/luxfi/node v1.22.83 // indirect
 	github.com/luxfi/precompile v0.4.1 // indirect
 	github.com/luxfi/ringtail v0.2.0 // indirect
 	github.com/luxfi/sampler v1.0.0 // indirect
-	github.com/luxfi/sdk/api v0.0.1 // indirect
+	github.com/luxfi/sdk/api v0.0.2 // indirect
 	github.com/luxfi/units v1.0.0 // indirect
 	github.com/melbahja/goph v1.4.0 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
