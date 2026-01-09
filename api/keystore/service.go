@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/luxfi/crypto/address/formatting"
+	"github.com/luxfi/crypto/address"
 	"github.com/luxfi/log"
 	"github.com/luxfi/vm/api"
 )
