@@ -4,6 +4,7 @@
 package secp256k1fx
 
 import (
+	"github.com/luxfi/formatting"
 	"testing"
 
 	"github.com/stretchr/testify/require"

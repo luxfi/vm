@@ -14,7 +14,6 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/units"
 )
 
 // GenesisConfig represents genesis configuration
@@ -72,7 +71,7 @@ func NewTestGenesisWithFunds(
 		addr := key.Address()
 		allocation := Allocation{
 			LUXAddr:       addr.String(),
-			InitialAmount: 300 * units.MegaLux, // 300M LUX per funded key
+			InitialAmount: 300 * constants.MegaLux, // 300M LUX per funded key
 		}
 		config.Allocations = append(config.Allocations, allocation)
 		config.InitialStakedFunds = append(config.InitialStakedFunds, addr.String())

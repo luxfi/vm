@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/luxfi/formatting"
 	"net/http"
 
-	"github.com/luxfi/crypto/address"
 	"github.com/luxfi/crypto/address"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/components/lux"

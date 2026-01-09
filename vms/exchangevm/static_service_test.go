@@ -4,12 +4,13 @@
 package exchangevm
 
 import (
+	"github.com/luxfi/formatting"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/crypto/address"
 	"github.com/luxfi/constants"
+	"github.com/luxfi/crypto/address"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/utils/json"
 )

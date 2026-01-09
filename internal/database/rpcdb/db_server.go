@@ -11,13 +11,13 @@ import (
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/luxfi/constants"
 	"github.com/luxfi/database"
-	"github.com/luxfi/vm/utils/units"
 
 	rpcdbpb "github.com/luxfi/vm/proto/pb/rpcdb"
 )
 
-const iterationBatchSize = 128 * units.KiB
+const iterationBatchSize = 128 * constants.KiB
 
 var errUnknownIterator = errors.New("unknown iterator")
 

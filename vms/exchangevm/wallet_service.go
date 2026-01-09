@@ -6,6 +6,7 @@ package exchangevm
 import (
 	"errors"
 	"fmt"
+	"github.com/luxfi/formatting"
 	"maps"
 	"net/http"
 

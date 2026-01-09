@@ -10,9 +10,8 @@ import (
 	"github.com/luxfi/metric"
 
 	"github.com/luxfi/ids"
-	utilmetric "github.com/luxfi/vm/utils/metric"
-	"github.com/luxfi/vm/utils/wrappers"
 	"github.com/luxfi/vm/components/gas"
+	"github.com/luxfi/vm/utils/wrappers"
 	"github.com/luxfi/vm/vms/platformvm/block"
 )
 
@@ -47,7 +46,7 @@ type Block struct {
 }
 
 type Metrics interface {
-	utilmetric.APIInterceptor
+	metric.APIInterceptor
 
 	// Mark that the given block was accepted.
 	MarkAccepted(Block) error
@@ -150,7 +149,7 @@ func New(registerer metric.Registerer) (Metrics, error) {
 	if !ok {
 		return nil, errors.New("registerer must be a Registry")
 	}
-	apiRequestMetrics, err := utilmetric.NewAPIInterceptor(registry)
+	apiRequestMetrics, err := metric.NewAPIInterceptor(registry)
 	errs.Add(err)
 	m.APIInterceptor = apiRequestMetrics
 
@@ -176,7 +175,7 @@ func New(registerer metric.Registerer) (Metrics, error) {
 }
 
 type metricsImpl struct {
-	utilmetric.APIInterceptor
+	metric.APIInterceptor
 
 	blockMetrics *blockMetrics
 

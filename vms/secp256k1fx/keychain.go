@@ -6,12 +6,13 @@ package secp256k1fx
 import (
 	"errors"
 	"fmt"
+	"github.com/luxfi/formatting"
 	"strings"
 
 	gethcommon "github.com/luxfi/geth/common"
 
-	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/crypto/address"
+	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/keychain"
 	"github.com/luxfi/math/set"

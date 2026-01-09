@@ -7,9 +7,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/luxfi/formatting"
 
-	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/crypto/address"
+	"github.com/luxfi/crypto/secp256k1"
 )
 
 var ErrNilCredential = errors.New("nil credential")
