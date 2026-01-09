@@ -10,10 +10,10 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/hashing"
 	"github.com/luxfi/vm/components/verify"
-	"github.com/luxfi/vm/vms/secp256k1fx"
-	"github.com/luxfi/vm/vms/types"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/types"
+	"github.com/luxfi/vm/utils/hashing"
 )
 
 var (

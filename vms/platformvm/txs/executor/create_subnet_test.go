@@ -11,10 +11,10 @@ import (
 
 	"github.com/luxfi/ids"
 	"github.com/luxfi/upgrade/upgradetest"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/state"
 	"github.com/luxfi/vm/vms/platformvm/utxo"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 func TestCreateSubnetTxAP3FeeChange(t *testing.T) {

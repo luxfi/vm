@@ -19,11 +19,11 @@ import (
 
 // mockServer implements a test server for handler registration
 type mockServer struct {
-	routes       map[string]http.Handler
-	failCount    int
-	maxFailures  int
-	returnError  error
-	aliases      map[string][]string
+	routes      map[string]http.Handler
+	failCount   int
+	maxFailures int
+	returnError error
+	aliases     map[string][]string
 }
 
 func newMockServer() *mockServer {
@@ -66,18 +66,19 @@ func (s *mockServer) AddAliasesWithReadLock(endpoint string, aliases ...string) 
 }
 
 func (s *mockServer) Dispatch() error { return nil }
-func (s *mockServer) RegisterChain(chainName string, ctx *consensusctx.Context, vm consensuscore.VM) {}
+func (s *mockServer) RegisterChain(chainName string, ctx *consensusctx.Context, vm consensuscore.VM) {
+}
 func (s *mockServer) Shutdown() error { return nil }
 
 func TestHandlerManager_RegisterChainHandlers(t *testing.T) {
 	tests := []struct {
-		name          string
-		chainID       ids.ID
-		chainAlias    string
-		handlers      map[string]http.Handler
-		serverError   error
-		expectError   bool
-		expectRoutes  int
+		name         string
+		chainID      ids.ID
+		chainAlias   string
+		handlers     map[string]http.Handler
+		serverError  error
+		expectError  bool
+		expectRoutes int
 	}{
 		{
 			name:       "successful registration with alias",
@@ -125,9 +126,9 @@ func TestHandlerManager_RegisterChainHandlers(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name:       "invalid endpoint format",
-			chainID:    ids.GenerateTestID(),
-			handlers:   map[string]http.Handler{"rpc": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})},
+			name:        "invalid endpoint format",
+			chainID:     ids.GenerateTestID(),
+			handlers:    map[string]http.Handler{"rpc": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})},
 			expectError: true,
 		},
 	}
@@ -182,7 +183,7 @@ func TestHandlerManager_RetryLogic(t *testing.T) {
 		"/rpc": handler,
 	}))
 	require.Equal(t, 2, server.failCount) // Failed twice, succeeded on third try
-	require.Len(t, server.routes, 2)       // Both alias and ID routes
+	require.Len(t, server.routes, 2)      // Both alias and ID routes
 }
 
 func TestHandlerManager_HealthCheck(t *testing.T) {
@@ -242,7 +243,7 @@ func TestHandlerManager_GetBasePaths(t *testing.T) {
 func TestHandlerManager_ContextCancellation(t *testing.T) {
 	// Create a server that delays to test cancellation
 	server := &mockServer{
-		routes: make(map[string]http.Handler),
+		routes:      make(map[string]http.Handler),
 		returnError: errors.New("slow server"),
 	}
 

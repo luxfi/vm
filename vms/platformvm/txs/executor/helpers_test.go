@@ -32,7 +32,7 @@ import (
 	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/config"
 
-	"github.com/luxfi/vm/vms/platformvm/fx"
+	"github.com/luxfi/vm/platformvm/fx"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/reward"
 
@@ -46,7 +46,7 @@ import (
 	"github.com/luxfi/vm/vms/platformvm/utxo"
 
 	"github.com/luxfi/sdk/wallet/chain/p/wallet"
-	"github.com/luxfi/vm/vms/secp256k1fx"
+	"github.com/luxfi/vm/secp256k1fx"
 )
 
 const (

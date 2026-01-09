@@ -29,11 +29,11 @@ import (
 	"github.com/luxfi/vm/chains/atomic/gsharedmemory"
 	"github.com/luxfi/vm/internal/database/rpcdb"
 	"github.com/luxfi/vm/internal/ids/galiasreader"
+	"github.com/luxfi/vm/rpcchainvm/grpcutils"
 	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/utils/wrappers"
 	"github.com/luxfi/vm/vms/rpcchainvm/appsender"
 	"github.com/luxfi/vm/vms/rpcchainvm/ghttp"
-	"github.com/luxfi/vm/vms/rpcchainvm/grpcutils"
 	"github.com/luxfi/vm/vms/rpcchainvm/gvalidators"
 	"github.com/luxfi/warp"
 

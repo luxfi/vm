@@ -57,17 +57,17 @@ import (
 	"github.com/luxfi/staking"
 	"github.com/luxfi/trace"
 	"github.com/luxfi/upgrade"
+	"github.com/luxfi/vm/fx"
 	"github.com/luxfi/vm/nets"
 	"github.com/luxfi/vm/utils/buffer"
 	"github.com/luxfi/vm/utils/perms"
 	"github.com/luxfi/vm/vms"
-	"github.com/luxfi/vm/vms/fx"
 	// "github.com/luxfi/vm/vms/metervm" // Temporarily disabled - needs consensus package updates
-	"github.com/luxfi/vm/vms/nftfx"
+	"github.com/luxfi/vm/nftfx"
 
-	"github.com/luxfi/vm/vms/propertyfx"
+	"github.com/luxfi/vm/propertyfx"
 	// "github.com/luxfi/vm/vms/proposervm"
-	"github.com/luxfi/vm/vms/secp256k1fx"
+	"github.com/luxfi/vm/secp256k1fx"
 	// "github.com/luxfi/vm/vms/tracedvm" // Temporarily disabled - needs consensus package updates
 
 	// "github.com/luxfi/node/proto/p2p" // Available if needed for protobuf parsing
@@ -86,7 +86,9 @@ const (
 
 	defaultChannelSize = 1
 	initialQueueSize   = 3
+)
 
+var (
 	luxNamespace          = metric.AppendNamespace(constants.PlatformName, "lux")
 	handlerNamespace      = metric.AppendNamespace(constants.PlatformName, "handler")
 	meterchainvmNamespace = metric.AppendNamespace(constants.PlatformName, "meterchainvm")

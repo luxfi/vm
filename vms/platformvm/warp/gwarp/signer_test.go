@@ -14,9 +14,9 @@ import (
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/crypto/bls/signer/localsigner"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/vm/rpcchainvm/grpcutils"
 	"github.com/luxfi/vm/vms/platformvm/warp"
 	"github.com/luxfi/vm/vms/platformvm/warp/signertest"
-	"github.com/luxfi/vm/vms/rpcchainvm/grpcutils"
 
 	pb "github.com/luxfi/vm/proto/pb/warp"
 )

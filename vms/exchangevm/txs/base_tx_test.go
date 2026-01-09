@@ -13,8 +13,8 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/vms/exchangevm/fxs"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 var (

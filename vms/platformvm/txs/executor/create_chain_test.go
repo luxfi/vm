@@ -15,11 +15,11 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/upgrade/upgradetest"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/utils/hashing"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/state"
 	"github.com/luxfi/vm/vms/platformvm/txs"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 // Ensure Execute fails when there are not enough control sigs

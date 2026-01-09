@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/luxfi/log"
-	"github.com/luxfi/vm/vms/rpcchainvm/grpcutils"
+	"github.com/luxfi/vm/rpcchainvm/grpcutils"
 	"github.com/luxfi/vm/vms/rpcchainvm/gruntime"
 	"github.com/luxfi/vm/vms/rpcchainvm/runtime"
 

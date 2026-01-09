@@ -11,9 +11,9 @@ import (
 	"github.com/luxfi/codec"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
+	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/vms/exchangevm/fxs"
 )
 

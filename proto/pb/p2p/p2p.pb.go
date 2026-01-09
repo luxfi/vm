@@ -26,8 +26,8 @@ type EngineType int32
 const (
 	EngineType_ENGINE_TYPE_UNSPECIFIED EngineType = 0
 	// Only the X-Chain uses lux consensus
-	EngineType_ENGINE_TYPE_DAG EngineType = 1
-	EngineType_ENGINE_TYPE_CONSENSUSMAN   EngineType = 2
+	EngineType_ENGINE_TYPE_DAG          EngineType = 1
+	EngineType_ENGINE_TYPE_CONSENSUSMAN EngineType = 2
 )
 
 // Enum value maps for EngineType.
@@ -38,9 +38,9 @@ var (
 		2: "ENGINE_TYPE_CONSENSUSMAN",
 	}
 	EngineType_value = map[string]int32{
-		"ENGINE_TYPE_UNSPECIFIED": 0,
-		"ENGINE_TYPE_DAG":   1,
-		"ENGINE_TYPE_CONSENSUSMAN":     2,
+		"ENGINE_TYPE_UNSPECIFIED":  0,
+		"ENGINE_TYPE_DAG":          1,
+		"ENGINE_TYPE_CONSENSUSMAN": 2,
 	}
 )
 
@@ -613,11 +613,11 @@ type Handshake struct {
 	// key.
 	IpNodeIdSig []byte `protobuf:"bytes,7,opt,name=ip_node_id_sig,json=ipNodeIdSig,proto3" json:"ip_node_id_sig,omitempty"`
 	// Nets the peer is tracking
-	TrackedNets [][]byte     `protobuf:"bytes,8,rep,name=tracked_subnets,json=trackedNets,proto3" json:"tracked_subnets,omitempty"`
-	Client         *Client      `protobuf:"bytes,9,opt,name=client,proto3" json:"client,omitempty"`
-	SupportedLps   []uint32     `protobuf:"varint,10,rep,packed,name=supported_lps,json=supportedLps,proto3" json:"supported_lps,omitempty"`
-	ObjectedLps    []uint32     `protobuf:"varint,11,rep,packed,name=objected_lps,json=objectedLps,proto3" json:"objected_lps,omitempty"`
-	KnownPeers     *BloomFilter `protobuf:"bytes,12,opt,name=known_peers,json=knownPeers,proto3" json:"known_peers,omitempty"`
+	TrackedNets  [][]byte     `protobuf:"bytes,8,rep,name=tracked_subnets,json=trackedNets,proto3" json:"tracked_subnets,omitempty"`
+	Client       *Client      `protobuf:"bytes,9,opt,name=client,proto3" json:"client,omitempty"`
+	SupportedLps []uint32     `protobuf:"varint,10,rep,packed,name=supported_lps,json=supportedLps,proto3" json:"supported_lps,omitempty"`
+	ObjectedLps  []uint32     `protobuf:"varint,11,rep,packed,name=objected_lps,json=objectedLps,proto3" json:"objected_lps,omitempty"`
+	KnownPeers   *BloomFilter `protobuf:"bytes,12,opt,name=known_peers,json=knownPeers,proto3" json:"known_peers,omitempty"`
 	// Signature of the peer IP port pair at a provided timestamp with the BLS
 	// key.
 	IpBlsSig []byte `protobuf:"bytes,13,opt,name=ip_bls_sig,json=ipBlsSig,proto3" json:"ip_bls_sig,omitempty"`
@@ -977,7 +977,7 @@ type GetPeerList struct {
 	unknownFields protoimpl.UnknownFields
 
 	KnownPeers *BloomFilter `protobuf:"bytes,1,opt,name=known_peers,json=knownPeers,proto3" json:"known_peers,omitempty"`
-	AllNets bool         `protobuf:"varint,2,opt,name=all_subnets,json=allNets,proto3" json:"all_subnets,omitempty"`
+	AllNets    bool         `protobuf:"varint,2,opt,name=all_subnets,json=allNets,proto3" json:"all_subnets,omitempty"`
 }
 
 func (x *GetPeerList) Reset() {

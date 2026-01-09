@@ -21,11 +21,11 @@ import (
 // ChainHandlerRegistrar provides a clean interface for chain manager to register handlers.
 // This replaces the inline registration logic with a more robust, testable solution.
 type ChainHandlerRegistrar struct {
-	manager   *HandlerManager
-	server    server.Server
-	log       log.Logger
-	cChainID  ids.ID // Special handling for C-Chain
-	pChainID  ids.ID // Platform chain ID for validation
+	manager  *HandlerManager
+	server   server.Server
+	log      log.Logger
+	cChainID ids.ID // Special handling for C-Chain
+	pChainID ids.ID // Platform chain ID for validation
 }
 
 // NewChainHandlerRegistrar creates a registrar for chain handler registration.

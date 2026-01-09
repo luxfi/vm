@@ -35,7 +35,6 @@ import (
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/node/benchlist"
 	"github.com/luxfi/vm/chains"
 	"github.com/luxfi/vm/chains/atomic"
 	// "github.com/luxfi/node/message" // unused
@@ -50,19 +49,19 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/platformvm/signer"
 	"github.com/luxfi/vm/vms/platformvm/block"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/reward"
-	"github.com/luxfi/vm/vms/platformvm/signer"
 	// "github.com/luxfi/vm/vms/platformvm/state" // unused after TestGenesis simplification
 	"github.com/luxfi/vm/vms/platformvm/status"
 	// "github.com/luxfi/vm/vms/platformvm/testcontext" // unused - using consensustest.Context instead
 	"github.com/luxfi/sdk/wallet/chain/p/wallet"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 	"github.com/luxfi/vm/vms/platformvm/txs/txstest"
 	"github.com/luxfi/vm/vms/platformvm/validators/fee"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 	// "github.com/luxfi/metric" // unused
 
 	// p2ppb "github.com/luxfi/vm/proto/pb/p2p" // unused
@@ -715,13 +714,19 @@ func (n *noOpBenchlist) RegisterChain(chainID ids.ID, vdrs validators.Manager) e
 	return nil
 }
 
-func (n *noOpBenchlist) Benchable(chainID ids.ID, nodeID ids.NodeID) benchlist.Benchable {
+func (n *noOpBenchlist) Benchable(chainID ids.ID, nodeID ids.NodeID) benchable {
 	return n
 }
 
 func (n *noOpBenchlist) Benched(chainID ids.ID, nodeID ids.NodeID) {}
 
 func (n *noOpBenchlist) Unbenched(chainID ids.ID, nodeID ids.NodeID) {}
+
+// benchable is a minimal local stand-in to avoid importing node/benchlist.
+type benchable interface {
+	Benched(chainID ids.ID, nodeID ids.NodeID)
+	Unbenched(chainID ids.ID, nodeID ids.NodeID)
+}
 
 func TestRewardValidatorAccept(t *testing.T) {
 	require := require.New(t)
