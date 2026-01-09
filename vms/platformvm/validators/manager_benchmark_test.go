@@ -16,7 +16,7 @@ import (
 	"github.com/luxfi/crypto/bls/signer/localsigner"
 	"github.com/luxfi/database/badgerdb"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/timer/mockable"
+	"github.com/luxfi/timer/mockable"
 
 	"github.com/luxfi/constants"
 	"github.com/luxfi/vm/vms/platformvm/block"

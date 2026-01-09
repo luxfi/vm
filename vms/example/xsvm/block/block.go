@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/hashing"
+	"github.com/luxfi/crypto/hash"
 	"github.com/luxfi/vm/vms/example/xsvm/tx"
 )
 
@@ -27,7 +27,7 @@ func (b *Stateless) Time() time.Time {
 
 func (b *Stateless) ID() (ids.ID, error) {
 	bytes, err := Codec.Marshal(CodecVersion, b)
-	return hashing.ComputeHash256Array(bytes), err
+	return hash.ComputeHash256Array(bytes), err
 }
 
 func Parse(bytes []byte) (*Stateless, error) {

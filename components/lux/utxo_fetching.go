@@ -10,7 +10,7 @@ import (
 
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/vm/utils"
+	"github.com/luxfi/utils"
 
 	safemath "github.com/luxfi/math"
 )

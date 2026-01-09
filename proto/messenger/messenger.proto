@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package messenger;
+
+option go_package = "github.com/luxfi/vm/proto/pb/messenger";
+
+service Messenger {
+  rpc Notify(NotifyRequest) returns (NotifyResponse);
+}
+
+enum MessageType {
+  MESSAGE_TYPE_UNSPECIFIED = 0;
+  MESSAGE_TYPE_PENDING_TXS = 1;
+  MESSAGE_TYPE_PUT_BLOCK = 2;
+  MESSAGE_TYPE_GET_BLOCK = 3;
+  MESSAGE_TYPE_GET_ACCEPTED = 4;
+  MESSAGE_TYPE_ACCEPTED = 5;
+  MESSAGE_TYPE_GET_ANCESTORS = 6;
+  MESSAGE_TYPE_MULTI_PUT = 7;
+  MESSAGE_TYPE_GET_FAILED = 8;
+  MESSAGE_TYPE_QUERY_FAILED = 9;
+  MESSAGE_TYPE_CHITS = 10;
+}
+
+message Message {
+  MessageType type = 1;
+  bytes node_id = 2;
+  bytes content = 3;
+}
+
+message NotifyRequest {
+  Message message = 1;
+}
+
+message NotifyResponse {}

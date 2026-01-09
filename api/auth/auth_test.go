@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/luxfi/log"
-	"github.com/luxfi/vm/utils/password"
+	"github.com/luxfi/utils/password"
 )
 
 var (

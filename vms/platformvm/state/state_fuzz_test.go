@@ -161,13 +161,13 @@ func FuzzStateTransitions(f *testing.F) {
 			}
 
 		case 4:
-			// Test subnet transformation operations
-			subnetID := ids.GenerateTestID()
+			// Test chain transformation operations
+			chainID := ids.GenerateTestID()
 
-			// Add a subnet transformation
+			// Add a chain transformation
 			s.AddNetTransformation(&txs.Tx{
 				Unsigned: &txs.TransformChainTx{
-					Chain:              subnetID,
+					Chain:              chainID,
 					AssetID:            ids.GenerateTestID(),
 					InitialSupply:      amount,
 					MaximumSupply:      amount * 2,
@@ -183,7 +183,7 @@ func FuzzStateTransitions(f *testing.F) {
 			})
 
 			// Verify the transformation was recorded
-			// This tests the subnet/net transformation tracking logic
+			// This tests the chain/net transformation tracking logic
 		}
 
 		// Commit changes

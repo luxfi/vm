@@ -32,10 +32,10 @@ import (
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/upgrade/upgradetest"
-	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/iterator"
+	"github.com/luxfi/utils"
+	"github.com/luxfi/container/iterator"
 
-	"github.com/luxfi/vm/utils/wrappers"
+	"github.com/luxfi/utils/wrappers"
 
 	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/components/lux"
@@ -130,11 +130,11 @@ func TestState_writeStakers(t *testing.T) {
 	const (
 		primaryValidatorDuration = 28 * 24 * time.Hour
 		primaryDelegatorDuration = 14 * 24 * time.Hour
-		subnetValidatorDuration  = 21 * 24 * time.Hour
+		chainValidatorDuration   = 21 * 24 * time.Hour
 
 		primaryValidatorReward = iota
 		primaryDelegatorReward
-		subnetValidatorReward
+		chainValidatorReward
 	)
 	var (
 		primaryValidatorStartTime   = time.Now().Truncate(time.Second)
@@ -145,9 +145,9 @@ func TestState_writeStakers(t *testing.T) {
 		primaryDelegatorEndTime     = primaryDelegatorStartTime.Add(primaryDelegatorDuration)
 		primaryDelegatorEndTimeUnix = uint64(primaryDelegatorEndTime.Unix())
 
-		subnetValidatorStartTime   = primaryValidatorStartTime
-		subnetValidatorEndTime     = subnetValidatorStartTime.Add(subnetValidatorDuration)
-		subnetValidatorEndTimeUnix = uint64(subnetValidatorEndTime.Unix())
+		chainValidatorStartTime   = primaryValidatorStartTime
+		chainValidatorEndTime     = chainValidatorStartTime.Add(chainValidatorDuration)
+		chainValidatorEndTimeUnix = uint64(chainValidatorEndTime.Unix())
 
 		primaryValidatorData = txs.Validator{
 			NodeID: ids.GenerateTestNodeID(),
@@ -159,13 +159,13 @@ func TestState_writeStakers(t *testing.T) {
 			End:    primaryDelegatorEndTimeUnix,
 			Wght:   6789,
 		}
-		subnetValidatorData = txs.Validator{
+		chainValidatorData = txs.Validator{
 			NodeID: primaryValidatorData.NodeID,
-			End:    subnetValidatorEndTimeUnix,
+			End:    chainValidatorEndTimeUnix,
 			Wght:   9876,
 		}
 
-		subnetID = ids.GenerateTestID()
+		chainID = ids.GenerateTestID()
 	)
 
 	unsignedAddPrimaryNetworkValidator := createPermissionlessValidatorTx(t, constants.PrimaryNetworkID, primaryValidatorData)
@@ -204,15 +204,15 @@ func TestState_writeStakers(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	unsignedAddNetValidator := createPermissionlessValidatorTx(t, subnetID, subnetValidatorData)
+	unsignedAddNetValidator := createPermissionlessValidatorTx(t, chainID, chainValidatorData)
 	addNetValidator := &txs.Tx{Unsigned: unsignedAddNetValidator}
 	require.NoError(t, addNetValidator.Initialize(txs.Codec))
 
-	subnetCurrentValidatorStaker, err := NewCurrentStaker(
+	chainCurrentValidatorStaker, err := NewCurrentStaker(
 		addNetValidator.ID(),
 		unsignedAddNetValidator,
-		subnetValidatorStartTime,
-		subnetValidatorReward,
+		chainValidatorStartTime,
+		chainValidatorReward,
 	)
 	require.NoError(t, err)
 
@@ -235,7 +235,7 @@ func TestState_writeStakers(t *testing.T) {
 		expectedValidatorSetOutput *validators.GetValidatorOutput
 
 		// Check whether weight/bls keys diffs are duly stored
-		expectedValidatorDiffs map[subnetIDNodeID]*validatorDiff
+		expectedValidatorDiffs map[chainIDNodeID]*validatorDiff
 	}{
 		"add current primary network validator": {
 			staker:                   primaryNetworkCurrentValidatorStaker,
@@ -248,10 +248,10 @@ func TestState_writeStakers(t *testing.T) {
 				Weight:    primaryNetworkCurrentValidatorStaker.Weight,
 				TxID:      addPrimaryNetworkValidator.ID(),
 			},
-			expectedValidatorDiffs: map[subnetIDNodeID]*validatorDiff{
+			expectedValidatorDiffs: map[chainIDNodeID]*validatorDiff{
 				{
-					subnetID: constants.PrimaryNetworkID,
-					nodeID:   primaryNetworkCurrentValidatorStaker.NodeID,
+					chainID: constants.PrimaryNetworkID,
+					nodeID:  primaryNetworkCurrentValidatorStaker.NodeID,
 				}: {
 					weightDiff: ValidatorWeightDiff{
 						Decrease:     false,
@@ -277,10 +277,10 @@ func TestState_writeStakers(t *testing.T) {
 				Weight:    primaryNetworkCurrentValidatorStaker.Weight + primaryNetworkCurrentDelegatorStaker.Weight,
 				TxID:      addPrimaryNetworkValidator.ID(),
 			},
-			expectedValidatorDiffs: map[subnetIDNodeID]*validatorDiff{
+			expectedValidatorDiffs: map[chainIDNodeID]*validatorDiff{
 				{
-					subnetID: constants.PrimaryNetworkID,
-					nodeID:   primaryNetworkCurrentValidatorStaker.NodeID,
+					chainID: constants.PrimaryNetworkID,
+					nodeID:  primaryNetworkCurrentValidatorStaker.NodeID,
 				}: {
 					weightDiff: ValidatorWeightDiff{
 						Decrease: false,
@@ -295,7 +295,7 @@ func TestState_writeStakers(t *testing.T) {
 			staker:                   primaryNetworkPendingValidatorStaker,
 			addStakerTx:              addPrimaryNetworkValidator,
 			expectedPendingValidator: primaryNetworkPendingValidatorStaker,
-			expectedValidatorDiffs:   map[subnetIDNodeID]*validatorDiff{},
+			expectedValidatorDiffs:   map[chainIDNodeID]*validatorDiff{},
 		},
 		"add pending primary network delegator": {
 			initialStakers:            []*Staker{primaryNetworkPendingValidatorStaker},
@@ -304,30 +304,30 @@ func TestState_writeStakers(t *testing.T) {
 			addStakerTx:               addPrimaryNetworkDelegator,
 			expectedPendingValidator:  primaryNetworkPendingValidatorStaker,
 			expectedPendingDelegators: []*Staker{primaryNetworkPendingDelegatorStaker},
-			expectedValidatorDiffs:    map[subnetIDNodeID]*validatorDiff{},
+			expectedValidatorDiffs:    map[chainIDNodeID]*validatorDiff{},
 		},
-		"add current subnet validator": {
+		"add current chain validator": {
 			initialStakers:           []*Staker{primaryNetworkCurrentValidatorStaker},
 			initialTxs:               []*txs.Tx{addPrimaryNetworkValidator},
-			staker:                   subnetCurrentValidatorStaker,
+			staker:                   chainCurrentValidatorStaker,
 			addStakerTx:              addNetValidator,
-			expectedCurrentValidator: subnetCurrentValidatorStaker,
+			expectedCurrentValidator: chainCurrentValidatorStaker,
 			expectedValidatorSetOutput: &validators.GetValidatorOutput{
-				NodeID:    subnetCurrentValidatorStaker.NodeID,
+				NodeID:    chainCurrentValidatorStaker.NodeID,
 				PublicKey: bls.PublicKeyToUncompressedBytes(primaryNetworkCurrentValidatorStaker.PublicKey),
-				Light:     subnetCurrentValidatorStaker.Weight,
-				Weight:    subnetCurrentValidatorStaker.Weight,
+				Light:     chainCurrentValidatorStaker.Weight,
+				Weight:    chainCurrentValidatorStaker.Weight,
 				TxID:      addNetValidator.ID(),
 			},
-			expectedValidatorDiffs: map[subnetIDNodeID]*validatorDiff{
+			expectedValidatorDiffs: map[chainIDNodeID]*validatorDiff{
 				{
-					subnetID: subnetID,
-					nodeID:   subnetCurrentValidatorStaker.NodeID,
+					chainID: chainID,
+					nodeID:  chainCurrentValidatorStaker.NodeID,
 				}: {
 					weightDiff: ValidatorWeightDiff{
 						Decrease:     false,
-						Amount:       subnetCurrentValidatorStaker.Weight,
-						ValidationID: subnetCurrentValidatorStaker.TxID,
+						Amount:       chainCurrentValidatorStaker.Weight,
+						ValidationID: chainCurrentValidatorStaker.TxID,
 					},
 					prevPublicKey: nil,
 					newPublicKey:  bls.PublicKeyToUncompressedBytes(primaryNetworkCurrentValidatorStaker.PublicKey),
@@ -338,10 +338,10 @@ func TestState_writeStakers(t *testing.T) {
 			initialStakers: []*Staker{primaryNetworkCurrentValidatorStaker},
 			initialTxs:     []*txs.Tx{addPrimaryNetworkValidator},
 			staker:         primaryNetworkCurrentValidatorStaker,
-			expectedValidatorDiffs: map[subnetIDNodeID]*validatorDiff{
+			expectedValidatorDiffs: map[chainIDNodeID]*validatorDiff{
 				{
-					subnetID: constants.PrimaryNetworkID,
-					nodeID:   primaryNetworkCurrentValidatorStaker.NodeID,
+					chainID: constants.PrimaryNetworkID,
+					nodeID:  primaryNetworkCurrentValidatorStaker.NodeID,
 				}: {
 					weightDiff: ValidatorWeightDiff{
 						Decrease:     true,
@@ -371,10 +371,10 @@ func TestState_writeStakers(t *testing.T) {
 				Weight:    primaryNetworkCurrentValidatorStaker.Weight,
 				TxID:      addPrimaryNetworkValidator.ID(),
 			},
-			expectedValidatorDiffs: map[subnetIDNodeID]*validatorDiff{
+			expectedValidatorDiffs: map[chainIDNodeID]*validatorDiff{
 				{
-					subnetID: constants.PrimaryNetworkID,
-					nodeID:   primaryNetworkCurrentValidatorStaker.NodeID,
+					chainID: constants.PrimaryNetworkID,
+					nodeID:  primaryNetworkCurrentValidatorStaker.NodeID,
 				}: {
 					weightDiff: ValidatorWeightDiff{
 						Decrease: true,
@@ -389,7 +389,7 @@ func TestState_writeStakers(t *testing.T) {
 			initialStakers:         []*Staker{primaryNetworkPendingValidatorStaker},
 			initialTxs:             []*txs.Tx{addPrimaryNetworkValidator},
 			staker:                 primaryNetworkPendingValidatorStaker,
-			expectedValidatorDiffs: map[subnetIDNodeID]*validatorDiff{},
+			expectedValidatorDiffs: map[chainIDNodeID]*validatorDiff{},
 		},
 		"delete pending primary network delegator": {
 			initialStakers: []*Staker{
@@ -402,21 +402,21 @@ func TestState_writeStakers(t *testing.T) {
 			},
 			staker:                   primaryNetworkPendingDelegatorStaker,
 			expectedPendingValidator: primaryNetworkPendingValidatorStaker,
-			expectedValidatorDiffs:   map[subnetIDNodeID]*validatorDiff{},
+			expectedValidatorDiffs:   map[chainIDNodeID]*validatorDiff{},
 		},
-		"delete current subnet validator": {
-			initialStakers: []*Staker{primaryNetworkCurrentValidatorStaker, subnetCurrentValidatorStaker},
+		"delete current chain validator": {
+			initialStakers: []*Staker{primaryNetworkCurrentValidatorStaker, chainCurrentValidatorStaker},
 			initialTxs:     []*txs.Tx{addPrimaryNetworkValidator, addNetValidator},
-			staker:         subnetCurrentValidatorStaker,
-			expectedValidatorDiffs: map[subnetIDNodeID]*validatorDiff{
+			staker:         chainCurrentValidatorStaker,
+			expectedValidatorDiffs: map[chainIDNodeID]*validatorDiff{
 				{
-					subnetID: subnetID,
-					nodeID:   subnetCurrentValidatorStaker.NodeID,
+					chainID: chainID,
+					nodeID:  chainCurrentValidatorStaker.NodeID,
 				}: {
 					weightDiff: ValidatorWeightDiff{
 						Decrease:     true,
-						Amount:       subnetCurrentValidatorStaker.Weight,
-						ValidationID: subnetCurrentValidatorStaker.TxID,
+						Amount:       chainCurrentValidatorStaker.Weight,
+						ValidationID: chainCurrentValidatorStaker.TxID,
 					},
 					prevPublicKey: bls.PublicKeyToUncompressedBytes(primaryNetworkCurrentValidatorStaker.PublicKey),
 					newPublicKey:  nil,
@@ -534,8 +534,8 @@ func TestState_writeStakers(t *testing.T) {
 					state.validators.GetMap(test.staker.ChainID)[test.staker.NodeID],
 				)
 
-				for subnetIDNodeID, expectedDiff := range test.expectedValidatorDiffs {
-					diffKey := marshalDiffKey(subnetIDNodeID.subnetID, 1, subnetIDNodeID.nodeID)
+				for chainIDNodeID, expectedDiff := range test.expectedValidatorDiffs {
+					diffKey := marshalDiffKey(chainIDNodeID.chainID, 1, chainIDNodeID.nodeID)
 					weightDiffBytes, err := state.validatorWeightDiffsDB.Get(diffKey)
 					if expectedDiff.weightDiff.Amount == 0 {
 						require.ErrorIs(err, database.ErrNotFound)
@@ -565,9 +565,9 @@ func TestState_writeStakers(t *testing.T) {
 	}
 }
 
-func createPermissionlessValidatorTx(t testing.TB, subnetID ids.ID, validatorsData txs.Validator) *txs.AddPermissionlessValidatorTx {
+func createPermissionlessValidatorTx(t testing.TB, chainID ids.ID, validatorsData txs.Validator) *txs.AddPermissionlessValidatorTx {
 	var sig signer.Signer = &signer.Empty{}
-	if subnetID == constants.PrimaryNetworkID {
+	if chainID == constants.PrimaryNetworkID {
 		sk, err := localsigner.New()
 		require.NoError(t, err)
 		sig, err = signer.NewProofOfPossession(sk)
@@ -601,7 +601,7 @@ func createPermissionlessValidatorTx(t testing.TB, subnetID ids.ID, validatorsDa
 			},
 		},
 		Validator: validatorsData,
-		Chain:     subnetID,
+		Chain:     chainID,
 		Signer:    sig,
 
 		StakeOuts: []*lux.TransferableOutput{
@@ -802,11 +802,11 @@ func TestState_ApplyValidatorDiffs(t *testing.T) {
 
 	var (
 		numNodes       = 5
-		subnetID       = ids.GenerateTestID()
+		chainID        = ids.GenerateTestID()
 		startTime      = time.Now()
 		endTime        = startTime.Add(24 * time.Hour)
 		primaryStakers = make([]Staker, numNodes)
-		subnetStakers  = make([]Staker, numNodes)
+		chainStakers   = make([]Staker, numNodes)
 	)
 	for i := range primaryStakers {
 		sk, err := localsigner.New()
@@ -825,11 +825,11 @@ func TestState_ApplyValidatorDiffs(t *testing.T) {
 		}
 	}
 	for i, primaryStaker := range primaryStakers {
-		subnetStakers[i] = Staker{
+		chainStakers[i] = Staker{
 			TxID:            ids.GenerateTestID(),
 			NodeID:          primaryStaker.NodeID,
 			PublicKey:       nil, // Key is inherited from the primary network
-			ChainID:         subnetID,
+			ChainID:         chainID,
 			Weight:          uint64(i + 1),
 			StartTime:       primaryStaker.StartTime,
 			EndTime:         primaryStaker.EndTime,
@@ -865,8 +865,8 @@ func TestState_ApplyValidatorDiffs(t *testing.T) {
 			expectedNetValidatorSet: map[ids.NodeID]*validators.GetValidatorOutput{},
 		},
 		{
-			// Add subnet validator 0
-			addedValidators: []Staker{subnetStakers[0]},
+			// Add chain validator 0
+			addedValidators: []Staker{chainStakers[0]},
 			expectedPrimaryValidatorSet: map[ids.NodeID]*validators.GetValidatorOutput{
 				primaryStakers[0].NodeID: {
 					NodeID:    primaryStakers[0].NodeID,
@@ -877,18 +877,18 @@ func TestState_ApplyValidatorDiffs(t *testing.T) {
 				},
 			},
 			expectedNetValidatorSet: map[ids.NodeID]*validators.GetValidatorOutput{
-				subnetStakers[0].NodeID: {
-					NodeID:    subnetStakers[0].NodeID,
+				chainStakers[0].NodeID: {
+					NodeID:    chainStakers[0].NodeID,
 					PublicKey: bls.PublicKeyToUncompressedBytes(primaryStakers[0].PublicKey),
-					Light:     subnetStakers[0].Weight,
-					Weight:    subnetStakers[0].Weight,
-					TxID:      subnetStakers[0].TxID,
+					Light:     chainStakers[0].Weight,
+					Weight:    chainStakers[0].Weight,
+					TxID:      chainStakers[0].TxID,
 				},
 			},
 		},
 		{
-			// Remove subnet validator 0
-			removedValidators: []Staker{subnetStakers[0]},
+			// Remove chain validator 0
+			removedValidators: []Staker{chainStakers[0]},
 			expectedPrimaryValidatorSet: map[ids.NodeID]*validators.GetValidatorOutput{
 				primaryStakers[0].NodeID: {
 					NodeID:    primaryStakers[0].NodeID,
@@ -901,10 +901,10 @@ func TestState_ApplyValidatorDiffs(t *testing.T) {
 			expectedNetValidatorSet: map[ids.NodeID]*validators.GetValidatorOutput{},
 		},
 		{
-			// Add primary network validator 1, and subnet validator 1
-			addedValidators: []Staker{primaryStakers[1], subnetStakers[1]},
-			// Remove primary network validator 0, and subnet validator 1
-			removedValidators: []Staker{primaryStakers[0], subnetStakers[1]},
+			// Add primary network validator 1, and chain validator 1
+			addedValidators: []Staker{primaryStakers[1], chainStakers[1]},
+			// Remove primary network validator 0, and chain validator 1
+			removedValidators: []Staker{primaryStakers[0], chainStakers[1]},
 			expectedPrimaryValidatorSet: map[ids.NodeID]*validators.GetValidatorOutput{
 				primaryStakers[1].NodeID: {
 					NodeID:    primaryStakers[1].NodeID,
@@ -917,8 +917,8 @@ func TestState_ApplyValidatorDiffs(t *testing.T) {
 			expectedNetValidatorSet: map[ids.NodeID]*validators.GetValidatorOutput{},
 		},
 		{
-			// Add primary network validator 2, and subnet validator 2
-			addedValidators: []Staker{primaryStakers[2], subnetStakers[2]},
+			// Add primary network validator 2, and chain validator 2
+			addedValidators: []Staker{primaryStakers[2], chainStakers[2]},
 			// Remove primary network validator 1
 			removedValidators: []Staker{primaryStakers[1]},
 			expectedPrimaryValidatorSet: map[ids.NodeID]*validators.GetValidatorOutput{
@@ -931,18 +931,18 @@ func TestState_ApplyValidatorDiffs(t *testing.T) {
 				},
 			},
 			expectedNetValidatorSet: map[ids.NodeID]*validators.GetValidatorOutput{
-				subnetStakers[2].NodeID: {
-					NodeID:    subnetStakers[2].NodeID,
+				chainStakers[2].NodeID: {
+					NodeID:    chainStakers[2].NodeID,
 					PublicKey: bls.PublicKeyToUncompressedBytes(primaryStakers[2].PublicKey),
-					TxID:      subnetStakers[2].TxID,
+					TxID:      chainStakers[2].TxID,
 					Light:     primaryStakers[2].Weight,
-					Weight:    subnetStakers[2].Weight,
+					Weight:    chainStakers[2].Weight,
 				},
 			},
 		},
 		{
-			// Add primary network and subnet validators 3 & 4
-			addedValidators: []Staker{primaryStakers[3], primaryStakers[4], subnetStakers[3], subnetStakers[4]},
+			// Add primary network and chain validators 3 & 4
+			addedValidators: []Staker{primaryStakers[3], primaryStakers[4], chainStakers[3], chainStakers[4]},
 			expectedPrimaryValidatorSet: map[ids.NodeID]*validators.GetValidatorOutput{
 				primaryStakers[2].NodeID: {
 					NodeID:    primaryStakers[2].NodeID,
@@ -967,34 +967,34 @@ func TestState_ApplyValidatorDiffs(t *testing.T) {
 				},
 			},
 			expectedNetValidatorSet: map[ids.NodeID]*validators.GetValidatorOutput{
-				subnetStakers[2].NodeID: {
-					NodeID:    subnetStakers[2].NodeID,
+				chainStakers[2].NodeID: {
+					NodeID:    chainStakers[2].NodeID,
 					PublicKey: bls.PublicKeyToUncompressedBytes(primaryStakers[2].PublicKey),
-					TxID:      subnetStakers[2].TxID,
+					TxID:      chainStakers[2].TxID,
 					Light:     primaryStakers[2].Weight,
-					Weight:    subnetStakers[2].Weight,
+					Weight:    chainStakers[2].Weight,
 				},
-				subnetStakers[3].NodeID: {
-					NodeID:    subnetStakers[3].NodeID,
+				chainStakers[3].NodeID: {
+					NodeID:    chainStakers[3].NodeID,
 					PublicKey: bls.PublicKeyToUncompressedBytes(primaryStakers[3].PublicKey),
-					TxID:      subnetStakers[3].TxID,
+					TxID:      chainStakers[3].TxID,
 					Light:     primaryStakers[3].Weight,
-					Weight:    subnetStakers[3].Weight,
+					Weight:    chainStakers[3].Weight,
 				},
-				subnetStakers[4].NodeID: {
-					NodeID:    subnetStakers[4].NodeID,
+				chainStakers[4].NodeID: {
+					NodeID:    chainStakers[4].NodeID,
 					PublicKey: bls.PublicKeyToUncompressedBytes(primaryStakers[4].PublicKey),
-					TxID:      subnetStakers[4].TxID,
+					TxID:      chainStakers[4].TxID,
 					Light:     primaryStakers[4].Weight,
-					Weight:    subnetStakers[4].Weight,
+					Weight:    chainStakers[4].Weight,
 				},
 			},
 		},
 		{
-			// Remove primary network and subnet validators 2 & 3 & 4
+			// Remove primary network and chain validators 2 & 3 & 4
 			removedValidators: []Staker{
 				primaryStakers[2], primaryStakers[3], primaryStakers[4],
-				subnetStakers[2], subnetStakers[3], subnetStakers[4],
+				chainStakers[2], chainStakers[3], chainStakers[4],
 			},
 			expectedPrimaryValidatorSet: map[ids.NodeID]*validators.GetValidatorOutput{},
 			expectedNetValidatorSet:     map[ids.NodeID]*validators.GetValidatorOutput{},
@@ -1009,21 +1009,21 @@ func TestState_ApplyValidatorDiffs(t *testing.T) {
 		d, err := NewDiffOn(state)
 		require.NoError(err)
 
-		expectedValidators := set.Of(subnetIDNodeID{})
+		expectedValidators := set.Of(chainIDNodeID{})
 		for _, added := range diff.addedValidators {
 			require.NoError(d.PutCurrentValidator(&added))
 
-			expectedValidators.Add(subnetIDNodeID{
-				subnetID: added.ChainID,
-				nodeID:   added.NodeID,
+			expectedValidators.Add(chainIDNodeID{
+				chainID: added.ChainID,
+				nodeID:  added.NodeID,
 			})
 		}
 		for _, removed := range diff.removedValidators {
 			d.DeleteCurrentValidator(&removed)
 
-			expectedValidators.Remove(subnetIDNodeID{
-				subnetID: removed.ChainID,
-				nodeID:   removed.NodeID,
+			expectedValidators.Remove(chainIDNodeID{
+				chainID: removed.ChainID,
+				nodeID:  removed.NodeID,
 			})
 		}
 
@@ -1036,11 +1036,11 @@ func TestState_ApplyValidatorDiffs(t *testing.T) {
 
 		// Verify that the current state is as expected.
 		for _, added := range diff.addedValidators {
-			subnetNodeID := subnetIDNodeID{
-				subnetID: added.ChainID,
-				nodeID:   added.NodeID,
+			chainNodeID := chainIDNodeID{
+				chainID: added.ChainID,
+				nodeID:  added.NodeID,
 			}
-			if !expectedValidators.Contains(subnetNodeID) {
+			if !expectedValidators.Contains(chainNodeID) {
 				continue
 			}
 
@@ -1058,7 +1058,7 @@ func TestState_ApplyValidatorDiffs(t *testing.T) {
 		delete(primaryValidatorSet, defaultValidatorNodeID) // Ignore the genesis validator
 		require.Equal(diff.expectedPrimaryValidatorSet, primaryValidatorSet)
 
-		require.Equal(diff.expectedNetValidatorSet, state.validators.GetMap(subnetID))
+		require.Equal(diff.expectedNetValidatorSet, state.validators.GetMap(chainID))
 
 		// Verify that applying diffs against the current state results in the
 		// expected state.
@@ -1092,10 +1092,10 @@ func TestState_ApplyValidatorDiffs(t *testing.T) {
 					legacyNetValidatorSet,
 					currentHeight,
 					prevHeight+1,
-					subnetID,
+					chainID,
 				))
 
-				// Update the public keys of the subnet validators with the current
+				// Update the public keys of the chain validators with the current
 				// primary network validator public keys
 				for nodeID, vdr := range legacyNetValidatorSet {
 					if primaryVdr, ok := diff.expectedPrimaryValidatorSet[nodeID]; ok {
@@ -1116,23 +1116,23 @@ func TestState_ApplyValidatorDiffs(t *testing.T) {
 			}
 
 			{
-				subnetValidatorSet := copyValidatorSet(diff.expectedNetValidatorSet)
+				chainValidatorSet := copyValidatorSet(diff.expectedNetValidatorSet)
 				require.NoError(state.ApplyValidatorWeightDiffs(
 					context.Background(),
-					subnetValidatorSet,
+					chainValidatorSet,
 					currentHeight,
 					prevHeight+1,
-					subnetID,
+					chainID,
 				))
 
 				require.NoError(state.ApplyValidatorPublicKeyDiffs(
 					context.Background(),
-					subnetValidatorSet,
+					chainValidatorSet,
 					currentHeight,
 					prevHeight+1,
-					subnetID,
+					chainID,
 				))
-				require.Equal(prevDiff.expectedNetValidatorSet, subnetValidatorSet)
+				require.Equal(prevDiff.expectedNetValidatorSet, chainValidatorSet)
 			}
 		}
 	}
@@ -1239,7 +1239,7 @@ func TestStateNetOwner(t *testing.T) {
 		owner2 = fxmock.NewOwner(ctrl)
 
 		createNetTx = &txs.Tx{
-			Unsigned: &txs.CreateSubnetTx{
+			Unsigned: &txs.CreateChainTx{
 				BaseTx: txs.BaseTx{},
 				Owner:  owner1,
 			},
@@ -1268,18 +1268,18 @@ func TestStateNetOwner(t *testing.T) {
 func TestStateNetToL1Conversion(t *testing.T) {
 	tests := []struct {
 		name  string
-		setup func(s *state, subnetID ids.ID, c NetToL1Conversion)
+		setup func(s *state, chainID ids.ID, c NetToL1Conversion)
 	}{
 		{
 			name: "in-memory",
-			setup: func(s *state, subnetID ids.ID, c NetToL1Conversion) {
-				s.SetNetToL1Conversion(subnetID, c)
+			setup: func(s *state, chainID ids.ID, c NetToL1Conversion) {
+				s.SetNetToL1Conversion(chainID, c)
 			},
 		},
 		{
 			name: "cache",
-			setup: func(s *state, subnetID ids.ID, c NetToL1Conversion) {
-				s.subnetToL1ConversionCache.Put(subnetID, c)
+			setup: func(s *state, chainID ids.ID, c NetToL1Conversion) {
+				s.chainToL1ConversionCache.Put(chainID, c)
 			},
 		},
 	}
@@ -1288,7 +1288,7 @@ func TestStateNetToL1Conversion(t *testing.T) {
 			var (
 				require            = require.New(t)
 				state              = newTestState(t, memdb.New())
-				subnetID           = ids.GenerateTestID()
+				chainID            = ids.GenerateTestID()
 				expectedConversion = NetToL1Conversion{
 					ConversionID: ids.GenerateTestID(),
 					ChainID:      ids.GenerateTestID(),
@@ -1296,13 +1296,13 @@ func TestStateNetToL1Conversion(t *testing.T) {
 				}
 			)
 
-			actualConversion, err := state.GetNetToL1Conversion(subnetID)
+			actualConversion, err := state.GetNetToL1Conversion(chainID)
 			require.ErrorIs(err, database.ErrNotFound)
 			require.Zero(actualConversion)
 
-			test.setup(state, subnetID, expectedConversion)
+			test.setup(state, chainID, expectedConversion)
 
-			actualConversion, err = state.GetNetToL1Conversion(subnetID)
+			actualConversion, err = state.GetNetToL1Conversion(chainID)
 			require.NoError(err)
 			require.Equal(expectedConversion, actualConversion)
 		})
@@ -1899,7 +1899,7 @@ func TestL1Validators(t *testing.T) {
 
 			var (
 				initialL1Validators = make(map[ids.ID]L1Validator)
-				subnetIDs           = set.NewSet[ids.ID](0)
+				chainIDs            = set.NewSet[ids.ID](0)
 			)
 			for _, l1Validator := range test.initial {
 				// The codec creates zero length slices rather than leaving them
@@ -1910,7 +1910,7 @@ func TestL1Validators(t *testing.T) {
 
 				require.NoError(state.PutL1Validator(l1Validator))
 				initialL1Validators[l1Validator.ValidationID] = l1Validator
-				subnetIDs.Add(l1Validator.ChainID)
+				chainIDs.Add(l1Validator.ChainID)
 			}
 
 			state.SetHeight(0)
@@ -1926,7 +1926,7 @@ func TestL1Validators(t *testing.T) {
 
 				require.NoError(d.PutL1Validator(l1Validator))
 				expectedL1Validators[l1Validator.ValidationID] = l1Validator
-				subnetIDs.Add(l1Validator.ChainID)
+				chainIDs.Add(l1Validator.ChainID)
 			}
 
 			verifyChain := func(chain Chain) {
@@ -1973,8 +1973,8 @@ func TestL1Validators(t *testing.T) {
 
 				require.Equal(len(expectedActive), chain.NumActiveL1Validators())
 
-				for subnetID, expectedWeight := range weights {
-					weight, err := chain.WeightOfL1Validators(subnetID)
+				for chainID, expectedWeight := range weights {
+					weight, err := chain.WeightOfL1Validators(chainID)
 					require.NoError(err)
 					require.Equal(expectedWeight, weight)
 				}
@@ -1992,21 +1992,21 @@ func TestL1Validators(t *testing.T) {
 			verifyChain(state)
 			assertChainsEqual(t, state, d)
 
-			// Verify that the subnetID+nodeID -> validationID mapping is correct.
-			var populatedChainIDNodeIDs = set.NewSet[subnetIDNodeID](0)
+			// Verify that the chainID+nodeID -> validationID mapping is correct.
+			var populatedChainIDNodeIDs = set.NewSet[chainIDNodeID](0)
 			for _, l1Validator := range expectedL1Validators {
 				if l1Validator.isDeleted() {
 					continue
 				}
 
-				subnetIDNodeID := subnetIDNodeID{
-					subnetID: l1Validator.ChainID,
-					nodeID:   l1Validator.NodeID,
+				chainIDNodeID := chainIDNodeID{
+					chainID: l1Validator.ChainID,
+					nodeID:  l1Validator.NodeID,
 				}
-				populatedChainIDNodeIDs.Add(subnetIDNodeID)
+				populatedChainIDNodeIDs.Add(chainIDNodeID)
 
-				subnetIDNodeIDKey := subnetIDNodeID.Marshal()
-				validatorID, err := database.GetID(state.subnetIDNodeIDDB, subnetIDNodeIDKey)
+				chainIDNodeIDKey := chainIDNodeID.Marshal()
+				validatorID, err := database.GetID(state.chainIDNodeIDDB, chainIDNodeIDKey)
 				require.NoError(err)
 				require.Equal(l1Validator.ValidationID, validatorID)
 			}
@@ -2015,23 +2015,23 @@ func TestL1Validators(t *testing.T) {
 					continue
 				}
 
-				subnetIDNodeID := subnetIDNodeID{
-					subnetID: l1Validator.ChainID,
-					nodeID:   l1Validator.NodeID,
+				chainIDNodeID := chainIDNodeID{
+					chainID: l1Validator.ChainID,
+					nodeID:  l1Validator.NodeID,
 				}
-				if populatedChainIDNodeIDs.Contains(subnetIDNodeID) {
+				if populatedChainIDNodeIDs.Contains(chainIDNodeID) {
 					continue
 				}
 
-				subnetIDNodeIDKey := subnetIDNodeID.Marshal()
-				has, err := state.subnetIDNodeIDDB.Has(subnetIDNodeIDKey)
+				chainIDNodeIDKey := chainIDNodeID.Marshal()
+				has, err := state.chainIDNodeIDDB.Has(chainIDNodeIDKey)
 				require.NoError(err)
 				require.False(has)
 			}
 
 			l1ValdiatorsToValidatorSet := func(
 				l1Validators map[ids.ID]L1Validator,
-				subnetID ids.ID,
+				chainID ids.ID,
 			) map[ids.NodeID]*validators.GetValidatorOutput {
 				// Sort validators by ValidationID for deterministic iteration.
 				// This ensures consistent TxID assignment when multiple inactive
@@ -2046,7 +2046,7 @@ func TestL1Validators(t *testing.T) {
 
 				validatorSet := make(map[ids.NodeID]*validators.GetValidatorOutput)
 				for _, l1Validator := range sortedValidators {
-					if l1Validator.ChainID != subnetID || l1Validator.isDeleted() {
+					if l1Validator.ChainID != chainID || l1Validator.isDeleted() {
 						continue
 					}
 
@@ -2067,18 +2067,18 @@ func TestL1Validators(t *testing.T) {
 			}
 
 			reloadedState := newTestState(t, db)
-			for subnetID := range subnetIDs {
-				expectedEndValidatorSet := l1ValdiatorsToValidatorSet(expectedL1Validators, subnetID)
-				endValidatorSet := state.validators.GetMap(subnetID)
+			for chainID := range chainIDs {
+				expectedEndValidatorSet := l1ValdiatorsToValidatorSet(expectedL1Validators, chainID)
+				endValidatorSet := state.validators.GetMap(chainID)
 				require.Equal(expectedEndValidatorSet, endValidatorSet)
 
-				reloadedEndValidatorSet := reloadedState.validators.GetMap(subnetID)
+				reloadedEndValidatorSet := reloadedState.validators.GetMap(chainID)
 				require.Equal(expectedEndValidatorSet, reloadedEndValidatorSet)
 
-				require.NoError(state.ApplyValidatorWeightDiffs(context.Background(), endValidatorSet, 1, 1, subnetID))
-				require.NoError(state.ApplyValidatorPublicKeyDiffs(context.Background(), endValidatorSet, 1, 1, subnetID))
+				require.NoError(state.ApplyValidatorWeightDiffs(context.Background(), endValidatorSet, 1, 1, chainID))
+				require.NoError(state.ApplyValidatorPublicKeyDiffs(context.Background(), endValidatorSet, 1, 1, chainID))
 
-				initialValidatorSet := l1ValdiatorsToValidatorSet(initialL1Validators, subnetID)
+				initialValidatorSet := l1ValdiatorsToValidatorSet(initialL1Validators, chainID)
 				require.Equal(initialValidatorSet, endValidatorSet)
 			}
 		})
@@ -2086,19 +2086,19 @@ func TestL1Validators(t *testing.T) {
 }
 
 // TestLoadL1ValidatorAndLegacy tests that the state can be loaded when there is
-// a mix of legacy validators and L1 validators in the same subnet.
+// a mix of legacy validators and L1 validators in the same chain.
 func TestLoadL1ValidatorAndLegacy(t *testing.T) {
 	var (
-		require         = require.New(t)
-		db              = memdb.New()
-		state           = newTestState(t, db)
-		subnetID        = ids.GenerateTestID()
-		weight   uint64 = 1
+		require        = require.New(t)
+		db             = memdb.New()
+		state          = newTestState(t, db)
+		chainID        = ids.GenerateTestID()
+		weight  uint64 = 1
 	)
 
 	unsignedAddNetValidator := createPermissionlessValidatorTx(
 		t,
-		subnetID,
+		chainID,
 		txs.Validator{
 			NodeID: defaultValidatorNodeID,
 			End:    genesistest.DefaultValidatorEndTimeUnix,
@@ -2113,7 +2113,7 @@ func TestLoadL1ValidatorAndLegacy(t *testing.T) {
 		TxID:            addNetValidator.ID(),
 		NodeID:          defaultValidatorNodeID,
 		PublicKey:       nil,
-		ChainID:         subnetID,
+		ChainID:         chainID,
 		Weight:          weight,
 		StartTime:       genesistest.DefaultValidatorStartTime,
 		EndTime:         genesistest.DefaultValidatorEndTime,
@@ -2143,11 +2143,11 @@ func TestLoadL1ValidatorAndLegacy(t *testing.T) {
 	state.SetHeight(1)
 	require.NoError(state.Commit())
 
-	expectedValidatorSet := state.validators.GetMap(subnetID)
+	expectedValidatorSet := state.validators.GetMap(chainID)
 
 	state = newTestState(t, db)
 
-	validatorSet := state.validators.GetMap(subnetID)
+	validatorSet := state.validators.GetMap(chainID)
 	require.Equal(expectedValidatorSet, validatorSet)
 }
 
@@ -2195,9 +2195,9 @@ func TestL1ValidatorAfterLegacyRemoval(t *testing.T) {
 }
 
 func TestGetCurrentValidators(t *testing.T) {
-	subnetID1 := ids.GenerateTestID()
-	subnetID2 := ids.GenerateTestID()
-	subnetIDs := []ids.ID{subnetID1, subnetID2}
+	chainID1 := ids.GenerateTestID()
+	chainID2 := ids.GenerateTestID()
+	chainIDs := []ids.ID{chainID1, chainID2}
 
 	sk, err := localsigner.New()
 	require.NoError(t, err)
@@ -2219,11 +2219,11 @@ func TestGetCurrentValidators(t *testing.T) {
 			name: "empty noop",
 		},
 		{
-			name: "initial stakers in same subnet",
+			name: "initial stakers in same chain",
 			initial: []*Staker{
 				{
 					TxID:      ids.GenerateTestID(),
-					ChainID:   subnetID1,
+					ChainID:   chainID1,
 					NodeID:    ids.GenerateTestNodeID(),
 					PublicKey: pk,
 					Weight:    1,
@@ -2231,7 +2231,7 @@ func TestGetCurrentValidators(t *testing.T) {
 				},
 				{
 					TxID:      ids.GenerateTestID(),
-					ChainID:   subnetID1,
+					ChainID:   chainID1,
 					NodeID:    ids.GenerateTestNodeID(),
 					PublicKey: otherPK,
 					Weight:    1,
@@ -2240,11 +2240,11 @@ func TestGetCurrentValidators(t *testing.T) {
 			},
 		},
 		{
-			name: "initial stakers in different subnets",
+			name: "initial stakers in different chains",
 			initial: []*Staker{
 				{
 					TxID:      ids.GenerateTestID(),
-					ChainID:   subnetID1,
+					ChainID:   chainID1,
 					NodeID:    ids.GenerateTestNodeID(),
 					PublicKey: pk,
 					Weight:    1,
@@ -2252,7 +2252,7 @@ func TestGetCurrentValidators(t *testing.T) {
 				},
 				{
 					TxID:      ids.GenerateTestID(),
-					ChainID:   subnetID2,
+					ChainID:   chainID2,
 					NodeID:    ids.GenerateTestNodeID(),
 					PublicKey: otherPK,
 					Weight:    1,
@@ -2265,7 +2265,7 @@ func TestGetCurrentValidators(t *testing.T) {
 			l1Validators: []L1Validator{
 				{
 					ValidationID: ids.GenerateTestID(),
-					ChainID:      subnetID1,
+					ChainID:      chainID1,
 					NodeID:       ids.GenerateTestNodeID(),
 					StartTime:    uint64(now.Unix()),
 					PublicKey:    pkBytes,
@@ -2273,7 +2273,7 @@ func TestGetCurrentValidators(t *testing.T) {
 				},
 				{
 					ValidationID: ids.GenerateTestID(),
-					ChainID:      subnetID1,
+					ChainID:      chainID1,
 					NodeID:       ids.GenerateTestNodeID(),
 					PublicKey:    otherPKBytes,
 					StartTime:    uint64(now.Unix()) + 1,
@@ -2286,7 +2286,7 @@ func TestGetCurrentValidators(t *testing.T) {
 			l1Validators: []L1Validator{
 				{
 					ValidationID: ids.GenerateTestID(),
-					ChainID:      subnetID1,
+					ChainID:      chainID1,
 					NodeID:       ids.GenerateTestNodeID(),
 					StartTime:    uint64(now.Unix()),
 					PublicKey:    pkBytes,
@@ -2294,7 +2294,7 @@ func TestGetCurrentValidators(t *testing.T) {
 				},
 				{
 					ValidationID: ids.GenerateTestID(),
-					ChainID:      subnetID2,
+					ChainID:      chainID2,
 					NodeID:       ids.GenerateTestNodeID(),
 					PublicKey:    otherPKBytes,
 					StartTime:    uint64(now.Unix()) + 1,
@@ -2307,7 +2307,7 @@ func TestGetCurrentValidators(t *testing.T) {
 			initial: []*Staker{
 				{
 					TxID:      ids.GenerateTestID(),
-					ChainID:   subnetID1,
+					ChainID:   chainID1,
 					NodeID:    ids.GenerateTestNodeID(),
 					PublicKey: pk,
 					Weight:    123123,
@@ -2315,7 +2315,7 @@ func TestGetCurrentValidators(t *testing.T) {
 				},
 				{
 					TxID:      ids.GenerateTestID(),
-					ChainID:   subnetID2,
+					ChainID:   chainID2,
 					NodeID:    ids.GenerateTestNodeID(),
 					PublicKey: pk,
 					Weight:    1,
@@ -2323,7 +2323,7 @@ func TestGetCurrentValidators(t *testing.T) {
 				},
 				{
 					TxID:      ids.GenerateTestID(),
-					ChainID:   subnetID1,
+					ChainID:   chainID1,
 					NodeID:    ids.GenerateTestNodeID(),
 					PublicKey: otherPK,
 					Weight:    0,
@@ -2333,7 +2333,7 @@ func TestGetCurrentValidators(t *testing.T) {
 			l1Validators: []L1Validator{
 				{
 					ValidationID:      ids.GenerateTestID(),
-					ChainID:           subnetID1,
+					ChainID:           chainID1,
 					NodeID:            ids.GenerateTestNodeID(),
 					StartTime:         uint64(now.Unix()),
 					PublicKey:         pkBytes,
@@ -2343,7 +2343,7 @@ func TestGetCurrentValidators(t *testing.T) {
 				},
 				{
 					ValidationID:      ids.GenerateTestID(),
-					ChainID:           subnetID2,
+					ChainID:           chainID2,
 					NodeID:            ids.GenerateTestNodeID(),
 					PublicKey:         otherPKBytes,
 					StartTime:         uint64(now.Unix()) + 1,
@@ -2352,7 +2352,7 @@ func TestGetCurrentValidators(t *testing.T) {
 				},
 				{
 					ValidationID:      ids.GenerateTestID(),
-					ChainID:           subnetID1,
+					ChainID:           chainID1,
 					NodeID:            ids.GenerateTestNodeID(),
 					PublicKey:         pkBytes,
 					StartTime:         uint64(now.Unix()) + 2,
@@ -2361,7 +2361,7 @@ func TestGetCurrentValidators(t *testing.T) {
 				},
 				{
 					ValidationID:      ids.GenerateTestID(),
-					ChainID:           subnetID1,
+					ChainID:           chainID1,
 					NodeID:            ids.GenerateTestNodeID(),
 					PublicKey:         otherPKBytes,
 					StartTime:         uint64(now.Unix()) + 3,
@@ -2388,7 +2388,7 @@ func TestGetCurrentValidators(t *testing.T) {
 					NodeID:    staker.NodeID,
 					PublicKey: staker.PublicKey,
 					Weight:    5,
-					// start primary network staker 1 second before the subnet staker
+					// start primary network staker 1 second before the chain staker
 					StartTime: staker.StartTime.Add(-1 * time.Second),
 				}
 				require.NoError(state.PutCurrentValidator(primaryStaker))
@@ -2419,12 +2419,12 @@ func TestGetCurrentValidators(t *testing.T) {
 			state.SetHeight(0)
 			require.NoError(state.Commit())
 
-			for _, subnetID := range subnetIDs {
-				baseStakers, currentValidators, height, err := state.GetCurrentValidators(context.Background(), subnetID)
+			for _, chainID := range chainIDs {
+				baseStakers, currentValidators, height, err := state.GetCurrentValidators(context.Background(), chainID)
 				require.NoError(err)
 				require.Equal(uint64(0), height)
-				require.Len(baseStakers, stakersLenByChainID[subnetID])
-				require.Len(currentValidators, l1ValidatorsLenByChainID[subnetID])
+				require.Len(baseStakers, stakersLenByChainID[chainID])
+				require.Len(currentValidators, l1ValidatorsLenByChainID[chainID])
 
 				for i, currentStaker := range baseStakers {
 					require.Equalf(stakersByTxID[currentStaker.TxID], currentStaker, "index %d", i)

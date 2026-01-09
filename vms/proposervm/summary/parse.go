@@ -6,12 +6,12 @@ package summary
 import (
 	"fmt"
 
-	"github.com/luxfi/vm/utils/hashing"
+	"github.com/luxfi/crypto/hash"
 )
 
 func Parse(bytes []byte) (StateSummary, error) {
 	summary := stateSummary{
-		id:    hashing.ComputeHash256Array(bytes),
+		id:    hash.ComputeHash256Array(bytes),
 		bytes: bytes,
 	}
 	version, err := Codec.Unmarshal(bytes, &summary)

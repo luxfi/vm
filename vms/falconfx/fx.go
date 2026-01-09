@@ -10,7 +10,7 @@ import (
 	"errors"
 
 	"github.com/luxfi/log"
-	"github.com/luxfi/vm/utils/hashing"
+	"github.com/luxfi/crypto/hash"
 )
 
 const (
@@ -147,7 +147,7 @@ func (fx *FalconFx) VerifyPermission(txIntf, inIntf, credIntf, ownerIntf interfa
 func (fx *FalconFx) verifyFalconSignature(tx UnsignedTx, in *FalconInput, cred *FalconCredential, owner *FalconOutputOwners) error {
 	// Get the message to be signed (transaction hash)
 	txBytes := tx.Bytes()
-	txHash := hashing.ComputeHash256(txBytes)
+	txHash := hash.ComputeHash256(txBytes)
 
 	// Check cache first
 	cacheKey := string(txHash) + string(cred.Sig)
@@ -179,7 +179,7 @@ func (fx *FalconFx) verifyMultisigFalcon(tx UnsignedTx, owner *FalconOutputOwner
 
 	// Verify each signature
 	txBytes := tx.Bytes()
-	txHash := hashing.ComputeHash256(txBytes)
+	txHash := hash.ComputeHash256(txBytes)
 
 	validSigs := 0
 	for i, sig := range cred.Sigs {

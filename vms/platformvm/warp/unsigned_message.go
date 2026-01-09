@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/hashing"
+	"github.com/luxfi/crypto/hash"
 )
 
 // UnsignedMessage defines the standard format for an unsigned Warp message.
@@ -39,7 +39,7 @@ func NewUnsignedMessage(
 func ParseUnsignedMessage(b []byte) (*UnsignedMessage, error) {
 	msg := &UnsignedMessage{
 		bytes: b,
-		id:    hashing.ComputeHash256Array(b),
+		id:    hash.ComputeHash256Array(b),
 	}
 	_, err := Codec.Unmarshal(b, msg)
 	return msg, err
@@ -52,7 +52,7 @@ func (m *UnsignedMessage) Initialize() error {
 		return fmt.Errorf("couldn't marshal warp unsigned message: %w", err)
 	}
 	m.bytes = bytes
-	m.id = hashing.ComputeHash256Array(m.bytes)
+	m.id = hash.ComputeHash256Array(m.bytes)
 	return nil
 }
 

@@ -6,13 +6,13 @@ package metrics
 import (
 	"context"
 
-	dto "github.com/prometheus/client_model/go"
+	"github.com/luxfi/metric"
 )
 
 type testGathererWithContext struct {
-	mfs []*dto.MetricFamily
+	mfs []*metric.MetricFamily
 }
 
-func (g *testGathererWithContext) Gather(context.Context) ([]*dto.MetricFamily, error) {
+func (g *testGathererWithContext) Gather(context.Context) ([]*metric.MetricFamily, error) {
 	return g.mfs, nil
 }

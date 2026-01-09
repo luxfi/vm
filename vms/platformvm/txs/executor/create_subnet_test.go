@@ -17,10 +17,10 @@ import (
 	"github.com/luxfi/vm/vms/platformvm/utxo"
 )
 
-func TestCreateSubnetTxAP3FeeChange(t *testing.T) {
+func TestCreateChainTxAP3FeeChange(t *testing.T) {
 	// Test the fee change at Apricot Phase 3
-	// Pre-AP3: CreateSubnetTxFee = 0
-	// Post-AP3: CreateSubnetTxFee = CreateSubnetTxFee from config (100 * defaultTxFee)
+	// Pre-AP3: CreateChainTxFee = 0
+	// Post-AP3: CreateChainTxFee = CreateChainTxFee from config (100 * defaultTxFee)
 	tests := []struct {
 		name        string
 		preAP3      bool
@@ -62,8 +62,8 @@ func TestCreateSubnetTxAP3FeeChange(t *testing.T) {
 				keys: genesistest.DefaultFundedKeys[:1],
 			})
 
-			// Create a subnet using the wallet
-			tx, err := wallet.IssueCreateSubnetTx(
+			// Create a chain using the wallet
+			tx, err := wallet.IssueCreateChainTx(
 				&secp256k1fx.OutputOwners{
 					Threshold: 1,
 					Addrs: []ids.ShortID{
@@ -89,9 +89,9 @@ func TestCreateSubnetTxAP3FeeChange(t *testing.T) {
 	}
 }
 
-// TestCreateSubnetTxInsufficientFunds tests that CreateSubnet transactions fail
+// TestCreateChainTxInsufficientFunds tests that CreateChain transactions fail
 // when the wallet doesn't have enough funds to pay the fee
-func TestCreateSubnetTxInsufficientFunds(t *testing.T) {
+func TestCreateChainTxInsufficientFunds(t *testing.T) {
 	require := require.New(t)
 
 	env := newEnvironment(t, upgradetest.Latest)
@@ -108,8 +108,8 @@ func TestCreateSubnetTxInsufficientFunds(t *testing.T) {
 		keys: genesistest.DefaultFundedKeys[4:5], // Use a key that might not have funds
 	})
 
-	// Try to create a subnet - should fail due to insufficient funds
-	_, err := wallet.IssueCreateSubnetTx(
+	// Try to create a chain - should fail due to insufficient funds
+	_, err := wallet.IssueCreateChainTx(
 		&secp256k1fx.OutputOwners{
 			Threshold: 1,
 			Addrs: []ids.ShortID{

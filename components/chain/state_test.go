@@ -15,8 +15,8 @@ import (
 	"github.com/luxfi/consensus/engine/chain/block"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/crypto/hash"
 	"github.com/luxfi/vm/chain/blocktest"
-	"github.com/luxfi/vm/utils/hashing"
 )
 
 const (
@@ -67,7 +67,7 @@ func (b *testBlockAdapter) Reject(ctx context.Context) error {
 // and using [parentID] as the parent block ID
 func NewTestBlock(i uint64, parentID ids.ID) *blocktest.Block {
 	b := []byte{byte(i)}
-	id := hashing.ComputeHash256Array(b)
+	id := hash.ComputeHash256Array(b)
 	return &blocktest.Block{
 		IDV:     id,
 		HeightV: i,
@@ -663,7 +663,7 @@ func TestSetLastAcceptedBlock(t *testing.T) {
 	genesisBlock := testBlks[0]
 	genesisBlock.StatusV = blocktest.Accepted
 
-	postSetBlk1ParentID := hashing.ComputeHash256Array([]byte{byte(199)})
+	postSetBlk1ParentID := hash.ComputeHash256Array([]byte{byte(199)})
 	postSetBlk1 := NewTestBlock(200, postSetBlk1ParentID)
 	postSetBlk2 := NewTestBlock(201, postSetBlk1.ID())
 

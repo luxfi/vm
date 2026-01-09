@@ -20,14 +20,14 @@ import (
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/crypto/bls/signer/localsigner"
 	"github.com/luxfi/crypto/secp256k1"
+	"github.com/luxfi/timer/mockable"
 	"github.com/luxfi/upgrade/upgradetest"
+	"github.com/luxfi/container/iterator"
 	"github.com/luxfi/vm/chain"
 	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/platformvm/signer"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils/iterator"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/block"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/reward"
@@ -430,9 +430,9 @@ func TestBanffProposalBlockUpdateStakers(t *testing.T) {
 
 	tests := []test{
 		{
-			description:   "advance time to before staker1 start with subnet",
+			description:   "advance time to before staker1 start with chain",
 			stakers:       []staker{staker1, staker2, staker3, staker4, staker5},
-			subnetStakers: []staker{staker1, staker2, staker3, staker4, staker5},
+			chainStakers:  []staker{staker1, staker2, staker3, staker4, staker5},
 			advanceTimeTo: []time.Time{staker1.startTime.Add(-1 * time.Second)},
 			expectedStakers: map[ids.NodeID]stakerStatus{
 				staker1.nodeID: pending,
@@ -450,9 +450,9 @@ func TestBanffProposalBlockUpdateStakers(t *testing.T) {
 			},
 		},
 		{
-			description:   "advance time to staker 1 start with subnet",
+			description:   "advance time to staker 1 start with chain",
 			stakers:       []staker{staker1, staker2, staker3, staker4, staker5},
-			subnetStakers: []staker{staker1},
+			chainStakers:  []staker{staker1},
 			advanceTimeTo: []time.Time{staker1.startTime},
 			expectedStakers: map[ids.NodeID]stakerStatus{
 				staker1.nodeID: current,
@@ -484,7 +484,7 @@ func TestBanffProposalBlockUpdateStakers(t *testing.T) {
 		{
 			description:   "staker3 should validate only primary network",
 			stakers:       []staker{staker1, staker2, staker3, staker4, staker5},
-			subnetStakers: []staker{staker1, staker2, staker3Sub, staker4, staker5},
+			chainStakers:  []staker{staker1, staker2, staker3Sub, staker4, staker5},
 			advanceTimeTo: []time.Time{staker1.startTime, staker2.startTime, staker3.startTime},
 			expectedStakers: map[ids.NodeID]stakerStatus{
 				staker1.nodeID: current,
@@ -502,9 +502,9 @@ func TestBanffProposalBlockUpdateStakers(t *testing.T) {
 			},
 		},
 		{
-			description:   "advance time to staker3 start with subnet",
+			description:   "advance time to staker3 start with chain",
 			stakers:       []staker{staker1, staker2, staker3, staker4, staker5},
-			subnetStakers: []staker{staker1, staker2, staker3Sub, staker4, staker5},
+			chainStakers:  []staker{staker1, staker2, staker3Sub, staker4, staker5},
 			advanceTimeTo: []time.Time{staker1.startTime, staker2.startTime, staker3.startTime, staker3Sub.startTime},
 			expectedStakers: map[ids.NodeID]stakerStatus{
 				staker1.nodeID: current,
@@ -560,9 +560,9 @@ func TestBanffProposalBlockUpdateStakers(t *testing.T) {
 				require.NoError(env.state.Commit())
 			}
 
-			for _, subStaker := range test.subnetStakers {
+			for _, subStaker := range test.chainStakers {
 				wallet := newWallet(t, env, walletConfig{
-					subnetIDs: []ids.ID{netID},
+					chainIDs: []ids.ID{netID},
 				})
 
 				tx, err := wallet.IssueAddChainValidatorTx(
@@ -578,13 +578,13 @@ func TestBanffProposalBlockUpdateStakers(t *testing.T) {
 				)
 				require.NoError(err)
 
-				subnetStaker, err := state.NewPendingStaker(
+				chainStaker, err := state.NewPendingStaker(
 					tx.ID(),
 					tx.Unsigned.(*txs.AddChainValidatorTx),
 				)
 				require.NoError(err)
 
-				require.NoError(env.state.PutPendingValidator(subnetStaker))
+				require.NoError(env.state.PutPendingValidator(chainStaker))
 				env.state.AddTx(tx, status.Committed)
 				require.NoError(env.state.Commit())
 			}
@@ -724,20 +724,20 @@ func TestBanffProposalBlockRemoveNetValidator(t *testing.T) {
 
 	netID := testNet1.ID()
 	wallet := newWallet(t, env, walletConfig{
-		subnetIDs: []ids.ID{netID},
+		chainIDs: []ids.ID{netID},
 	})
 
 	env.config.TrackedChains.Add(netID)
 
-	// Add a subnet validator to the staker set
-	subnetValidatorNodeID := genesistest.DefaultNodeIDs[0]
-	subnetVdr1EndTime := genesistest.DefaultValidatorStartTime.Add(defaultMinStakingDuration)
+	// Add a chain validator to the staker set
+	chainValidatorNodeID := genesistest.DefaultNodeIDs[0]
+	chainVdr1EndTime := genesistest.DefaultValidatorStartTime.Add(defaultMinStakingDuration)
 	tx, err := wallet.IssueAddChainValidatorTx(
 		&txs.ChainValidator{
 			Validator: txs.Validator{
-				NodeID: subnetValidatorNodeID,
+				NodeID: chainValidatorNodeID,
 				Start:  genesistest.DefaultValidatorStartTimeUnix,
-				End:    uint64(subnetVdr1EndTime.Unix()),
+				End:    uint64(chainVdr1EndTime.Unix()),
 				Wght:   1,
 			},
 			Chain: netID,
@@ -761,13 +761,13 @@ func TestBanffProposalBlockRemoveNetValidator(t *testing.T) {
 	// The above validator is now part of the staking set
 
 	// Queue a staker that joins the staker set after the above validator leaves
-	subnetVdr2NodeID := genesistest.DefaultNodeIDs[1]
+	chainVdr2NodeID := genesistest.DefaultNodeIDs[1]
 	tx, err = wallet.IssueAddChainValidatorTx(
 		&txs.ChainValidator{
 			Validator: txs.Validator{
-				NodeID: subnetVdr2NodeID,
-				Start:  uint64(subnetVdr1EndTime.Add(time.Second).Unix()),
-				End:    uint64(subnetVdr1EndTime.Add(time.Second).Add(defaultMinStakingDuration).Unix()),
+				NodeID: chainVdr2NodeID,
+				Start:  uint64(chainVdr1EndTime.Add(time.Second).Unix()),
+				End:    uint64(chainVdr1EndTime.Add(time.Second).Add(defaultMinStakingDuration).Unix()),
 				Wght:   1,
 			},
 			Chain: netID,
@@ -788,11 +788,11 @@ func TestBanffProposalBlockRemoveNetValidator(t *testing.T) {
 	// The above validator is now in the pending staker set
 
 	// Advance time to the first staker's end time.
-	env.clk.Set(subnetVdr1EndTime)
+	env.clk.Set(chainVdr1EndTime)
 
 	// add Staker0 (with the right end time) to state
 	// so to allow proposalBlk issuance
-	staker0EndTime := subnetVdr1EndTime
+	staker0EndTime := chainVdr1EndTime
 	addStaker0, err := wallet.IssueAddValidatorTx(
 		&txs.Validator{
 			NodeID: ids.GenerateTestNodeID(),
@@ -839,7 +839,7 @@ func TestBanffProposalBlockRemoveNetValidator(t *testing.T) {
 	parentBlk, err := env.state.GetStatelessBlock(preferredID)
 	require.NoError(err)
 	statelessProposalBlock, err := block.NewBanffProposalBlock(
-		subnetVdr1EndTime,
+		chainVdr1EndTime,
 		parentBlk.ID(),
 		parentBlk.Height()+1,
 		s0RewardTx,
@@ -856,15 +856,15 @@ func TestBanffProposalBlockRemoveNetValidator(t *testing.T) {
 
 	blkStateMap := env.blkManager.(*manager).blkIDToState
 	updatedState := blkStateMap[commitBlk.ID()].onAcceptState
-	_, err = updatedState.GetCurrentValidator(netID, subnetValidatorNodeID)
+	_, err = updatedState.GetCurrentValidator(netID, chainValidatorNodeID)
 	require.ErrorIs(err, database.ErrNotFound)
 
 	// Check VM Validators are removed successfully
 	require.NoError(propBlk.Accept(context.Background()))
 	require.NoError(commitBlk.Accept(context.Background()))
-	_, ok := env.config.Validators.GetValidator(netID, subnetVdr2NodeID)
+	_, ok := env.config.Validators.GetValidator(netID, chainVdr2NodeID)
 	require.False(ok)
-	_, ok = env.config.Validators.GetValidator(netID, subnetValidatorNodeID)
+	_, ok = env.config.Validators.GetValidator(netID, chainValidatorNodeID)
 	require.False(ok)
 }
 
@@ -880,20 +880,20 @@ func TestBanffProposalBlockTrackedNet(t *testing.T) {
 			}
 
 			wallet := newWallet(t, env, walletConfig{
-				subnetIDs: []ids.ID{netID},
+				chainIDs: []ids.ID{netID},
 			})
 
-			// Add a subnet validator to the staker set
-			subnetValidatorNodeID := genesistest.DefaultNodeIDs[0]
-			subnetVdr1StartTime := genesistest.DefaultValidatorStartTime.Add(1 * time.Minute)
-			subnetVdr1EndTime := genesistest.DefaultValidatorStartTime.Add(10 * defaultMinStakingDuration).Add(1 * time.Minute)
+			// Add a chain validator to the staker set
+			chainValidatorNodeID := genesistest.DefaultNodeIDs[0]
+			chainVdr1StartTime := genesistest.DefaultValidatorStartTime.Add(1 * time.Minute)
+			chainVdr1EndTime := genesistest.DefaultValidatorStartTime.Add(10 * defaultMinStakingDuration).Add(1 * time.Minute)
 
 			tx, err := wallet.IssueAddChainValidatorTx(
 				&txs.ChainValidator{
 					Validator: txs.Validator{
-						NodeID: subnetValidatorNodeID,
-						Start:  uint64(subnetVdr1StartTime.Unix()),
-						End:    uint64(subnetVdr1EndTime.Unix()),
+						NodeID: chainValidatorNodeID,
+						Start:  uint64(chainVdr1StartTime.Unix()),
+						End:    uint64(chainVdr1EndTime.Unix()),
 						Wght:   1,
 					},
 					Chain: netID,
@@ -912,12 +912,12 @@ func TestBanffProposalBlockTrackedNet(t *testing.T) {
 			require.NoError(env.state.Commit())
 
 			// Advance time to the staker's start time.
-			env.clk.Set(subnetVdr1StartTime)
+			env.clk.Set(chainVdr1StartTime)
 
 			// add Staker0 (with the right end time) to state
 			// so to allow proposalBlk issuance
 			staker0StartTime := genesistest.DefaultValidatorStartTime
-			staker0EndTime := subnetVdr1StartTime
+			staker0EndTime := chainVdr1StartTime
 
 			addStaker0, err := wallet.IssueAddValidatorTx(
 				&txs.Validator{
@@ -961,7 +961,7 @@ func TestBanffProposalBlockTrackedNet(t *testing.T) {
 			parentBlk, err := env.state.GetStatelessBlock(preferredID)
 			require.NoError(err)
 			statelessProposalBlock, err := block.NewBanffProposalBlock(
-				subnetVdr1StartTime,
+				chainVdr1StartTime,
 				parentBlk.ID(),
 				parentBlk.Height()+1,
 				s0RewardTx,
@@ -977,7 +977,7 @@ func TestBanffProposalBlockTrackedNet(t *testing.T) {
 
 			require.NoError(propBlk.Accept(context.Background()))
 			require.NoError(commitBlk.Accept(context.Background()))
-			_, ok := env.config.Validators.GetValidator(netID, subnetValidatorNodeID)
+			_, ok := env.config.Validators.GetValidator(netID, chainValidatorNodeID)
 			require.True(ok)
 		})
 	}

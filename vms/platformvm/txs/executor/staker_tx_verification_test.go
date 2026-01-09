@@ -14,12 +14,12 @@ import (
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/mock/gomock"
+	"github.com/luxfi/timer/mockable"
 	"github.com/luxfi/upgrade/upgradetest"
+	"github.com/luxfi/utils"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/state"
 	"github.com/luxfi/vm/vms/platformvm/txs"
@@ -616,7 +616,7 @@ func TestGetValidatorRules(t *testing.T) {
 			expectedErr:   ErrIsNotTransformChainTx,
 		},
 		{
-			name:    "subnet",
+			name:    "chain",
 			netID:   netID,
 			backend: nil,
 			chainStateF: func(ctrl *gomock.Controller) state.Chain {
@@ -733,7 +733,7 @@ func TestGetDelegatorRules(t *testing.T) {
 			expectedErr:   ErrIsNotTransformChainTx,
 		},
 		{
-			name:    "subnet",
+			name:    "chain",
 			netID:   netID,
 			backend: nil,
 			chainStateF: func(ctrl *gomock.Controller) state.Chain {

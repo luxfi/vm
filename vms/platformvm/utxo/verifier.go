@@ -7,12 +7,12 @@ import (
 	"fmt"
 
 	"github.com/luxfi/ids"
+	"github.com/luxfi/timer/mockable"
+	"github.com/luxfi/crypto/hash"
+	"github.com/luxfi/utils/math"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/platformvm/fx"
-	"github.com/luxfi/vm/utils/hashing"
-	"github.com/luxfi/vm/utils/math"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 )
@@ -169,7 +169,7 @@ func (h *verifier) VerifySpendUTXOs(
 			lockedConsumedAsset = make(map[uint64]map[ids.ID]uint64)
 			lockedConsumed[realAssetID] = lockedConsumedAsset
 		}
-		ownerID := hashing.ComputeHash256Array(ownerBytes)
+		ownerID := hash.ComputeHash256Array(ownerBytes)
 		owners, ok := lockedConsumedAsset[locktime]
 		if !ok {
 			owners = make(map[ids.ID]uint64)
@@ -218,7 +218,7 @@ func (h *verifier) VerifySpendUTXOs(
 			lockedProducedAsset = make(map[uint64]map[ids.ID]uint64)
 			lockedProduced[assetID] = lockedProducedAsset
 		}
-		ownerID := hashing.ComputeHash256Array(ownerBytes)
+		ownerID := hash.ComputeHash256Array(ownerBytes)
 		owners, ok := lockedProducedAsset[locktime]
 		if !ok {
 			owners = make(map[ids.ID]uint64)

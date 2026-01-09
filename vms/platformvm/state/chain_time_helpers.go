@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/luxfi/timer/mockable"
+	"github.com/luxfi/container/iterator"
+	"github.com/luxfi/utils/math"
 	"github.com/luxfi/vm/components/gas"
-	"github.com/luxfi/vm/utils/iterator"
-	"github.com/luxfi/vm/utils/math"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/config"
 
 	txfee "github.com/luxfi/vm/vms/platformvm/txs/fee"

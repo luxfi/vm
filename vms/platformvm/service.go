@@ -24,6 +24,7 @@ import (
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
+	safemath "github.com/luxfi/utils/math"
 	"github.com/luxfi/vm/api"
 	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/components/lux"
@@ -31,7 +32,6 @@ import (
 	"github.com/luxfi/vm/platformvm/signer"
 	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/types"
-	safemath "github.com/luxfi/vm/utils/math"
 	"github.com/luxfi/vm/vms/platformvm/reward"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
 	"github.com/luxfi/vm/vms/platformvm/state"
@@ -40,7 +40,7 @@ import (
 	"github.com/luxfi/vm/vms/platformvm/validators/fee"
 	"github.com/luxfi/vm/vms/platformvm/warp/message"
 
-	avajson "github.com/luxfi/vm/utils/json"
+	avajson "github.com/luxfi/utils/json"
 	platformapi "github.com/luxfi/vm/vms/platformvm/api"
 )
 
@@ -1304,7 +1304,7 @@ func (s *Service) Validates(_ *http.Request, args *ValidatesArgs, response *Vali
 				err,
 			)
 		}
-		_, ok := netTx.Unsigned.(*txs.CreateSubnetTx)
+		_, ok := netTx.Unsigned.(*txs.CreateChainTx)
 		if !ok {
 			return fmt.Errorf("%q is not a net", args.NetID)
 		}

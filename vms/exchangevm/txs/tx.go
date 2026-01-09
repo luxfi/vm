@@ -11,11 +11,11 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/p2p/gossip"
+	"github.com/luxfi/crypto/hash"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/nftfx"
 	"github.com/luxfi/vm/propertyfx"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils/hashing"
 	"github.com/luxfi/vm/vms/exchangevm/fxs"
 )
 
@@ -64,7 +64,7 @@ func (t *Tx) Initialize(c codec.Manager) error {
 }
 
 func (t *Tx) SetBytes(unsignedBytes, signedBytes []byte) {
-	t.TxID = hashing.ComputeHash256Array(signedBytes)
+	t.TxID = hash.ComputeHash256Array(signedBytes)
 	t.bytes = signedBytes
 	t.Unsigned.SetBytes(unsignedBytes)
 }
@@ -107,7 +107,7 @@ func (t *Tx) SignSECP256K1Fx(c codec.Manager, signers [][]*secp256k1.PrivateKey)
 		return fmt.Errorf("problem creating transaction: %w", err)
 	}
 
-	hash := hashing.ComputeHash256(unsignedBytes)
+	hash := hash.ComputeHash256(unsignedBytes)
 	for _, keys := range signers {
 		cred := &secp256k1fx.Credential{
 			Sigs: make([][secp256k1.SignatureLen]byte, len(keys)),
@@ -136,7 +136,7 @@ func (t *Tx) SignPropertyFx(c codec.Manager, signers [][]*secp256k1.PrivateKey) 
 		return fmt.Errorf("problem creating transaction: %w", err)
 	}
 
-	hash := hashing.ComputeHash256(unsignedBytes)
+	hash := hash.ComputeHash256(unsignedBytes)
 	for _, keys := range signers {
 		cred := &propertyfx.Credential{Credential: secp256k1fx.Credential{
 			Sigs: make([][secp256k1.SignatureLen]byte, len(keys)),
@@ -165,7 +165,7 @@ func (t *Tx) SignNFTFx(c codec.Manager, signers [][]*secp256k1.PrivateKey) error
 		return fmt.Errorf("problem creating transaction: %w", err)
 	}
 
-	hash := hashing.ComputeHash256(unsignedBytes)
+	hash := hash.ComputeHash256(unsignedBytes)
 	for _, keys := range signers {
 		cred := &nftfx.Credential{Credential: secp256k1fx.Credential{
 			Sigs: make([][secp256k1.SignatureLen]byte, len(keys)),

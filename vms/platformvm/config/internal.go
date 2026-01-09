@@ -25,7 +25,7 @@ type Internal struct {
 	// The node's chain manager
 	Chains chains.Manager
 
-	// Node's validator set maps chainID -> validators of the subnet
+	// Node's validator set maps chainID -> validators of the chain
 	//
 	// Invariant: The primary network's validator set should have been added to
 	//            the manager before calling VM.Initialize.
@@ -86,7 +86,7 @@ type Internal struct {
 	// window.
 	//
 	// This config is particularly useful for triggering proposervm activation
-	// on recently created subnets (without this, users need to wait for
+	// on recently created chains (without this, users need to wait for
 	// [recentlyAcceptedWindowTTL] to pass for activation to occur).
 	UseCurrentHeight bool
 }

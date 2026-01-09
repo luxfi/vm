@@ -14,23 +14,23 @@ import (
 
 var ErrNoPrimaryNetworkConfig = errors.New("no net config for primary network found")
 
-// Nets holds the currently running subnets on this node
+// Nets holds the currently running chains on this node
 type Nets struct {
 	nodeID  ids.NodeID
 	configs map[ids.ID]nets.Config
 
-	lock    sync.RWMutex
-	subnets map[ids.ID]nets.Net
+	lock   sync.RWMutex
+	chains map[ids.ID]nets.Net
 }
 
-// GetOrCreate returns a subnet running on this node, or creates one if it was
-// not running before. Returns the subnet and if the subnet was created.
+// GetOrCreate returns a chain running on this node, or creates one if it was
+// not running before. Returns the chain and if the chain was created.
 func (s *Nets) GetOrCreate(netID ids.ID) (nets.Net, bool) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if subnet, ok := s.subnets[netID]; ok {
-		return subnet, false
+	if chain, ok := s.chains[netID]; ok {
+		return chain, false
 	}
 
 	// Default to the primary network config if a net config was not
@@ -40,10 +40,10 @@ func (s *Nets) GetOrCreate(netID ids.ID) (nets.Net, bool) {
 		config = s.configs[constants.PrimaryNetworkID]
 	}
 
-	subnet := nets.New(s.nodeID, config)
-	s.subnets[netID] = subnet
+	chain := nets.New(s.nodeID, config)
+	s.chains[netID] = chain
 
-	return subnet, true
+	return chain, true
 }
 
 // Bootstrapping returns the netIDs of any chains that are still
@@ -52,14 +52,14 @@ func (s *Nets) Bootstrapping() []ids.ID {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	subnetsBootstrapping := make([]ids.ID, 0, len(s.subnets))
-	for netID, subnet := range s.subnets {
-		if !subnet.IsBootstrapped() {
-			subnetsBootstrapping = append(subnetsBootstrapping, netID)
+	chainsBootstrapping := make([]ids.ID, 0, len(s.chains))
+	for netID, chain := range s.chains {
+		if !chain.IsBootstrapped() {
+			chainsBootstrapping = append(chainsBootstrapping, netID)
 		}
 	}
 
-	return subnetsBootstrapping
+	return chainsBootstrapping
 }
 
 // NewNets returns an instance of Nets
@@ -74,7 +74,7 @@ func NewNets(
 	s := &Nets{
 		nodeID:  nodeID,
 		configs: configs,
-		subnets: make(map[ids.ID]nets.Net),
+		chains:  make(map[ids.ID]nets.Net),
 	}
 
 	_, _ = s.GetOrCreate(constants.PrimaryNetworkID)

@@ -15,12 +15,12 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls/signer/localsigner"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/timer/mockable"
 	"github.com/luxfi/upgrade/upgradetest"
+	"github.com/luxfi/container/iterator"
 	"github.com/luxfi/vm/chain"
 	"github.com/luxfi/vm/platformvm/signer"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils/iterator"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/block"
 	"github.com/luxfi/vm/vms/platformvm/reward"
 	"github.com/luxfi/vm/vms/platformvm/state"
@@ -37,14 +37,14 @@ func TestBuildBlockBasic(t *testing.T) {
 	env.ctx.Lock.Lock()
 	defer env.ctx.Lock.Unlock()
 
-	subnetID := testNet1.ID()
+	chainID := testNet1.ID()
 	wallet := newWallet(t, env, walletConfig{
-		netIDs: []ids.ID{subnetID},
+		netIDs: []ids.ID{chainID},
 	})
 
 	// Create a valid transaction
 	tx, err := wallet.IssueCreateChainTx(
-		subnetID,
+		chainID,
 		nil,
 		constants.XVMID,
 		nil,
@@ -253,14 +253,14 @@ func TestBuildBlockForceAdvanceTime(t *testing.T) {
 	env.ctx.Lock.Lock()
 	defer env.ctx.Lock.Unlock()
 
-	subnetID := testNet1.ID()
+	chainID := testNet1.ID()
 	wallet := newWallet(t, env, walletConfig{
-		netIDs: []ids.ID{subnetID},
+		netIDs: []ids.ID{chainID},
 	})
 
 	// Create a valid transaction
 	tx, err := wallet.IssueCreateChainTx(
-		subnetID,
+		chainID,
 		nil,
 		constants.XVMID,
 		nil,
@@ -417,9 +417,9 @@ func TestPreviouslyDroppedTxsCannotBeReAddedToMempool(t *testing.T) {
 	env.ctx.Lock.Lock()
 	defer env.ctx.Lock.Unlock()
 
-	subnetID := testNet1.ID()
+	chainID := testNet1.ID()
 	wallet := newWallet(t, env, walletConfig{
-		netIDs: []ids.ID{subnetID},
+		netIDs: []ids.ID{chainID},
 	})
 
 	// Create a valid transaction

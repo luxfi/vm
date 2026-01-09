@@ -4,8 +4,8 @@
 package state
 
 import (
-	"github.com/luxfi/vm/utils/heap"
-	"github.com/luxfi/vm/utils/iterator"
+	"github.com/luxfi/utils/heap"
+	"github.com/luxfi/container/iterator"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 )
 
