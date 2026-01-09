@@ -9,7 +9,7 @@ import (
 	"fmt"
 
 	"github.com/luxfi/crypto/secp256k1"
-	"github.com/luxfi/address/formatting"
+	"github.com/luxfi/formatting"
 )
 
 var ErrNilCredential = errors.New("nil credential")
