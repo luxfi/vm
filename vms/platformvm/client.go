@@ -5,10 +5,10 @@ package platformvm
 
 import (
 	"context"
-	"github.com/luxfi/crypto/address/formatting"
+	"github.com/luxfi/address/formatting"
 	"time"
 
-	"github.com/luxfi/crypto/address"
+	"github.com/luxfi/address"
 	validators "github.com/luxfi/consensus/validator"
 	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls"

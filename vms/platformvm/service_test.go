@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/luxfi/crypto/address/formatting"
+	"github.com/luxfi/address/formatting"
 	"math"
 	"math/rand"
 	"net/http"
@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/luxfi/crypto/address"
+	"github.com/luxfi/address"
 	"github.com/luxfi/cache/lru"
 	"github.com/luxfi/consensus"
 	"github.com/luxfi/consensus/engine/chain"

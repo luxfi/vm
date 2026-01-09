@@ -14,7 +14,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/luxfi/crypto/address/formatting"
+	"github.com/luxfi/address/formatting"
 	"github.com/luxfi/cache/lru"
 	"github.com/luxfi/log"
 
