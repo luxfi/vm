@@ -7,7 +7,7 @@ import (
 	"cmp"
 	"fmt"
 
-	"github.com/luxfi/address"
+	"github.com/luxfi/crypto/address"
 	"github.com/luxfi/codec"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/components/lux"
