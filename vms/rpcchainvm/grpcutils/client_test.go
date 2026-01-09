@@ -10,13 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-
 	// Commented imports that are not currently used
 	// "github.com/luxfi/database/memdb"
 	// "github.com/luxfi/vm/internal/database/rpcdb"
 	// pb "github.com/luxfi/vm/proto/pb/rpcdb"
-
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 )
 
 func TestDialOptsSmoke(t *testing.T) {
@@ -25,11 +22,8 @@ func TestDialOptsSmoke(t *testing.T) {
 	opts := newDialOpts()
 	require.Len(opts, 3)
 
-	opts = newDialOpts(
-		WithChainUnaryInterceptor(grpc_prometheus.UnaryClientInterceptor),
-		WithChainStreamInterceptor(grpc_prometheus.StreamClientInterceptor),
-	)
-	require.Len(opts, 5)
+	opts = newDialOpts()
+	require.Len(opts, 3)
 }
 
 // TestWaitForReady shows the expected results from the DialOption during

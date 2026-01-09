@@ -10,7 +10,7 @@ import (
 
 	"github.com/luxfi/consensus/core/choices"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/hashing"
+	"github.com/luxfi/crypto/hash"
 )
 
 var (
@@ -187,7 +187,7 @@ func (b *Block) Verify(ctx context.Context) error {
 // Bytes implements the chain.Block interface
 func (b *Block) Bytes() []byte {
 	if b.bytes == nil {
-		b.bytes = hashing.ComputeHash256([]byte(b.id.String()))
+		b.bytes = hash.ComputeHash256([]byte(b.id.String()))
 	}
 	return b.bytes
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/vm/utils/hashing"
+	"github.com/luxfi/crypto/hash"
 )
 
 var (
@@ -255,7 +255,7 @@ func (s *state) appendTraitKeys(keys *[][]byte, keySet *set.Set[ids.ID], limit *
 
 		// Calculate the hash of the key to check against the set and ensure
 		// we don't add the same element twice.
-		id := hashing.ComputeHash256Array(key)
+		id := hash.ComputeHash256Array(key)
 		if keySet.Contains(id) {
 			continue
 		}

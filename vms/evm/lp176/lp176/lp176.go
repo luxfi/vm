@@ -18,10 +18,10 @@ import (
 
 	"github.com/holiman/uint256"
 
+	"github.com/luxfi/utils/wrappers"
 	"github.com/luxfi/vm/components/gas"
-	"github.com/luxfi/vm/utils/wrappers"
 
-	safemath "github.com/luxfi/vm/utils/math"
+	safemath "github.com/luxfi/utils/math"
 )
 
 const (

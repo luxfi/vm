@@ -22,14 +22,14 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/upgrade/upgradetest"
+	"github.com/luxfi/utils"
 	"github.com/luxfi/vm/chains"
 	"github.com/luxfi/vm/chains/atomic"
-	"github.com/luxfi/vm/utils"
 
 	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/log"
-	"github.com/luxfi/vm/utils/timer/mockable"
+	"github.com/luxfi/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/config"
 
 	"github.com/luxfi/vm/platformvm/fx"
@@ -240,7 +240,7 @@ func newWallet(t testing.TB, e *environment, c walletConfig) wallet.Wallet {
 		TxFee:                 constants.MilliLux,
 		CreateAssetTxFee:      constants.MilliLux,
 		CreateNetTxFee:        constants.Lux,
-		CreateBlockchainTxFee: constants.Lux,
+		CreateChainTxFee: constants.Lux,
 	}
 	return txstest.NewWallet(
 		t,
@@ -262,7 +262,7 @@ func addNet(t *testing.T, env *environment) {
 	})
 
 	var err error
-	testNet1, err = wallet.IssueCreateSubnetTx(
+	testNet1, err = wallet.IssueCreateChainTx(
 		&secp256k1fx.OutputOwners{
 			Threshold: 2,
 			Addrs: []ids.ShortID{

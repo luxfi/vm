@@ -24,7 +24,7 @@ type Backend struct {
 	TypeToFxIndex map[reflect.Type]int
 	Codec         codec.Manager
 	// Note: FeeAssetID may be different than ctx.XAssetID if this XVM is
-	// running in a subnet.
+	// running in a chain.
 	FeeAssetID   ids.ID
 	Bootstrapped bool
 

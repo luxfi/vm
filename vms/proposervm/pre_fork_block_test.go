@@ -19,8 +19,8 @@ import (
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
+	"github.com/luxfi/timer/mockable"
 	componentblocktest "github.com/luxfi/vm/chain/blocktest"
-	"github.com/luxfi/vm/utils/timer/mockable"
 
 	engineBlock "github.com/luxfi/consensus/engine/chain/block"
 	statelessblock "github.com/luxfi/vm/vms/proposervm/block"

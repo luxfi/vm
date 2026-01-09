@@ -10,7 +10,7 @@ import (
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/hashing"
+	"github.com/luxfi/crypto/hash"
 )
 
 type rcLock struct {
@@ -111,5 +111,5 @@ func sharedID(id1, id2 ids.ID) ids.ID {
 	if err != nil {
 		panic(err)
 	}
-	return hashing.ComputeHash256Array(combinedBytes)
+	return hash.ComputeHash256Array(combinedBytes)
 }

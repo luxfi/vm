@@ -11,9 +11,9 @@ import (
 
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
+	"github.com/luxfi/utils/json"
 	"github.com/luxfi/vm/api"
 	"github.com/luxfi/vm/chains"
-	"github.com/luxfi/vm/utils/json"
 	"github.com/luxfi/warp"
 )
 

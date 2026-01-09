@@ -24,16 +24,16 @@ import (
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/metric"
+	"github.com/luxfi/timer/mockable"
 	"github.com/luxfi/upgrade"
 	"github.com/luxfi/upgrade/upgradetest"
+	"github.com/luxfi/utils"
+	"github.com/luxfi/container/iterator"
 	"github.com/luxfi/vm/chains/atomic"
 	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/iterator"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/block"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
@@ -206,7 +206,7 @@ func TestVerifierVisitAtomicBlock(t *testing.T) {
 			},
 			verifier.state,
 			secp256k1fx.NewKeychain(genesistest.DefaultFundedKeys[0]),
-			nil, // subnetIDs
+			nil, // chainIDs
 			nil, // validationIDs
 			nil, // chainIDs
 		)
@@ -365,7 +365,7 @@ func TestVerifierVisitStandardBlock(t *testing.T) {
 			},
 			verifier.state,
 			secp256k1fx.NewKeychain(genesistest.DefaultFundedKeys[0]),
-			nil,                    // subnetIDs
+			nil,                    // chainIDs
 			nil,                    // validationIDs
 			[]ids.ID{ctx.XChainID}, // Read the UTXO to import
 		)
@@ -1169,7 +1169,7 @@ func TestBlockExecutionWithComplexity(t *testing.T) {
 		},
 		verifier.state,
 		secp256k1fx.NewKeychain(genesistest.DefaultFundedKeys[0]),
-		nil, // subnetIDs
+		nil, // chainIDs
 		nil, // validationIDs
 		nil, // chainIDs
 	)

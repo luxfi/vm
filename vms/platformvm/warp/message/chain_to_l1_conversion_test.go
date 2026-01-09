@@ -10,8 +10,8 @@ import (
 
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/crypto/hash"
 	"github.com/luxfi/vm/types"
-	"github.com/luxfi/vm/utils/hashing"
 )
 
 func TestChainToL1ConversionID(t *testing.T) {
@@ -53,7 +53,7 @@ func TestChainToL1ConversionID(t *testing.T) {
 		// Weight:
 		0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d,
 	}
-	var expectedChainToL1ConversionID ids.ID = hashing.ComputeHash256Array(chainToL1ConversionDataBytes)
+	var expectedChainToL1ConversionID ids.ID = hash.ComputeHash256Array(chainToL1ConversionDataBytes)
 
 	chainToL1ConversionData := ChainToL1ConversionData{
 		ChainID: ids.ID{

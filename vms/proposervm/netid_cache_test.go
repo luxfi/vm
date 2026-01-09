@@ -31,7 +31,7 @@ func (m *mockValidatorState) GetChainID(ids.ID) (ids.ID, error) {
 	return ids.Empty, nil
 }
 
-func (m *mockValidatorState) GetSubnetID(chainID ids.ID) (ids.ID, error) {
+func (m *mockValidatorState) GetChainID(chainID ids.ID) (ids.ID, error) {
 	return ids.Empty, nil
 }
 

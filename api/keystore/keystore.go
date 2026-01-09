@@ -15,9 +15,9 @@ import (
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
+	"github.com/luxfi/utils/json"
+	"github.com/luxfi/utils/password"
 	"github.com/luxfi/vm/chains/atomic"
-	"github.com/luxfi/vm/utils/json"
-	"github.com/luxfi/vm/utils/password"
 )
 
 const (

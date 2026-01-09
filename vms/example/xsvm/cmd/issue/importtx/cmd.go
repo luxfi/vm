@@ -52,7 +52,7 @@ func Import(ctx context.Context, config *Config) (*status.TxIssuance, error) {
 		// Note: here we assume the unsigned message is correct from the last
 		//       URI in sourceURIs. In practice this shouldn't be done.
 		unsignedMessage *warp.UnsignedMessage
-		// Note: assumes that sourceURIs are all of the validators of the subnet
+		// Note: assumes that sourceURIs are all of the validators of the chain
 		//       and that they do not share public keys.
 		signatures = make([]*bls.Signature, len(config.SourceURIs))
 	)

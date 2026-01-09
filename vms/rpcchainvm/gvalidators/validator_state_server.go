@@ -38,12 +38,12 @@ func (s *Server) GetCurrentHeight(ctx context.Context, _ *emptypb.Empty) (*pb.Ge
 func (s *Server) GetNetID(ctx context.Context, req *pb.GetNetIDRequest) (*pb.GetNetIDResponse, error) {
 	// validators.State doesn't have GetNetID - return empty ID
 	return &pb.GetNetIDResponse{
-		NetId: ids.Empty[:],
+		ChainId: ids.Empty[:],
 	}, nil
 }
 
 func (s *Server) GetValidatorSet(ctx context.Context, req *pb.GetValidatorSetRequest) (*pb.GetValidatorSetResponse, error) {
-	netID, err := ids.ToID(req.NetId)
+	netID, err := ids.ToID(req.ChainId)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (s *Server) GetValidatorSet(ctx context.Context, req *pb.GetValidatorSetReq
 }
 
 func (s *Server) GetCurrentValidatorSet(ctx context.Context, req *pb.GetCurrentValidatorSetRequest) (*pb.GetCurrentValidatorSetResponse, error) {
-	netID, err := ids.ToID(req.NetId)
+	netID, err := ids.ToID(req.ChainId)
 	if err != nil {
 		return nil, err
 	}

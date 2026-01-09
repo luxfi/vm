@@ -37,7 +37,7 @@ var (
 )
 
 // ChainVM wraps the functional DEX VM to implement the block.ChainVM interface
-// required for running as an L2 subnet plugin.
+// required for running as an L2 chain plugin.
 type ChainVM struct {
 	// The inner functional VM
 	inner *VM

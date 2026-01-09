@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/luxfi/ids"
+	"github.com/luxfi/utils"
 	"github.com/luxfi/vm/components/verify"
-	"github.com/luxfi/vm/utils"
 )
 
 var (

@@ -151,7 +151,7 @@ func (pe *ProtocolExecutor) CreateHandler(
 	handler, err := protocol.NewHandler(
 		ctx,
 		pe.logger,
-		nil, // No prometheus registry for now
+		nil, // No metrics registry for now
 		startFunc,
 		[]byte(sessionID),
 		protocol.DefaultConfig(),

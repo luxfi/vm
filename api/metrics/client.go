@@ -38,7 +38,7 @@ func NewClient(uri string) *Client {
 
 // GetMetrics returns the metrics from the connected node. The metrics are
 // returned as a map of metric family name to the metric family.
-func (c *Client) GetMetrics(ctx context.Context) (map[string]*metric.DTOMetricFamily, error) {
+func (c *Client) GetMetrics(ctx context.Context) (map[string]*metric.MetricFamily, error) {
 	uri, err := url.Parse(c.uri)
 	if err != nil {
 		return nil, err

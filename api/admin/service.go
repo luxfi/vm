@@ -20,14 +20,14 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
+	"github.com/luxfi/utils"
+	"github.com/luxfi/utils/json"
+	"github.com/luxfi/utils/perms"
+	"github.com/luxfi/utils/profiler"
 	"github.com/luxfi/vm/api"
 	"github.com/luxfi/vm/api/server"
 	"github.com/luxfi/vm/chains"
 	"github.com/luxfi/vm/registry"
-	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/json"
-	"github.com/luxfi/vm/utils/perms"
-	"github.com/luxfi/vm/utils/profiler"
 	"github.com/luxfi/vm/vms"
 )
 

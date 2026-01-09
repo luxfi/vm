@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/luxfi/vm/utils/timer/mockable"
+	"github.com/luxfi/timer/mockable"
 	"github.com/stretchr/testify/require"
 
 	consensustest "github.com/luxfi/consensus/test/helpers"

@@ -12,7 +12,7 @@ import (
 
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/iterator"
+	"github.com/luxfi/container/iterator"
 )
 
 var ErrAddingStakerAfterDeletion = errors.New("attempted to add a staker after deleting it")
@@ -51,7 +51,7 @@ type CurrentStakers interface {
 	// GetCurrentDelegatorIterator returns the delegators associated with the
 	// validator on [netID] with [nodeID]. Delegators are sorted by their
 	// removal from current staker set.
-	GetCurrentDelegatorIterator(subnetID ids.ID, nodeID ids.NodeID) (iterator.Iterator[*Staker], error)
+	GetCurrentDelegatorIterator(chainID ids.ID, nodeID ids.NodeID) (iterator.Iterator[*Staker], error)
 
 	// PutCurrentDelegator adds the [staker] describing a delegator to the
 	// staker set.
@@ -87,7 +87,7 @@ type PendingStakers interface {
 	// GetPendingDelegatorIterator returns the delegators associated with the
 	// validator on [netID] with [nodeID]. Delegators are sorted by their
 	// removal from pending staker set.
-	GetPendingDelegatorIterator(subnetID ids.ID, nodeID ids.NodeID) (iterator.Iterator[*Staker], error)
+	GetPendingDelegatorIterator(chainID ids.ID, nodeID ids.NodeID) (iterator.Iterator[*Staker], error)
 
 	// PutPendingDelegator adds the [staker] describing a delegator to the
 	// staker set.
@@ -105,7 +105,7 @@ type PendingStakers interface {
 type baseStakers struct {
 	// mu protects concurrent access to the btree and maps
 	mu sync.RWMutex
-	// netID --> nodeID --> current state for the validator of the subnet
+	// netID --> nodeID --> current state for the validator of the chain
 	validators map[ids.ID]map[ids.NodeID]*baseStaker
 	stakers    *btree.BTreeG[*Staker]
 	// netID --> nodeID --> diff for that validator since the last db write
@@ -128,11 +128,11 @@ func newBaseStakers() *baseStakers {
 func (v *baseStakers) GetValidator(netID ids.ID, nodeID ids.NodeID) (*Staker, error) {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
-	subnetValidators, ok := v.validators[netID]
+	chainValidators, ok := v.validators[netID]
 	if !ok {
 		return nil, database.ErrNotFound
 	}
-	validator, ok := subnetValidators[nodeID]
+	validator, ok := chainValidators[nodeID]
 	if !ok {
 		return nil, database.ErrNotFound
 	}
@@ -169,14 +169,14 @@ func (v *baseStakers) DeleteValidator(staker *Staker) {
 	v.stakers.Delete(staker)
 }
 
-func (v *baseStakers) GetDelegatorIterator(subnetID ids.ID, nodeID ids.NodeID) iterator.Iterator[*Staker] {
+func (v *baseStakers) GetDelegatorIterator(chainID ids.ID, nodeID ids.NodeID) iterator.Iterator[*Staker] {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
-	subnetValidators, ok := v.validators[subnetID]
+	chainValidators, ok := v.validators[chainID]
 	if !ok {
 		return iterator.Empty[*Staker]{}
 	}
-	validator, ok := subnetValidators[nodeID]
+	validator, ok := chainValidators[nodeID]
 	if !ok {
 		return iterator.Empty[*Staker]{}
 	}
@@ -264,15 +264,15 @@ func (v *baseStakers) LoadDelegator(staker *Staker) {
 
 // getOrCreateValidatorLocked requires the caller to hold v.mu (write lock)
 func (v *baseStakers) getOrCreateValidatorLocked(netID ids.ID, nodeID ids.NodeID) *baseStaker {
-	subnetValidators, ok := v.validators[netID]
+	chainValidators, ok := v.validators[netID]
 	if !ok {
-		subnetValidators = make(map[ids.NodeID]*baseStaker)
-		v.validators[netID] = subnetValidators
+		chainValidators = make(map[ids.NodeID]*baseStaker)
+		v.validators[netID] = chainValidators
 	}
-	validator, ok := subnetValidators[nodeID]
+	validator, ok := chainValidators[nodeID]
 	if !ok {
 		validator = &baseStaker{}
-		subnetValidators[nodeID] = validator
+		chainValidators[nodeID] = validator
 	}
 	return validator
 }
@@ -280,33 +280,33 @@ func (v *baseStakers) getOrCreateValidatorLocked(netID ids.ID, nodeID ids.NodeID
 // pruneValidatorLocked assumes that the named validator is currently in the
 // [validators] map. Requires the caller to hold v.mu (write lock).
 func (v *baseStakers) pruneValidatorLocked(netID ids.ID, nodeID ids.NodeID) {
-	subnetValidators := v.validators[netID]
-	validator := subnetValidators[nodeID]
+	chainValidators := v.validators[netID]
+	validator := chainValidators[nodeID]
 	if validator.validator != nil {
 		return
 	}
 	if validator.delegators != nil && validator.delegators.Len() > 0 {
 		return
 	}
-	delete(subnetValidators, nodeID)
-	if len(subnetValidators) == 0 {
+	delete(chainValidators, nodeID)
+	if len(chainValidators) == 0 {
 		delete(v.validators, netID)
 	}
 }
 
 // getOrCreateValidatorDiffLocked requires the caller to hold v.mu (write lock)
 func (v *baseStakers) getOrCreateValidatorDiffLocked(netID ids.ID, nodeID ids.NodeID) *diffValidator {
-	subnetValidatorDiffs, ok := v.validatorDiffs[netID]
+	chainValidatorDiffs, ok := v.validatorDiffs[netID]
 	if !ok {
-		subnetValidatorDiffs = make(map[ids.NodeID]*diffValidator)
-		v.validatorDiffs[netID] = subnetValidatorDiffs
+		chainValidatorDiffs = make(map[ids.NodeID]*diffValidator)
+		v.validatorDiffs[netID] = chainValidatorDiffs
 	}
-	validatorDiff, ok := subnetValidatorDiffs[nodeID]
+	validatorDiff, ok := chainValidatorDiffs[nodeID]
 	if !ok {
 		validatorDiff = &diffValidator{
 			validatorStatus: unmodified,
 		}
-		subnetValidatorDiffs[nodeID] = validatorDiff
+		chainValidatorDiffs[nodeID] = validatorDiff
 	}
 	return validatorDiff
 }
@@ -360,16 +360,16 @@ func (d *diffValidator) WeightDiff() (ValidatorWeightDiff, error) {
 	return weightDiff, nil
 }
 
-// GetValidator attempts to fetch the validator with the given subnetID and
+// GetValidator attempts to fetch the validator with the given chainID and
 // nodeID.
 // Invariant: Assumes that the validator will never be removed and then added.
 func (s *diffStakers) GetValidator(netID ids.ID, nodeID ids.NodeID) (*Staker, diffValidatorStatus) {
-	subnetValidatorDiffs, ok := s.validatorDiffs[netID]
+	chainValidatorDiffs, ok := s.validatorDiffs[netID]
 	if !ok {
 		return nil, unmodified
 	}
 
-	validatorDiff, ok := subnetValidatorDiffs[nodeID]
+	validatorDiff, ok := chainValidatorDiffs[nodeID]
 	if !ok {
 		return nil, unmodified
 	}
@@ -418,15 +418,15 @@ func (s *diffStakers) DeleteValidator(staker *Staker) {
 
 func (s *diffStakers) GetDelegatorIterator(
 	parentIterator iterator.Iterator[*Staker],
-	subnetID ids.ID,
+	chainID ids.ID,
 	nodeID ids.NodeID,
 ) iterator.Iterator[*Staker] {
 	var (
 		addedDelegatorIterator iterator.Iterator[*Staker] = iterator.Empty[*Staker]{}
 		deletedDelegators      map[ids.ID]*Staker
 	)
-	if subnetValidatorDiffs, ok := s.validatorDiffs[subnetID]; ok {
-		if validatorDiff, ok := subnetValidatorDiffs[nodeID]; ok {
+	if chainValidatorDiffs, ok := s.validatorDiffs[chainID]; ok {
+		if validatorDiff, ok := chainValidatorDiffs[nodeID]; ok {
 			addedDelegatorIterator = iterator.FromTree(validatorDiff.addedDelegators)
 			deletedDelegators = validatorDiff.deletedDelegators
 		}
@@ -489,17 +489,17 @@ func (s *diffStakers) getOrCreateDiff(netID ids.ID, nodeID ids.NodeID) *diffVali
 	if s.validatorDiffs == nil {
 		s.validatorDiffs = make(map[ids.ID]map[ids.NodeID]*diffValidator)
 	}
-	subnetValidatorDiffs, ok := s.validatorDiffs[netID]
+	chainValidatorDiffs, ok := s.validatorDiffs[netID]
 	if !ok {
-		subnetValidatorDiffs = make(map[ids.NodeID]*diffValidator)
-		s.validatorDiffs[netID] = subnetValidatorDiffs
+		chainValidatorDiffs = make(map[ids.NodeID]*diffValidator)
+		s.validatorDiffs[netID] = chainValidatorDiffs
 	}
-	validatorDiff, ok := subnetValidatorDiffs[nodeID]
+	validatorDiff, ok := chainValidatorDiffs[nodeID]
 	if !ok {
 		validatorDiff = &diffValidator{
 			validatorStatus: unmodified,
 		}
-		subnetValidatorDiffs[nodeID] = validatorDiff
+		chainValidatorDiffs[nodeID] = validatorDiff
 	}
 	return validatorDiff
 }

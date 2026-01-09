@@ -12,8 +12,8 @@ import (
 	validators "github.com/luxfi/consensus/validator"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/hashing"
-	"github.com/luxfi/vm/utils/wrappers"
+	"github.com/luxfi/crypto/hash"
+	"github.com/luxfi/utils/wrappers"
 	"github.com/luxfi/vm/vms/example/xsvm/state"
 	"github.com/luxfi/vm/vms/example/xsvm/tx"
 	"github.com/luxfi/vm/vms/platformvm/warp"
@@ -150,7 +150,7 @@ func (t *Tx) Import(i *tx.Import) error {
 		)
 	}
 
-	var loanID ids.ID = hashing.ComputeHash256Array(message.UnsignedMessage.Bytes())
+	var loanID ids.ID = hash.ComputeHash256Array(message.UnsignedMessage.Bytes())
 	hasLoanID, err := state.HasLoanID(t.Database, message.SourceChainID, loanID)
 	if hasLoanID {
 		return errDuplicateImport

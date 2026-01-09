@@ -12,16 +12,16 @@ import (
 
 	"github.com/luxfi/address"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/utils"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/nftfx"
 	"github.com/luxfi/vm/propertyfx"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/vms/exchangevm/fxs"
 	"github.com/luxfi/vm/vms/exchangevm/txs"
 
-	avajson "github.com/luxfi/vm/utils/json"
+	avajson "github.com/luxfi/utils/json"
 )
 
 var (

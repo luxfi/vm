@@ -26,10 +26,10 @@ import (
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/staking"
+	"github.com/luxfi/timer/mockable"
 	"github.com/luxfi/upgrade"
 	"github.com/luxfi/upgrade/upgradetest"
 	componentblocktest "github.com/luxfi/vm/chain/blocktest"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/proposervm/lp181"
 	"github.com/luxfi/vm/vms/proposervm/proposer"
 
@@ -2626,7 +2626,7 @@ func TestSelectChildPChainHeight(t *testing.T) {
 		name                 string
 		time                 time.Time
 		networkID            uint32
-		subnetID             ids.ID
+		chainID             ids.ID
 		currentPChainHeight  uint64
 		minPChainHeight      uint64
 		expectedPChainHeight uint64
@@ -2635,7 +2635,7 @@ func TestSelectChildPChainHeight(t *testing.T) {
 			name:                 "no override - mainnet",
 			time:                 beforeOverrideEnds,
 			networkID:            constants.MainnetID,
-			subnetID:             ids.GenerateTestID(),
+			chainID:             ids.GenerateTestID(),
 			currentPChainHeight:  fujiOverridePChainHeightUntilHeight + 2,
 			minPChainHeight:      fujiOverridePChainHeightUntilHeight - 5,
 			expectedPChainHeight: fujiOverridePChainHeightUntilHeight + 2,
@@ -2644,7 +2644,7 @@ func TestSelectChildPChainHeight(t *testing.T) {
 			name:                 "no override - primary network",
 			time:                 beforeOverrideEnds,
 			networkID:            constants.FujiID,
-			subnetID:             constants.PrimaryNetworkID,
+			chainID:             constants.PrimaryNetworkID,
 			currentPChainHeight:  fujiOverridePChainHeightUntilHeight + 2,
 			minPChainHeight:      fujiOverridePChainHeightUntilHeight - 5,
 			expectedPChainHeight: fujiOverridePChainHeightUntilHeight + 2,
@@ -2653,7 +2653,7 @@ func TestSelectChildPChainHeight(t *testing.T) {
 			name:                 "no override - expired network",
 			time:                 fujiOverridePChainHeightUntilTimestamp,
 			networkID:            constants.FujiID,
-			subnetID:             ids.GenerateTestID(),
+			chainID:             ids.GenerateTestID(),
 			currentPChainHeight:  fujiOverridePChainHeightUntilHeight + 2,
 			minPChainHeight:      fujiOverridePChainHeightUntilHeight - 5,
 			expectedPChainHeight: fujiOverridePChainHeightUntilHeight + 2,
@@ -2662,7 +2662,7 @@ func TestSelectChildPChainHeight(t *testing.T) {
 			name:                 "no override - chain previously advanced",
 			time:                 beforeOverrideEnds,
 			networkID:            constants.FujiID,
-			subnetID:             ids.GenerateTestID(),
+			chainID:             ids.GenerateTestID(),
 			currentPChainHeight:  fujiOverridePChainHeightUntilHeight + 2,
 			minPChainHeight:      fujiOverridePChainHeightUntilHeight + 1,
 			expectedPChainHeight: fujiOverridePChainHeightUntilHeight + 2,
@@ -2671,7 +2671,7 @@ func TestSelectChildPChainHeight(t *testing.T) {
 			name:                 "override",
 			time:                 beforeOverrideEnds,
 			networkID:            constants.FujiID,
-			subnetID:             ids.GenerateTestID(),
+			chainID:             ids.GenerateTestID(),
 			currentPChainHeight:  fujiOverridePChainHeightUntilHeight + 2,
 			minPChainHeight:      fujiOverridePChainHeightUntilHeight - 5,
 			expectedPChainHeight: fujiOverridePChainHeightUntilHeight - 5,
@@ -2687,7 +2687,7 @@ func TestSelectChildPChainHeight(t *testing.T) {
 
 			proVM.Clock.Set(test.time)
 			proVM.ctx.NetworkID = test.networkID
-			proVM.ctx.ChainID = test.subnetID
+			proVM.ctx.ChainID = test.chainID
 
 
 			actualPChainHeight, err := proVM.selectChildPChainHeight(

@@ -15,8 +15,8 @@ import (
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/memdb"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/maybe"
+	"github.com/luxfi/utils"
+	"github.com/luxfi/utils/maybe"
 	"github.com/luxfi/vm/vms/platformvm/block"
 )
 
@@ -96,7 +96,7 @@ func TestL1Validator_immutableFieldsAreUnmodified(t *testing.T) {
 		v := randomizeL1Validator(newL1Validator())
 		require.True(t, l1Validator.immutableFieldsAreUnmodified(v))
 	})
-	t.Run("different subnetID", func(t *testing.T) {
+	t.Run("different chainID", func(t *testing.T) {
 		v := randomizeL1Validator(l1Validator)
 		v.ChainID = ids.GenerateTestID()
 		require.False(t, l1Validator.immutableFieldsAreUnmodified(v))

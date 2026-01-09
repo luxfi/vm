@@ -19,11 +19,11 @@ import (
 	"github.com/luxfi/database/memdb"
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/timer/mockable"
 	"github.com/luxfi/vm/chains/atomic"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/exchangevm/fxs"
 	"github.com/luxfi/vm/vms/exchangevm/state"
 	"github.com/luxfi/vm/vms/exchangevm/state/statemock"
@@ -780,11 +780,11 @@ func TestSemanticVerifierExportTx(t *testing.T) {
 
 // testValidatorState is a simple stub for consensusctx.ValidatorState used in tests
 type testValidatorState struct {
-	chainID ids.ID // The chain/subnet ID this validator state returns
+	chainID ids.ID // The chain/chain ID this validator state returns
 }
 
 func (t *testValidatorState) GetChainID(_ ids.ID) (ids.ID, error) {
-	// Returns the subnet/chain ID for the given chain
+	// Returns the chain/chain ID for the given chain
 	return t.chainID, nil
 }
 
@@ -792,7 +792,7 @@ func (t *testValidatorState) GetNetworkID(_ ids.ID) (ids.ID, error) {
 	return t.chainID, nil
 }
 
-func (t *testValidatorState) GetSubnetID(_ ids.ID) (ids.ID, error) {
+func (t *testValidatorState) GetChainID(_ ids.ID) (ids.ID, error) {
 	return ids.Empty, nil
 }
 
