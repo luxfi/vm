@@ -14,7 +14,7 @@ import (
 	"github.com/luxfi/database/dbtest"
 	"github.com/luxfi/database/memdb"
 	"github.com/luxfi/log"
-	"github.com/luxfi/vm/vms/rpcchainvm/grpcutils"
+	"github.com/luxfi/vm/rpcchainvm/grpcutils"
 
 	rpcdbpb "github.com/luxfi/vm/proto/pb/rpcdb"
 )

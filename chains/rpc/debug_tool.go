@@ -219,11 +219,11 @@ type TestResult struct {
 
 // RPCTest represents a test of a specific RPC method.
 type RPCTest struct {
-	Method   string
-	URL      string
-	Success  bool
-	Result   string
-	Error    string
+	Method  string
+	URL     string
+	Success bool
+	Result  string
+	Error   string
 }
 
 // GetBestURL returns the first working URL from the tests.

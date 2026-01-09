@@ -16,12 +16,12 @@ import (
 	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
-	"github.com/luxfi/vm/vms/platformvm/fx"
-	"github.com/luxfi/vm/vms/platformvm/signer"
+	"github.com/luxfi/vm/platformvm/fx"
+	"github.com/luxfi/vm/platformvm/signer"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 	"github.com/luxfi/vm/vms/platformvm/warp/message"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 func TestTxComplexity_Individual(t *testing.T) {

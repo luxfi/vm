@@ -15,14 +15,14 @@ import (
 	"github.com/luxfi/database/databasemock"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/chains/atomic"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/components/verify"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/block"
 	"github.com/luxfi/vm/vms/platformvm/metrics"
 	"github.com/luxfi/vm/vms/platformvm/state"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 	"github.com/luxfi/vm/vms/platformvm/validators"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 func TestAcceptorVisitProposalBlock(t *testing.T) {

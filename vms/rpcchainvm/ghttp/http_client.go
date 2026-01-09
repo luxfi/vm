@@ -10,9 +10,9 @@ import (
 	"github.com/luxfi/log"
 
 	"github.com/luxfi/vm/proto/pb/io/reader"
+	"github.com/luxfi/vm/rpcchainvm/grpcutils"
 	"github.com/luxfi/vm/vms/rpcchainvm/ghttp/greader"
 	"github.com/luxfi/vm/vms/rpcchainvm/ghttp/gresponsewriter"
-	"github.com/luxfi/vm/vms/rpcchainvm/grpcutils"
 
 	httppb "github.com/luxfi/vm/proto/pb/http"
 	responsewriterpb "github.com/luxfi/vm/proto/pb/http/responsewriter"

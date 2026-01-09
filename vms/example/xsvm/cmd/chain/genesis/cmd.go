@@ -6,12 +6,11 @@ package genesis
 import (
 	"errors"
 	"fmt"
-	"github.com/luxfi/formatting"
 	"os"
 
 	"github.com/spf13/cobra"
 
-	"github.com/luxfi/crypto/address"
+	"github.com/luxfi/formatting"
 	"github.com/luxfi/vm/vms/example/xsvm/genesis"
 )
 

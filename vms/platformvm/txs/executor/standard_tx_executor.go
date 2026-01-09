@@ -16,17 +16,17 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/vm/chains/atomic"
-	"github.com/luxfi/vm/utils/math"
 	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/components/lux"
-	"github.com/luxfi/vm/vms/platformvm/signer"
+	"github.com/luxfi/vm/platformvm/signer"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/utils/math"
 	"github.com/luxfi/vm/vms/platformvm/state"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 	"github.com/luxfi/vm/vms/platformvm/txs/fee"
 	"github.com/luxfi/vm/vms/platformvm/warp"
 	"github.com/luxfi/vm/vms/platformvm/warp/message"
 	"github.com/luxfi/vm/vms/platformvm/warp/payload"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 // TODO: Before Etna, ensure that the maximum number of expiries to track is

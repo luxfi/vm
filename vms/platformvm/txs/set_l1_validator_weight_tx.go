@@ -6,7 +6,7 @@ package txs
 import (
 	consensusctx "github.com/luxfi/consensus/context"
 
-	"github.com/luxfi/vm/vms/types"
+	"github.com/luxfi/vm/types"
 )
 
 var _ UnsignedTx = (*SetL1ValidatorWeightTx)(nil)

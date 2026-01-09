@@ -203,8 +203,8 @@ func TestAcceptRejectOldVsNew(t *testing.T) {
 		name        string
 		blockExists bool
 		verifyError error
-		oldAccept   bool  // What old logic would have done (always true)
-		newAccept   bool  // What new logic does (derived from verification)
+		oldAccept   bool // What old logic would have done (always true)
+		newAccept   bool // What new logic does (derived from verification)
 	}{
 		{
 			name:        "valid block - old and new agree",

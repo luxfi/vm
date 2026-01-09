@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/crypto/address"
+	"github.com/luxfi/address"
 	consensusctx "github.com/luxfi/consensus/context"
 	core "github.com/luxfi/consensus/core"
 	"github.com/luxfi/consensus/core/choices"
@@ -24,11 +24,11 @@ import (
 	"github.com/luxfi/upgrade/upgradetest"
 	"github.com/luxfi/vm/chains/atomic"
 	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/nftfx"
+	"github.com/luxfi/vm/propertyfx"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/vms/exchangevm/txs"
 	"github.com/luxfi/vm/vms/exchangevm/txs/txstest"
-	"github.com/luxfi/vm/vms/nftfx"
-	"github.com/luxfi/vm/vms/propertyfx"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 	"github.com/luxfi/warp"
 )
 

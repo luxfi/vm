@@ -21,11 +21,11 @@ import (
 
 	"github.com/luxfi/crypto/hash"
 	"github.com/luxfi/vm/components/lux"
-	"github.com/luxfi/vm/vms/platformvm/signer"
+	"github.com/luxfi/vm/platformvm/signer"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/types"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
 	"github.com/luxfi/vm/vms/platformvm/warp/message"
-	"github.com/luxfi/vm/vms/secp256k1fx"
-	"github.com/luxfi/vm/vms/types"
 )
 
 var (

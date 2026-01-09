@@ -20,14 +20,14 @@ import (
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/chains/atomic"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/exchangevm/fxs"
 	"github.com/luxfi/vm/vms/exchangevm/state"
 	"github.com/luxfi/vm/vms/exchangevm/state/statemock"
 	"github.com/luxfi/vm/vms/exchangevm/txs"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 // testSharedMemory adapts atomic.SharedMemory to executor.SharedMemory

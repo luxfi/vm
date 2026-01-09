@@ -16,8 +16,8 @@ import (
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/vm/utils/wrappers"
 	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/utils/wrappers"
 )
 
 var (

@@ -6,10 +6,10 @@ package atomic_test
 import (
 	"testing"
 
-	"github.com/luxfi/vm/chains/atomic/atomictest"
 	"github.com/luxfi/database/memdb"
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/vm/chains/atomic/atomictest"
 
 	. "github.com/luxfi/vm/chains/atomic"
 )

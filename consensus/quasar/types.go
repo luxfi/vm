@@ -143,9 +143,9 @@ func NewBLSSignature(sig []byte, signers []ids.NodeID) *BLSSignature {
 	return &BLSSignature{sig: sig, signers: signers}
 }
 
-func (s *BLSSignature) Bytes() []byte           { return s.sig }
-func (s *BLSSignature) Type() SignatureType     { return SignatureTypeBLS }
-func (s *BLSSignature) Signers() []ids.NodeID   { return s.signers }
+func (s *BLSSignature) Bytes() []byte         { return s.sig }
+func (s *BLSSignature) Type() SignatureType   { return SignatureTypeBLS }
+func (s *BLSSignature) Signers() []ids.NodeID { return s.signers }
 
 // QuasarSignature combines BLS and Ringtail signatures for P/Q security
 type QuasarSignature struct {

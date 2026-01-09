@@ -8,7 +8,7 @@ import (
 	"fmt"
 	consensusctx "github.com/luxfi/consensus/context"
 
-	"github.com/luxfi/crypto/address"
+	"github.com/luxfi/address"
 	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"

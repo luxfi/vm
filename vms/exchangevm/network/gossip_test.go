@@ -15,7 +15,7 @@ import (
 	"github.com/luxfi/vm/vms/exchangevm/txs"
 	"github.com/luxfi/vm/vms/exchangevm/txs/mempool"
 
-	"github.com/luxfi/vm/vms/secp256k1fx"
+	"github.com/luxfi/vm/secp256k1fx"
 )
 
 var _ TxVerifier = (*testVerifier)(nil)

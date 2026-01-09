@@ -12,8 +12,8 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/pubsub"
 	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/vms/exchangevm/txs"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 type mockFilter struct {

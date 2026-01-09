@@ -41,21 +41,21 @@ import (
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/vms/platformvm/block"
 
+	"github.com/luxfi/vm/platformvm/fx/fxmock"
 	"github.com/luxfi/vm/vms/platformvm/config"
-	"github.com/luxfi/vm/vms/platformvm/fx/fxmock"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/metrics"
 	"github.com/luxfi/vm/vms/platformvm/reward"
 
-	"github.com/luxfi/vm/vms/platformvm/signer"
+	"github.com/luxfi/vm/platformvm/signer"
 
 	"github.com/luxfi/vm/vms/platformvm/status"
 
 	"github.com/luxfi/vm/vms/platformvm/txs"
 
-	"github.com/luxfi/vm/vms/secp256k1fx"
+	"github.com/luxfi/vm/secp256k1fx"
 
-	"github.com/luxfi/vm/vms/types"
+	"github.com/luxfi/vm/types"
 
 	safemath "github.com/luxfi/math"
 )

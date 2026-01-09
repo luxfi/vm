@@ -15,9 +15,9 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/types"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
-	"github.com/luxfi/vm/vms/secp256k1fx"
-	"github.com/luxfi/vm/vms/types"
 )
 
 //go:embed set_l1_validator_weight_tx_test.json

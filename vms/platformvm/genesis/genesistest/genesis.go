@@ -14,9 +14,9 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/upgrade"
 	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/vms/platformvm/reward"
 	"github.com/luxfi/vm/vms/platformvm/txs"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 
 	platformvmgenesis "github.com/luxfi/vm/vms/platformvm/genesis"
 )

@@ -7,8 +7,8 @@ import (
 	"errors"
 
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/hashing"
 	"github.com/luxfi/vm/components/verify"
+	"github.com/luxfi/vm/utils/hashing"
 )
 
 var (

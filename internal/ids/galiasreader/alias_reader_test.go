@@ -13,7 +13,7 @@ import (
 
 	"github.com/luxfi/ids"
 	"github.com/luxfi/ids/idstest"
-	"github.com/luxfi/vm/vms/rpcchainvm/grpcutils"
+	"github.com/luxfi/vm/rpcchainvm/grpcutils"
 
 	aliasreaderpb "github.com/luxfi/vm/proto/pb/aliasreader"
 )

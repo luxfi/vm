@@ -18,7 +18,7 @@ import (
 
 	"github.com/luxfi/vm/chains/atomic"
 	"github.com/luxfi/vm/chains/atomic/atomictest"
-	"github.com/luxfi/vm/vms/rpcchainvm/grpcutils"
+	"github.com/luxfi/vm/rpcchainvm/grpcutils"
 
 	sharedmemorypb "github.com/luxfi/vm/proto/pb/sharedmemory"
 )

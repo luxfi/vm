@@ -7,9 +7,9 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/nets"
-	"github.com/luxfi/constants"
 )
 
 var ErrNoPrimaryNetworkConfig = errors.New("no net config for primary network found")

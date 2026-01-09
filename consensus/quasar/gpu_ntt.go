@@ -20,17 +20,17 @@ import (
 // When CGO is disabled, this uses the pure Go lattice library
 // which provides optimized CPU-based NTT transforms.
 type GPUNTTAccelerator struct {
-	enabled  bool
-	stats    GPUNTTStats
-	statsmu  sync.RWMutex
+	enabled bool
+	stats   GPUNTTStats
+	statsmu sync.RWMutex
 }
 
 // GPUNTTStats tracks NTT accelerator statistics.
 type GPUNTTStats struct {
-	Enabled       bool
-	Backend       string
-	CachedRings   int
-	TotalOps      uint64
+	Enabled     bool
+	Backend     string
+	CachedRings int
+	TotalOps    uint64
 }
 
 // NewGPUNTTAccelerator creates a new NTT accelerator using pure Go lattice library.

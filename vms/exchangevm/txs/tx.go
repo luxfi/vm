@@ -11,12 +11,12 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/p2p/gossip"
-	"github.com/luxfi/vm/utils/hashing"
 	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/nftfx"
+	"github.com/luxfi/vm/propertyfx"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/utils/hashing"
 	"github.com/luxfi/vm/vms/exchangevm/fxs"
-	"github.com/luxfi/vm/vms/nftfx"
-	"github.com/luxfi/vm/vms/propertyfx"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 var _ gossip.Gossipable = (*Tx)(nil)

@@ -8,10 +8,10 @@ import (
 	"github.com/luxfi/consensus/validator/uptime"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
+	"github.com/luxfi/vm/platformvm/fx"
 	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/config"
-	"github.com/luxfi/vm/vms/platformvm/fx"
 	"github.com/luxfi/vm/vms/platformvm/reward"
 	"github.com/luxfi/vm/vms/platformvm/utxo"
 )

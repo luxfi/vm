@@ -23,8 +23,9 @@ import (
 	"github.com/luxfi/database/versiondb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/exchangevm/block"
 	blkexecutor "github.com/luxfi/vm/vms/exchangevm/block/executor"
 	"github.com/luxfi/vm/vms/exchangevm/block/executor/executormock"
@@ -36,7 +37,6 @@ import (
 	txexecutor "github.com/luxfi/vm/vms/exchangevm/txs/executor"
 	"github.com/luxfi/vm/vms/exchangevm/txs/mempool"
 	"github.com/luxfi/vm/vms/exchangevm/txs/txsmock"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 const trackChecksums = false

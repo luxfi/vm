@@ -16,12 +16,12 @@ import (
 	consensusctx "github.com/luxfi/consensus/context"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/components/verify"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/vms/platformvm/block"
 	"github.com/luxfi/vm/vms/platformvm/state"
 	"github.com/luxfi/vm/vms/platformvm/testcontext"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 	"github.com/luxfi/vm/vms/platformvm/txs/mempool"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 func TestRejectBlock(t *testing.T) {
