@@ -14,9 +14,9 @@ import (
 	validators "github.com/luxfi/consensus/validator"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math"
-	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/sampler"
-	"github.com/luxfi/vm/utils/wrappers"
+	"github.com/luxfi/utils"
+	"github.com/luxfi/container/sampler"
+	"github.com/luxfi/utils/wrappers"
 )
 
 // Proposer list constants

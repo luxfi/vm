@@ -9,29 +9,29 @@ import (
 	"github.com/luxfi/ids"
 )
 
-// subnetIDNodeID = [subnetID] + [nodeID]
-const subnetIDNodeIDEntryLength = ids.IDLen + ids.NodeIDLen
+// chainIDNodeID = [chainID] + [nodeID]
+const chainIDNodeIDEntryLength = ids.IDLen + ids.NodeIDLen
 
-var errUnexpectedChainIDNodeIDLength = fmt.Errorf("expected subnetID+nodeID entry length %d", subnetIDNodeIDEntryLength)
+var errUnexpectedChainIDNodeIDLength = fmt.Errorf("expected chainID+nodeID entry length %d", chainIDNodeIDEntryLength)
 
-type subnetIDNodeID struct {
-	subnetID ids.ID
-	nodeID   ids.NodeID
+type chainIDNodeID struct {
+	chainID ids.ID
+	nodeID  ids.NodeID
 }
 
-func (s *subnetIDNodeID) Marshal() []byte {
-	data := make([]byte, subnetIDNodeIDEntryLength)
-	copy(data, s.subnetID[:])
+func (s *chainIDNodeID) Marshal() []byte {
+	data := make([]byte, chainIDNodeIDEntryLength)
+	copy(data, s.chainID[:])
 	copy(data[ids.IDLen:], s.nodeID[:])
 	return data
 }
 
-func (s *subnetIDNodeID) Unmarshal(data []byte) error {
-	if len(data) != subnetIDNodeIDEntryLength {
+func (s *chainIDNodeID) Unmarshal(data []byte) error {
+	if len(data) != chainIDNodeIDEntryLength {
 		return errUnexpectedChainIDNodeIDLength
 	}
 
-	copy(s.subnetID[:], data)
+	copy(s.chainID[:], data)
 	copy(s.nodeID[:], data[ids.IDLen:])
 	return nil
 }

@@ -19,8 +19,8 @@ import (
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/metric"
 	"github.com/luxfi/upgrade"
-	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/math"
+	"github.com/luxfi/utils"
+	"github.com/luxfi/utils/math"
 )
 
 var (
@@ -33,7 +33,7 @@ var (
 // ValidatorState defines the functions that must be implemented to get
 // the canonical validator set for warp message validation.
 type ValidatorState interface {
-	GetValidatorSet(ctx context.Context, height uint64, subnetID ids.ID) (map[ids.NodeID]*ValidatorData, error)
+	GetValidatorSet(ctx context.Context, height uint64, chainID ids.ID) (map[ids.NodeID]*ValidatorData, error)
 }
 
 // ValidatorData contains the data for a single validator
@@ -63,17 +63,17 @@ func (v *Validator) Compare(o *Validator) int {
 	return bytes.Compare(v.PublicKeyBytes, o.PublicKeyBytes)
 }
 
-// GetCanonicalValidatorSetFromSubsubnetID returns the CanonicalValidatorSet of [subsubnetID] at
+// GetCanonicalValidatorSetFromSubchainID returns the CanonicalValidatorSet of [subchainID] at
 // [pChcainHeight]. The returned CanonicalValidatorSet includes the validator set in a canonical ordering
 // and the total weight.
-func GetCanonicalValidatorSetFromSubsubnetID(
+func GetCanonicalValidatorSetFromSubchainID(
 	ctx context.Context,
 	pChainState ValidatorState,
 	pChainHeight uint64,
-	subsubnetID ids.ID,
+	subchainID ids.ID,
 ) (CanonicalValidatorSet, error) {
 	// Get the validator set at the given height.
-	vdrSet, err := pChainState.GetValidatorSet(ctx, pChainHeight, subsubnetID)
+	vdrSet, err := pChainState.GetValidatorSet(ctx, pChainHeight, subchainID)
 	if err != nil {
 		return CanonicalValidatorSet{}, err
 	}
@@ -201,8 +201,8 @@ type validatorStateAdapter struct {
 	state validators.State
 }
 
-func (v *validatorStateAdapter) GetValidatorSet(ctx context.Context, height uint64, subnetID ids.ID) (map[ids.NodeID]*ValidatorData, error) {
-	validatorSet, err := v.state.GetValidatorSet(ctx, height, subnetID)
+func (v *validatorStateAdapter) GetValidatorSet(ctx context.Context, height uint64, chainID ids.ID) (map[ids.NodeID]*ValidatorData, error) {
+	validatorSet, err := v.state.GetValidatorSet(ctx, height, chainID)
 	if err != nil {
 		return nil, err
 	}
@@ -229,15 +229,15 @@ func GetCanonicalValidatorSetFromChainID(ctx context.Context,
 	adapter := &validatorStateAdapter{
 		state: pChainState,
 	}
-	// In the new architecture, use sourceChainID as the subnet ID
-	// This assumes a 1:1 mapping between chains and subnets
-	return GetCanonicalValidatorSetFromSubsubnetID(ctx, adapter, pChainHeight, sourceChainID)
+	// In the new architecture, use sourceChainID as the chain ID
+	// This assumes a 1:1 mapping between chains and chains
+	return GetCanonicalValidatorSetFromSubchainID(ctx, adapter, pChainHeight, sourceChainID)
 }
 
-// cacheKey combines height and subnetID for cache lookups
+// cacheKey combines height and chainID for cache lookups
 type cacheKey struct {
-	height   uint64
-	subnetID ids.ID
+	height  uint64
+	chainID ids.ID
 }
 
 // CachedValidatorState wraps ValidatorState with an LRU cache
@@ -296,12 +296,12 @@ func NewCachedValidatorState(
 func (c *CachedValidatorState) GetValidatorSet(
 	ctx context.Context,
 	height uint64,
-	subnetID ids.ID,
+	chainID ids.ID,
 ) (map[ids.NodeID]*ValidatorData, error) {
 	// Check if Granite is activated - we only cache post-Granite
 	// Use current time as approximation since we don't have block timestamp
 	if c.upgradeConfig != nil && c.upgradeConfig.IsGraniteActivated(time.Now()) {
-		key := cacheKey{height: height, subnetID: subnetID}
+		key := cacheKey{height: height, chainID: chainID}
 		if cached, ok := c.cache.Get(key); ok {
 			c.metrics.hits.Inc()
 			return cached, nil
@@ -310,14 +310,14 @@ func (c *CachedValidatorState) GetValidatorSet(
 	}
 
 	// Cache miss or pre-Granite - fetch from underlying state
-	vdrSet, err := c.state.GetValidatorSet(ctx, height, subnetID)
+	vdrSet, err := c.state.GetValidatorSet(ctx, height, chainID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Cache the result if Granite is active
 	if c.upgradeConfig != nil && c.upgradeConfig.IsGraniteActivated(time.Now()) {
-		key := cacheKey{height: height, subnetID: subnetID}
+		key := cacheKey{height: height, chainID: chainID}
 		c.cache.Put(key, vdrSet)
 	}
 

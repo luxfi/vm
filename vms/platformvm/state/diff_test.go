@@ -16,11 +16,11 @@ import (
 	"github.com/luxfi/database/memdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
+	"github.com/luxfi/utils"
+	"github.com/luxfi/container/iterator"
 	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/platformvm/fx/fxmock"
-	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/iterator"
 	"github.com/luxfi/vm/vms/platformvm/status"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 )
@@ -316,7 +316,7 @@ func TestDiffL1ValidatorsErrors(t *testing.T) {
 			expectedErr: ErrMutatedL1Validator,
 		},
 		{
-			name:                     "conflicting legacy subnetID and nodeID pair",
+			name:                     "conflicting legacy chainID and nodeID pair",
 			initialEndAccumulatedFee: 1,
 			l1Validator: L1Validator{
 				ValidationID: ids.GenerateTestID(),
@@ -325,7 +325,7 @@ func TestDiffL1ValidatorsErrors(t *testing.T) {
 			expectedErr: ErrConflictingL1Validator,
 		},
 		{
-			name:                     "duplicate active subnetID and nodeID pair",
+			name:                     "duplicate active chainID and nodeID pair",
 			initialEndAccumulatedFee: 1,
 			l1Validator: L1Validator{
 				ValidationID: ids.GenerateTestID(),
@@ -334,7 +334,7 @@ func TestDiffL1ValidatorsErrors(t *testing.T) {
 			expectedErr: ErrDuplicateL1Validator,
 		},
 		{
-			name:                     "duplicate inactive subnetID and nodeID pair",
+			name:                     "duplicate inactive chainID and nodeID pair",
 			initialEndAccumulatedFee: 0,
 			l1Validator: L1Validator{
 				ValidationID: ids.GenerateTestID(),
@@ -362,7 +362,7 @@ func TestDiffL1ValidatorsErrors(t *testing.T) {
 			d, err := NewDiffOn(state)
 			require.NoError(err)
 
-			// Initialize subnetID, weight, and endAccumulatedFee as they are
+			// Initialize chainID, weight, and endAccumulatedFee as they are
 			// constant among all tests.
 			test.l1Validator.ChainID = l1Validator.ChainID
 			test.l1Validator.Weight = 1                        // Not removed
@@ -548,15 +548,15 @@ func TestDiffNet(t *testing.T) {
 
 	state := newTestState(t, memdb.New())
 
-	// Initialize parent with one subnet
+	// Initialize parent with one chain
 	parentStateCreateNetTx := &txs.Tx{
-		Unsigned: &txs.CreateSubnetTx{
+		Unsigned: &txs.CreateChainTx{
 			Owner: fxmock.NewOwner(ctrl),
 		},
 	}
 	state.AddNet(parentStateCreateNetTx.ID())
 
-	// Verify parent returns one subnet
+	// Verify parent returns one chain
 	chainIDs, err := state.GetChainIDs()
 	require.NoError(err)
 	require.Equal(
@@ -569,9 +569,9 @@ func TestDiffNet(t *testing.T) {
 	diff, err := NewDiffOn(state)
 	require.NoError(err)
 
-	// Put a subnet
+	// Put a chain
 	createNetTx := &txs.Tx{
-		Unsigned: &txs.CreateSubnetTx{
+		Unsigned: &txs.CreateChainTx{
 			Owner: fxmock.NewOwner(ctrl),
 		},
 	}
@@ -580,7 +580,7 @@ func TestDiffNet(t *testing.T) {
 	// Apply diff to parent state
 	require.NoError(diff.Apply(state))
 
-	// Verify parent now returns two subnets
+	// Verify parent now returns two chains
 	chainIDs, err = state.GetChainIDs()
 	require.NoError(err)
 	require.Equal(
@@ -596,18 +596,18 @@ func TestDiffChain(t *testing.T) {
 	require := require.New(t)
 
 	state := newTestState(t, memdb.New())
-	subnetID := ids.GenerateTestID()
+	chainID := ids.GenerateTestID()
 
 	// Initialize parent with one chain
 	parentStateCreateChainTx := &txs.Tx{
 		Unsigned: &txs.CreateChainTx{
-			ChainID: subnetID,
+			ChainID: chainID,
 		},
 	}
 	state.AddChain(parentStateCreateChainTx)
 
 	// Verify parent returns one chain
-	chains, err := state.GetChains(subnetID)
+	chains, err := state.GetChains(chainID)
 	require.NoError(err)
 	require.Equal(
 		[]*txs.Tx{
@@ -622,7 +622,7 @@ func TestDiffChain(t *testing.T) {
 	// Put a chain
 	createChainTx := &txs.Tx{
 		Unsigned: &txs.CreateChainTx{
-			ChainID: subnetID, // note this is the same net as [parentStateCreateChainTx]
+			ChainID: chainID, // note this is the same net as [parentStateCreateChainTx]
 		},
 	}
 	diff.AddChain(createChainTx)
@@ -631,7 +631,7 @@ func TestDiffChain(t *testing.T) {
 	require.NoError(diff.Apply(state))
 
 	// Verify parent now returns two chains
-	chains, err = state.GetChains(subnetID)
+	chains, err = state.GetChains(chainID)
 	require.NoError(err)
 	require.Equal(
 		[]*txs.Tx{
@@ -864,7 +864,7 @@ func TestDiffNetOwner(t *testing.T) {
 		owner2 = fxmock.NewOwner(ctrl)
 
 		createNetTx = &txs.Tx{
-			Unsigned: &txs.CreateSubnetTx{
+			Unsigned: &txs.CreateChainTx{
 				BaseTx: txs.BaseTx{},
 				Owner:  owner1,
 			},
@@ -885,7 +885,7 @@ func TestDiffNetOwner(t *testing.T) {
 	require.NoError(err)
 	require.Equal(owner1, owner)
 
-	// Create diff and verify that subnet owner returns correctly
+	// Create diff and verify that chain owner returns correctly
 	d, err := NewDiffOn(state)
 	require.NoError(err)
 
@@ -915,7 +915,7 @@ func TestDiffNetToL1Conversion(t *testing.T) {
 	var (
 		require            = require.New(t)
 		state              = newTestState(t, memdb.New())
-		subnetID           = ids.GenerateTestID()
+		chainID            = ids.GenerateTestID()
 		expectedConversion = NetToL1Conversion{
 			ConversionID: ids.GenerateTestID(),
 			ChainID:      ids.GenerateTestID(),
@@ -923,30 +923,30 @@ func TestDiffNetToL1Conversion(t *testing.T) {
 		}
 	)
 
-	actualConversion, err := state.GetNetToL1Conversion(subnetID)
+	actualConversion, err := state.GetNetToL1Conversion(chainID)
 	require.ErrorIs(err, database.ErrNotFound)
 	require.Zero(actualConversion)
 
 	d, err := NewDiffOn(state)
 	require.NoError(err)
 
-	actualConversion, err = d.GetNetToL1Conversion(subnetID)
+	actualConversion, err = d.GetNetToL1Conversion(chainID)
 	require.ErrorIs(err, database.ErrNotFound)
 	require.Zero(actualConversion)
 
-	// Setting a subnet conversion should be reflected on diff not state
-	d.SetNetToL1Conversion(subnetID, expectedConversion)
-	actualConversion, err = d.GetNetToL1Conversion(subnetID)
+	// Setting a chain conversion should be reflected on diff not state
+	d.SetNetToL1Conversion(chainID, expectedConversion)
+	actualConversion, err = d.GetNetToL1Conversion(chainID)
 	require.NoError(err)
 	require.Equal(expectedConversion, actualConversion)
 
-	actualConversion, err = state.GetNetToL1Conversion(subnetID)
+	actualConversion, err = state.GetNetToL1Conversion(chainID)
 	require.ErrorIs(err, database.ErrNotFound)
 	require.Zero(actualConversion)
 
-	// State should reflect new subnet conversion after diff is applied
+	// State should reflect new chain conversion after diff is applied
 	require.NoError(d.Apply(state))
-	actualConversion, err = state.GetNetToL1Conversion(subnetID)
+	actualConversion, err = state.GetNetToL1Conversion(chainID)
 	require.NoError(err)
 	require.Equal(expectedConversion, actualConversion)
 }
@@ -963,7 +963,7 @@ func TestDiffStacking(t *testing.T) {
 		owner3 = fxmock.NewOwner(ctrl)
 
 		createNetTx = &txs.Tx{
-			Unsigned: &txs.CreateSubnetTx{
+			Unsigned: &txs.CreateChainTx{
 				BaseTx: txs.BaseTx{},
 				Owner:  owner1,
 			},
@@ -984,7 +984,7 @@ func TestDiffStacking(t *testing.T) {
 	require.NoError(err)
 	require.Equal(owner1, owner)
 
-	// Create first diff and verify that subnet owner returns correctly
+	// Create first diff and verify that chain owner returns correctly
 	statesDiff, err := NewDiffOn(state)
 	require.NoError(err)
 

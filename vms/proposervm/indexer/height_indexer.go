@@ -10,7 +10,7 @@ import (
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
-	"github.com/luxfi/vm/utils"
+	"github.com/luxfi/utils"
 	"github.com/luxfi/vm/vms/proposervm/state"
 )
 

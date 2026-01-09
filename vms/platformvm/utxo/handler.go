@@ -11,13 +11,13 @@ import (
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
+	"github.com/luxfi/timer/mockable"
+	"github.com/luxfi/crypto/hash"
+	safemath "github.com/luxfi/utils/math"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/platformvm/fx"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils/hashing"
-	safemath "github.com/luxfi/vm/utils/math"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
 	"github.com/luxfi/vm/vms/platformvm/state"
 	"github.com/luxfi/vm/vms/platformvm/txs"
@@ -413,7 +413,7 @@ func (h *handler) Authorize(
 	[]*secp256k1.PrivateKey, // Keys that prove ownership
 	error,
 ) {
-	subnetOwner, err := state.GetNetOwner(netID)
+	chainOwner, err := state.GetNetOwner(netID)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
 			"failed to fetch net owner for %s: %w",
@@ -423,9 +423,9 @@ func (h *handler) Authorize(
 	}
 
 	// Make sure the owners of the net match the provided keys
-	owner, ok := subnetOwner.(*secp256k1fx.OutputOwners)
+	owner, ok := chainOwner.(*secp256k1fx.OutputOwners)
 	if !ok {
-		return nil, nil, fmt.Errorf("expected *secp256k1fx.OutputOwners but got %T", subnetOwner)
+		return nil, nil, fmt.Errorf("expected *secp256k1fx.OutputOwners but got %T", chainOwner)
 	}
 
 	// Add the keys to a keychain
@@ -434,7 +434,7 @@ func (h *handler) Authorize(
 	// Make sure that the operation is valid after a minimum time
 	now := uint64(h.clk.Time().Unix())
 
-	// Attempt to prove ownership of the subnet
+	// Attempt to prove ownership of the chain
 	indices, signers, matches := kc.Match(owner, now)
 	if !matches {
 		return nil, nil, errCantSign
@@ -580,7 +580,7 @@ func (h *handler) VerifySpendUTXOs(
 			lockedConsumedAsset = make(map[uint64]map[ids.ID]uint64)
 			lockedConsumed[realAssetID] = lockedConsumedAsset
 		}
-		ownerID := hashing.ComputeHash256Array(ownerBytes)
+		ownerID := hash.ComputeHash256Array(ownerBytes)
 		owners, ok := lockedConsumedAsset[locktime]
 		if !ok {
 			owners = make(map[ids.ID]uint64)
@@ -629,7 +629,7 @@ func (h *handler) VerifySpendUTXOs(
 			lockedProducedAsset = make(map[uint64]map[ids.ID]uint64)
 			lockedProduced[assetID] = lockedProducedAsset
 		}
-		ownerID := hashing.ComputeHash256Array(ownerBytes)
+		ownerID := hash.ComputeHash256Array(ownerBytes)
 		owners, ok := lockedProducedAsset[locktime]
 		if !ok {
 			owners = make(map[ids.ID]uint64)

@@ -2,7 +2,7 @@
 // See the file LICENSE for licensing terms.
 
 // Package netrunner provides integration tests for DEX VM with the network runner.
-// These tests verify that DEX VM can be deployed and operated as a subnet VM.
+// These tests verify that DEX VM can be deployed and operated as a chain VM.
 package netrunner
 
 import (
@@ -240,20 +240,20 @@ func TestDexVMNetworkSimulation(t *testing.T) {
 	}
 }
 
-// TestDexVMSubnetDeploymentScenario tests the full subnet deployment scenario.
-func TestDexVMSubnetDeploymentScenario(t *testing.T) {
+// TestDexVMChainDeploymentScenario tests the full chain deployment scenario.
+func TestDexVMChainDeploymentScenario(t *testing.T) {
 	require := require.New(t)
 	ctx := context.Background()
 
-	// This test simulates what netrunner does when deploying DEX VM as a subnet:
-	// 1. Creates a subnet
-	// 2. Deploys DEX VM blockchain on the subnet
+	// This test simulates what netrunner does when deploying DEX VM as a chain:
+	// 1. Creates a chain
+	// 2. Deploys DEX VM blockchain on the chain
 	// 3. All validators run the DEX VM
 	// 4. Blocks are processed deterministically
 
-	// Step 1: Simulate subnet creation (done by P-Chain)
-	subnetID := ids.GenerateTestID()
-	t.Logf("Simulated subnet ID: %s", subnetID)
+	// Step 1: Simulate chain creation (done by P-Chain)
+	chainID := ids.GenerateTestID()
+	t.Logf("Simulated chain ID: %s", chainID)
 
 	// Step 2: Simulate blockchain creation with DEX VM
 	blockchainID := ids.GenerateTestID()

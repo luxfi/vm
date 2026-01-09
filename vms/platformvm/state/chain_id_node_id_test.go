@@ -15,13 +15,13 @@ func FuzzChainIDNodeIDMarshal(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		require := require.New(t)
 
-		var v subnetIDNodeID
+		var v chainIDNodeID
 		fz := fuzzer.NewFuzzer(data)
 		fz.Fill(&v)
 
 		marshalledData := v.Marshal()
 
-		var parsed subnetIDNodeID
+		var parsed chainIDNodeID
 		require.NoError(parsed.Unmarshal(marshalledData))
 		require.Equal(v, parsed)
 	})
@@ -31,7 +31,7 @@ func FuzzChainIDNodeIDUnmarshal(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		require := require.New(t)
 
-		var v subnetIDNodeID
+		var v chainIDNodeID
 		if err := v.Unmarshal(data); err != nil {
 			require.ErrorIs(err, errUnexpectedChainIDNodeIDLength)
 			return
@@ -45,13 +45,13 @@ func FuzzChainIDNodeIDUnmarshal(f *testing.F) {
 func FuzzChainIDNodeIDOrdering(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		var (
-			v0 subnetIDNodeID
-			v1 subnetIDNodeID
+			v0 chainIDNodeID
+			v1 chainIDNodeID
 		)
 		fz := fuzzer.NewFuzzer(data)
 		fz.Fill(&v0, &v1)
 
-		if v0.subnetID == v1.subnetID {
+		if v0.chainID == v1.chainID {
 			return
 		}
 
@@ -59,7 +59,7 @@ func FuzzChainIDNodeIDOrdering(f *testing.F) {
 		key1 := v1.Marshal()
 		require.Equal(
 			t,
-			v0.subnetID.Compare(v1.subnetID),
+			v0.chainID.Compare(v1.chainID),
 			bytes.Compare(key0, key1),
 		)
 	})

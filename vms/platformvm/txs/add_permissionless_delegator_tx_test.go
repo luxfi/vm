@@ -15,12 +15,12 @@ import (
 	consensusctx "github.com/luxfi/consensus/context"
 	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/utils"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/lux/luxmock"
 	"github.com/luxfi/vm/platformvm/fx/fxmock"
 	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/types"
-	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
 
 	safemath "github.com/luxfi/math"

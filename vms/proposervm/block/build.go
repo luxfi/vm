@@ -10,8 +10,8 @@ import (
 
 	"github.com/luxfi/ids"
 	"github.com/luxfi/staking"
-	"github.com/luxfi/vm/utils/hashing"
-	"github.com/luxfi/vm/utils/wrappers"
+	"github.com/luxfi/crypto/hash"
+	"github.com/luxfi/utils/wrappers"
 )
 
 func BuildUnsigned(
@@ -80,14 +80,14 @@ func Build(
 	// prefix to get the unsigned bytes.
 	lenUnsignedBytes := len(unsignedBytesWithEmptySignature) - wrappers.IntLen
 	unsignedBytes := unsignedBytesWithEmptySignature[:lenUnsignedBytes]
-	block.id = hashing.ComputeHash256Array(unsignedBytes)
+	block.id = hash.ComputeHash256Array(unsignedBytes)
 
 	header, err := BuildHeader(chainID, parentID, block.id)
 	if err != nil {
 		return nil, err
 	}
 
-	headerHash := hashing.ComputeHash256(header.Bytes())
+	headerHash := hash.ComputeHash256(header.Bytes())
 	block.Signature, err = key.Sign(rand.Reader, headerHash, crypto.SHA256)
 	if err != nil {
 		return nil, err

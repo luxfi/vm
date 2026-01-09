@@ -3,7 +3,7 @@
 
 package state
 
-import "github.com/luxfi/vm/utils/heap"
+import "github.com/luxfi/utils/heap"
 
 var _ StakerIterator = (*mergedIterator)(nil)
 

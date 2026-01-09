@@ -36,10 +36,10 @@ type ConsensusNetwork struct {
 // PrimaryNode simulates a primary network validator.
 type PrimaryNode struct {
 	ID            ids.NodeID
-	ValidatedSets map[ids.ID]bool // Subnets this node validates
+	ValidatedSets map[ids.ID]bool // Chains this node validates
 }
 
-// DexNode represents a DEX subnet validator node.
+// DexNode represents a DEX chain validator node.
 type DexNode struct {
 	ID            ids.NodeID
 	VM            *dexvm.VM
@@ -64,9 +64,9 @@ func NewConsensusNetwork(t *testing.T) *ConsensusNetwork {
 		}
 	}
 
-	// Create 5 DEX subnet validators (can be same or different from primary)
-	// In this test, first 5 primary validators also validate DEX subnet
-	subnetID := ids.GenerateTestID()
+	// Create 5 DEX chain validators (can be same or different from primary)
+	// In this test, first 5 primary validators also validate DEX chain
+	chainID := ids.GenerateTestID()
 	blockchainID := ids.GenerateTestID()
 
 	logger := log.NewNoOpLogger()
@@ -74,8 +74,8 @@ func NewConsensusNetwork(t *testing.T) *ConsensusNetwork {
 	cfg.BlockInterval = time.Millisecond
 
 	for i := 0; i < 5; i++ {
-		// Primary node validates DEX subnet
-		network.PrimaryNodes[i].ValidatedSets[subnetID] = true
+		// Primary node validates DEX chain
+		network.PrimaryNodes[i].ValidatedSets[chainID] = true
 
 		// Create DEX VM for this node
 		vm := dexvm.NewVMForTest(cfg, logger)

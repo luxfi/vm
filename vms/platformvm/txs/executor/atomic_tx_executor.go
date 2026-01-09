@@ -72,7 +72,7 @@ func (*atomicTxExecutor) CreateChainTx(*txs.CreateChainTx) error {
 	return ErrWrongTxType
 }
 
-func (*atomicTxExecutor) CreateSubnetTx(*txs.CreateSubnetTx) error {
+func (*atomicTxExecutor) CreateChainTx(*txs.CreateChainTx) error {
 	return ErrWrongTxType
 }
 

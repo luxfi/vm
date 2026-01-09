@@ -10,8 +10,8 @@ import (
 	"github.com/luxfi/metric"
 
 	"github.com/luxfi/ids"
+	"github.com/luxfi/utils/wrappers"
 	"github.com/luxfi/vm/components/gas"
-	"github.com/luxfi/vm/utils/wrappers"
 	"github.com/luxfi/vm/vms/platformvm/block"
 )
 

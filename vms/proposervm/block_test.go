@@ -28,8 +28,8 @@ import (
 	consensustest "github.com/luxfi/consensus/test/helpers"
 	validators "github.com/luxfi/consensus/validator"
 	validatorsmock "github.com/luxfi/consensus/validator/validatorsmock"
+	"github.com/luxfi/timer/mockable"
 	componentblocktest "github.com/luxfi/vm/chain/blocktest"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/proposervm/proposer"
 
 	statelessblock "github.com/luxfi/vm/vms/proposervm/block"

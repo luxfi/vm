@@ -9,8 +9,8 @@ type Visitor interface {
 	AddValidatorTx(*AddValidatorTx) error
 	AddChainValidatorTx(*AddChainValidatorTx) error
 	AddDelegatorTx(*AddDelegatorTx) error
+	CreateNetworkTx(*CreateNetworkTx) error
 	CreateChainTx(*CreateChainTx) error
-	CreateSubnetTx(*CreateSubnetTx) error
 	ImportTx(*ImportTx) error
 	ExportTx(*ExportTx) error
 	AdvanceTimeTx(*AdvanceTimeTx) error

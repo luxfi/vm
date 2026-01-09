@@ -12,8 +12,8 @@ import (
 	"github.com/luxfi/address"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
+	"github.com/luxfi/utils"
 	"github.com/luxfi/vm/components/verify"
-	"github.com/luxfi/vm/utils"
 )
 
 var (
@@ -24,7 +24,7 @@ var (
 )
 
 type OutputOwners struct {
-	verify.IsNotState `json:"-"`
+	verify.IsNotState `serialize:"-" json:"-"`
 
 	Locktime  uint64        `serialize:"true" json:"locktime"`
 	Threshold uint32        `serialize:"true" json:"threshold"`
@@ -33,7 +33,7 @@ type OutputOwners struct {
 	// ctx is used in MarshalJSON to convert Addrs into human readable
 	// format with ChainID and NetworkID. Unexported because we don't use
 	// it outside this object.
-	ctx *consensusctx.Context
+	ctx *consensusctx.Context `serialize:"-"`
 }
 
 // InitCtx allows addresses to be formatted into their human readable format

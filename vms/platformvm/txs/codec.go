@@ -9,9 +9,9 @@ import (
 
 	"github.com/luxfi/codec"
 	"github.com/luxfi/codec/linearcodec"
+	"github.com/luxfi/utils/wrappers"
 	"github.com/luxfi/vm/platformvm/signer"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils/wrappers"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
 )
 
@@ -85,8 +85,8 @@ func RegisterApricotTypes(targetCodec *linearcodec.Codec) error {
 		targetCodec.RegisterType(&AddValidatorTx{}),
 		targetCodec.RegisterType(&AddChainValidatorTx{}),
 		targetCodec.RegisterType(&AddDelegatorTx{}),
+		targetCodec.RegisterType(&CreateNetworkTx{}),
 		targetCodec.RegisterType(&CreateChainTx{}),
-		targetCodec.RegisterType(&CreateSubnetTx{}),
 		targetCodec.RegisterType(&ImportTx{}),
 		targetCodec.RegisterType(&ExportTx{}),
 		targetCodec.RegisterType(&AdvanceTimeTx{}),

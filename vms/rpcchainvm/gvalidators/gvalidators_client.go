@@ -33,8 +33,8 @@ func (c *Client) GetCurrentHeight(ctx context.Context) (uint64, error) {
 
 func (c *Client) GetValidatorSet(ctx context.Context, height uint64, netID ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
 	resp, err := c.client.GetValidatorSet(ctx, &validatorstatepb.GetValidatorSetRequest{
-		Height: height,
-		NetId:  netID[:],
+		Height:  height,
+		ChainId: netID[:],
 	})
 	if err != nil {
 		return nil, err

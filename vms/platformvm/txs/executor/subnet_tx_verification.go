@@ -21,32 +21,32 @@ var (
 	errUnauthorizedModification = errors.New("unauthorized modification")
 )
 
-// verifyPoASubnetAuthorization carries out the validation for modifying a PoA
-// subnet. This is an extension of [verifySubnetAuthorization] that additionally
-// verifies that the subnet being modified is currently a PoA subnet.
-func verifyPoASubnetAuthorization(
+// verifyPoAChainAuthorization carries out the validation for modifying a PoA
+// chain. This is an extension of [verifyChainAuthorization] that additionally
+// verifies that the chain being modified is currently a PoA chain.
+func verifyPoAChainAuthorization(
 	fx fx.Fx,
 	chainState state.Chain,
 	sTx *txs.Tx,
-	subnetID ids.ID,
-	subnetAuth verify.Verifiable,
+	chainID ids.ID,
+	chainAuth verify.Verifiable,
 ) ([]verify.Verifiable, error) {
-	creds, err := verifySubnetAuthorization(fx, chainState, sTx, subnetID, subnetAuth)
+	creds, err := verifyChainAuthorization(fx, chainState, sTx, chainID, chainAuth)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = chainState.GetNetTransformation(subnetID)
+	_, err = chainState.GetNetTransformation(chainID)
 	if err == nil {
-		return nil, fmt.Errorf("%q %w", subnetID, errIsImmutable)
+		return nil, fmt.Errorf("%q %w", chainID, errIsImmutable)
 	}
 	if err != database.ErrNotFound {
 		return nil, err
 	}
 
-	_, err = chainState.GetNetToL1Conversion(subnetID)
+	_, err = chainState.GetNetToL1Conversion(chainID)
 	if err == nil {
-		return nil, fmt.Errorf("%q %w", subnetID, errIsImmutable)
+		return nil, fmt.Errorf("%q %w", chainID, errIsImmutable)
 	}
 	if err != database.ErrNotFound {
 		return nil, err
@@ -55,23 +55,23 @@ func verifyPoASubnetAuthorization(
 	return creds, nil
 }
 
-// verifySubnetAuthorization carries out the validation for modifying a subnet.
-// The last credential in [tx.Creds] is used as the subnet authorization.
+// verifyChainAuthorization carries out the validation for modifying a chain.
+// The last credential in [tx.Creds] is used as the chain authorization.
 // Returns the remaining tx credentials that should be used to authorize the
 // other operations in the tx.
-func verifySubnetAuthorization(
+func verifyChainAuthorization(
 	fx fx.Fx,
 	chainState state.Chain,
 	tx *txs.Tx,
-	subnetID ids.ID,
-	subnetAuth verify.Verifiable,
+	chainID ids.ID,
+	chainAuth verify.Verifiable,
 ) ([]verify.Verifiable, error) {
-	subnetOwner, err := chainState.GetNetOwner(subnetID)
+	chainOwner, err := chainState.GetNetOwner(chainID)
 	if err != nil {
 		return nil, err
 	}
 
-	return verifyAuthorization(fx, tx, subnetOwner, subnetAuth)
+	return verifyAuthorization(fx, tx, chainOwner, chainAuth)
 }
 
 // verifyAuthorization carries out the validation of an auth. The last
@@ -85,7 +85,7 @@ func verifyAuthorization(
 	auth verify.Verifiable,
 ) ([]verify.Verifiable, error) {
 	if len(tx.Creds) == 0 {
-		// Ensure there is at least one credential for the subnet authorization
+		// Ensure there is at least one credential for the chain authorization
 		return nil, errWrongNumberOfCredentials
 	}
 

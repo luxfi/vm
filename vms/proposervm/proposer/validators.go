@@ -5,7 +5,7 @@ package proposer
 
 import (
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils"
+	"github.com/luxfi/utils"
 )
 
 var _ utils.Sortable[validatorData] = validatorData{}

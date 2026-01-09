@@ -19,12 +19,12 @@ func TestNewNets(t *testing.T) {
 		constants.PrimaryNetworkID: {},
 	}
 
-	subnets, err := NewNets(ids.EmptyNodeID, config)
+	chains, err := NewNets(ids.EmptyNodeID, config)
 	require.NoError(err)
 
-	subnet, ok := subnets.GetOrCreate(constants.PrimaryNetworkID)
+	chain, ok := chains.GetOrCreate(constants.PrimaryNetworkID)
 	require.False(ok)
-	require.Equal(config[constants.PrimaryNetworkID], subnet.Config())
+	require.Equal(config[constants.PrimaryNetworkID], chain.Config())
 }
 
 func TestNewNetsNoPrimaryNetworkConfig(t *testing.T) {
@@ -60,7 +60,7 @@ func TestNetsGetOrCreate(t *testing.T) {
 			},
 		},
 		{
-			name: "adding unique subnets succeeds",
+			name: "adding unique chains succeeds",
 			args: []args{
 				{
 					netID: ids.GenerateTestID(),
@@ -84,11 +84,11 @@ func TestNetsGetOrCreate(t *testing.T) {
 			config := map[ids.ID]nets.Config{
 				constants.PrimaryNetworkID: {},
 			}
-			subnets, err := NewNets(ids.EmptyNodeID, config)
+			chains, err := NewNets(ids.EmptyNodeID, config)
 			require.NoError(err)
 
 			for _, arg := range tt.args {
-				_, got := subnets.GetOrCreate(arg.netID)
+				_, got := chains.GetOrCreate(arg.netID)
 				require.Equal(arg.want, got)
 			}
 		})
@@ -131,13 +131,13 @@ func TestNetConfigs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			require := require.New(t)
 
-			subnets, err := NewNets(ids.EmptyNodeID, tt.config)
+			chains, err := NewNets(ids.EmptyNodeID, tt.config)
 			require.NoError(err)
 
-			subnet, ok := subnets.GetOrCreate(tt.netID)
+			chain, ok := chains.GetOrCreate(tt.netID)
 			require.True(ok)
 
-			require.Equal(tt.want, subnet.Config())
+			require.Equal(tt.want, chain.Config())
 		})
 	}
 }
@@ -149,21 +149,21 @@ func TestNetsBootstrapping(t *testing.T) {
 		constants.PrimaryNetworkID: {},
 	}
 
-	subnets, err := NewNets(ids.EmptyNodeID, config)
+	chains, err := NewNets(ids.EmptyNodeID, config)
 	require.NoError(err)
 
 	netID := ids.GenerateTestID()
 	chainID := ids.GenerateTestID()
 
-	subnet, ok := subnets.GetOrCreate(netID)
+	chain, ok := chains.GetOrCreate(netID)
 	require.True(ok)
 
 	// Start bootstrapping
-	subnet.AddChain(chainID)
-	bootstrapping := subnets.Bootstrapping()
+	chain.AddChain(chainID)
+	bootstrapping := chains.Bootstrapping()
 	require.Contains(bootstrapping, netID)
 
 	// Finish bootstrapping
-	subnet.Bootstrapped(chainID)
-	require.Empty(subnets.Bootstrapping())
+	chain.Bootstrapped(chainID)
+	require.Empty(chains.Bootstrapping())
 }

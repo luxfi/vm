@@ -9,7 +9,7 @@ import (
 
 	"github.com/luxfi/codec"
 	"github.com/luxfi/log"
-	"github.com/luxfi/vm/utils/timer/mockable"
+	"github.com/luxfi/timer/mockable"
 	"github.com/luxfi/vm/vms/exchangevm/fxs"
 	"github.com/luxfi/vm/vms/exchangevm/txs"
 )

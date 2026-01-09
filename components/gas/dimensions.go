@@ -3,7 +3,7 @@
 
 package gas
 
-import "github.com/luxfi/vm/utils/math"
+import "github.com/luxfi/utils/math"
 
 const (
 	Bandwidth Dimension = iota

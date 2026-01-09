@@ -5,7 +5,7 @@ package block
 
 import (
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/hashing"
+	"github.com/luxfi/crypto/hash"
 )
 
 // CommonBlock contains fields and methods common to all blocks in this VM.
@@ -21,7 +21,7 @@ type CommonBlock struct {
 }
 
 func (b *CommonBlock) initialize(bytes []byte) {
-	b.BlockID = hashing.ComputeHash256Array(bytes)
+	b.BlockID = hash.ComputeHash256Array(bytes)
 	b.bytes = bytes
 }
 

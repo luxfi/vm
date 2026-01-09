@@ -14,18 +14,18 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
+	"github.com/luxfi/utils"
 	"github.com/luxfi/vm/api"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/nftfx"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/vms/exchangevm/txs"
 	"math"
 	"net/http"
 
 	safemath "github.com/luxfi/math"
-	avajson "github.com/luxfi/vm/utils/json"
+	avajson "github.com/luxfi/utils/json"
 )
 
 const (

@@ -15,7 +15,7 @@ var (
 )
 
 type TestState struct {
-	verify.IsState `json:"-"`
+	verify.IsState `serialize:"-" json:"-"`
 
 	Err error
 }

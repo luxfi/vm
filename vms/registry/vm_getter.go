@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 
 	"github.com/luxfi/ids"
+	"github.com/luxfi/utils/filesystem"
+	"github.com/luxfi/utils/resource"
 	"github.com/luxfi/vm/api/metrics"
-	"github.com/luxfi/vm/utils/filesystem"
-	"github.com/luxfi/vm/utils/resource"
 	"github.com/luxfi/vm/vms"
 	"github.com/luxfi/vm/vms/rpcchainvm"
 	"github.com/luxfi/vm/vms/rpcchainvm/runtime"

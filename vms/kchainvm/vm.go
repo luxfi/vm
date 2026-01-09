@@ -25,9 +25,9 @@ import (
 	"github.com/luxfi/database/versiondb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
+	"github.com/luxfi/timer/mockable"
+	"github.com/luxfi/utils/json"
 	"github.com/luxfi/version"
-	"github.com/luxfi/vm/utils/json"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/kchainvm/config"
 	"github.com/luxfi/warp"
 )

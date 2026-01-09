@@ -13,7 +13,7 @@ import (
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/crypto/bls/signer/localsigner"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/hashing"
+	"github.com/luxfi/crypto/hash"
 )
 
 func newBLSPublicKey(t *testing.T) [bls.PublicKeyLen]byte {
@@ -50,7 +50,7 @@ func TestRegisterL1Validator(t *testing.T) {
 	require.NoError(err)
 
 	bytes := msg.Bytes()
-	var expectedValidationID ids.ID = hashing.ComputeHash256Array(bytes)
+	var expectedValidationID ids.ID = hash.ComputeHash256Array(bytes)
 	require.Equal(expectedValidationID, msg.ValidationID())
 
 	parsed, err := ParseRegisterL1Validator(bytes)

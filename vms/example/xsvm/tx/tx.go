@@ -6,7 +6,7 @@ package tx
 import (
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/hashing"
+	"github.com/luxfi/crypto/hash"
 )
 
 var secpCache = secp256k1.NewRecoverCache(2048)
@@ -42,7 +42,7 @@ func Sign(utx Unsigned, key *secp256k1.PrivateKey) (*Tx, error) {
 
 func (tx *Tx) ID() (ids.ID, error) {
 	bytes, err := Codec.Marshal(CodecVersion, tx)
-	return hashing.ComputeHash256Array(bytes), err
+	return hash.ComputeHash256Array(bytes), err
 }
 
 func (tx *Tx) SenderID() (ids.ShortID, error) {

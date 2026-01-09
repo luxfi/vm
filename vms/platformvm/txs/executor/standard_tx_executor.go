@@ -15,12 +15,12 @@ import (
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
+	"github.com/luxfi/utils/math"
 	"github.com/luxfi/vm/chains/atomic"
 	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/platformvm/signer"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils/math"
 	"github.com/luxfi/vm/vms/platformvm/state"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 	"github.com/luxfi/vm/vms/platformvm/txs/fee"
@@ -56,7 +56,7 @@ var (
 	errWarpMessageAlreadyIssued        = errors.New("warp message already issued")
 	errCouldNotLoadL1Validator         = errors.New("could not load L1 validator")
 	errWarpMessageContainsStaleNonce   = errors.New("warp message contains stale nonce")
-	errRemovingLastValidator           = errors.New("attempting to remove the last L1 validator from a converted subnet")
+	errRemovingLastValidator           = errors.New("attempting to remove the last L1 validator from a converted chain")
 	errStateCorruption                 = errors.New("state corruption")
 )
 
@@ -205,7 +205,7 @@ func (e *standardTxExecutor) CreateChainTx(tx *txs.CreateChainTx) error {
 		return fmt.Errorf("chain name %q is already taken", tx.BlockchainName)
 	}
 
-	baseTxCreds, err := verifyPoASubnetAuthorization(e.backend.Fx, e.state, e.tx, tx.ChainID, tx.ChainAuth)
+	baseTxCreds, err := verifyPoAChainAuthorization(e.backend.Fx, e.state, e.tx, tx.ChainID, tx.ChainAuth)
 	if err != nil {
 		return err
 	}
@@ -237,7 +237,7 @@ func (e *standardTxExecutor) CreateChainTx(tx *txs.CreateChainTx) error {
 	// Add the new chain to the database
 	e.state.AddChain(e.tx)
 
-	// If this proposal is committed and this node is a member of the subnet
+	// If this proposal is committed and this node is a member of the chain
 	// that validates the blockchain, create the blockchain
 	e.onAccept = func() {
 		e.backend.Config.CreateChain(txID, tx)
@@ -245,7 +245,7 @@ func (e *standardTxExecutor) CreateChainTx(tx *txs.CreateChainTx) error {
 	return nil
 }
 
-func (e *standardTxExecutor) CreateSubnetTx(tx *txs.CreateSubnetTx) error {
+func (e *standardTxExecutor) CreateChainTx(tx *txs.CreateChainTx) error {
 	// Make sure this transaction is well formed.
 	if err := e.tx.SyntacticVerify(e.backend.Ctx); err != nil {
 		return err
@@ -283,7 +283,7 @@ func (e *standardTxExecutor) CreateSubnetTx(tx *txs.CreateSubnetTx) error {
 	lux.Consume(e.state, tx.Ins)
 	// Produce the UTXOS
 	lux.Produce(e.state, txID, tx.Outs)
-	// Add the new subnet to the database
+	// Add the new chain to the database
 	e.state.AddNet(txID)
 	e.state.SetNetOwner(txID, tx.Owner)
 	return nil
@@ -526,7 +526,7 @@ func (e *standardTxExecutor) TransformChainTx(tx *txs.TransformChainTx) error {
 		return errMaxStakeDurationTooLarge
 	}
 
-	baseTxCreds, err := verifyPoASubnetAuthorization(e.backend.Fx, e.state, e.tx, tx.Chain, tx.ChainAuth)
+	baseTxCreds, err := verifyPoAChainAuthorization(e.backend.Fx, e.state, e.tx, tx.Chain, tx.ChainAuth)
 	if err != nil {
 		return err
 	}
@@ -560,7 +560,7 @@ func (e *standardTxExecutor) TransformChainTx(tx *txs.TransformChainTx) error {
 	lux.Consume(e.state, tx.Ins)
 	// Produce the UTXOS
 	lux.Produce(e.state, txID, tx.Outs)
-	// Transform the new subnet in the database
+	// Transform the new chain in the database
 	e.state.AddNetTransformation(e.tx)
 	e.state.SetCurrentSupply(tx.Chain, tx.InitialSupply)
 	return nil
@@ -705,7 +705,7 @@ func (e *standardTxExecutor) ConvertChainToL1Tx(tx *txs.ConvertChainToL1Tx) erro
 		return err
 	}
 
-	baseTxCreds, err := verifyPoASubnetAuthorization(e.backend.Fx, e.state, e.tx, tx.Chain, tx.ChainAuth)
+	baseTxCreds, err := verifyPoAChainAuthorization(e.backend.Fx, e.state, e.tx, tx.Chain, tx.ChainAuth)
 	if err != nil {
 		return err
 	}
@@ -717,9 +717,9 @@ func (e *standardTxExecutor) ConvertChainToL1Tx(tx *txs.ConvertChainToL1Tx) erro
 	}
 
 	var (
-		startTime                = uint64(currentTimestamp.Unix())
-		currentFees              = e.state.GetAccruedFees()
-		subnetToL1ConversionData = message.ChainToL1ConversionData{
+		startTime               = uint64(currentTimestamp.Unix())
+		currentFees             = e.state.GetAccruedFees()
+		chainToL1ConversionData = message.ChainToL1ConversionData{
 			ChainID:        tx.Chain,
 			ManagerChainID: tx.ManagerChainID,
 			ManagerAddress: tx.Address,
@@ -774,7 +774,7 @@ func (e *standardTxExecutor) ConvertChainToL1Tx(tx *txs.ConvertChainToL1Tx) erro
 			return err
 		}
 
-		subnetToL1ConversionData.Validators[i] = message.ChainToL1ConversionValidatorData{
+		chainToL1ConversionData.Validators[i] = message.ChainToL1ConversionValidatorData{
 			NodeID:       vdr.NodeID,
 			BLSPublicKey: vdr.Signer.PublicKey,
 			Weight:       vdr.Weight,
@@ -793,7 +793,7 @@ func (e *standardTxExecutor) ConvertChainToL1Tx(tx *txs.ConvertChainToL1Tx) erro
 		return err
 	}
 
-	conversionID, err := message.ChainToL1ConversionID(subnetToL1ConversionData)
+	conversionID, err := message.ChainToL1ConversionID(chainToL1ConversionData)
 	if err != nil {
 		return err
 	}
@@ -804,7 +804,7 @@ func (e *standardTxExecutor) ConvertChainToL1Tx(tx *txs.ConvertChainToL1Tx) erro
 	lux.Consume(e.state, tx.Ins)
 	// Produce the UTXOS
 	lux.Produce(e.state, txID, tx.Outs)
-	// Track the subnet conversion in the database
+	// Track the chain conversion in the database
 	e.state.SetNetToL1Conversion(
 		tx.Chain,
 		state.NetToL1Conversion{
@@ -1308,13 +1308,13 @@ func (e *standardTxExecutor) putStaker(stakerTx txs.Staker) error {
 		// validator as there are no permissioned delegators
 		var potentialReward uint64
 		if !stakerTx.CurrentPriority().IsPermissionedValidator() {
-			subnetID := stakerTx.ChainID()
-			currentSupply, err := e.state.GetCurrentSupply(subnetID)
+			chainID := stakerTx.ChainID()
+			currentSupply, err := e.state.GetCurrentSupply(chainID)
 			if err != nil {
 				return err
 			}
 
-			rewards, err := GetRewardsCalculator(e.backend, e.state, subnetID)
+			rewards, err := GetRewardsCalculator(e.backend, e.state, chainID)
 			if err != nil {
 				return err
 			}
@@ -1328,7 +1328,7 @@ func (e *standardTxExecutor) putStaker(stakerTx txs.Staker) error {
 				currentSupply,
 			)
 
-			e.state.SetCurrentSupply(subnetID, currentSupply+potentialReward)
+			e.state.SetCurrentSupply(chainID, currentSupply+potentialReward)
 		}
 
 		staker, err = state.NewCurrentStaker(txID, stakerTx, chainTime, potentialReward)
@@ -1356,23 +1356,23 @@ func (e *standardTxExecutor) putStaker(stakerTx txs.Staker) error {
 	return nil
 }
 
-// verifyL1Conversion verifies that the L1 conversion of [subnetID] references
+// verifyL1Conversion verifies that the L1 conversion of [chainID] references
 // the [expectedChainID] and [expectedAddress].
 func verifyL1Conversion(
 	state state.Chain,
-	subnetID ids.ID,
+	chainID ids.ID,
 	expectedChainID ids.ID,
 	expectedAddress []byte,
 ) error {
-	subnetToL1Conversion, err := state.GetNetToL1Conversion(subnetID)
+	chainToL1Conversion, err := state.GetNetToL1Conversion(chainID)
 	if err != nil {
-		return fmt.Errorf("%w for %s with: %w", errCouldNotLoadChainToL1Conversion, subnetID, err)
+		return fmt.Errorf("%w for %s with: %w", errCouldNotLoadChainToL1Conversion, chainID, err)
 	}
-	if expectedChainID != subnetToL1Conversion.ChainID {
-		return fmt.Errorf("%w expected %s but had %s", errWrongWarpMessageSourceChainID, subnetToL1Conversion.ChainID, expectedChainID)
+	if expectedChainID != chainToL1Conversion.ChainID {
+		return fmt.Errorf("%w expected %s but had %s", errWrongWarpMessageSourceChainID, chainToL1Conversion.ChainID, expectedChainID)
 	}
-	if !bytes.Equal(expectedAddress, subnetToL1Conversion.Addr) {
-		return fmt.Errorf("%w expected 0x%x but got 0x%x", errWrongWarpMessageSourceAddress, subnetToL1Conversion.Addr, expectedAddress)
+	if !bytes.Equal(expectedAddress, chainToL1Conversion.Addr) {
+		return fmt.Errorf("%w expected 0x%x but got 0x%x", errWrongWarpMessageSourceAddress, chainToL1Conversion.Addr, expectedAddress)
 	}
 	return nil
 }

@@ -43,39 +43,39 @@ var (
 	ErrAddDelegatorTxPostDurango       = errors.New("AddDelegatorTx is not permitted post-Durango")
 )
 
-// verifySubnetValidatorPrimaryNetworkRequirements verifies the primary
-// network requirements for [subnetValidator]. An error is returned if they
+// verifyChainValidatorPrimaryNetworkRequirements verifies the primary
+// network requirements for [chainValidator]. An error is returned if they
 // are not fulfilled.
-func verifySubnetValidatorPrimaryNetworkRequirements(
+func verifyChainValidatorPrimaryNetworkRequirements(
 	isDurangoActive bool,
 	chainState state.Chain,
-	subnetValidator txs.Validator,
+	chainValidator txs.Validator,
 ) error {
-	primaryNetworkValidator, err := GetValidator(chainState, constants.PrimaryNetworkID, subnetValidator.NodeID)
+	primaryNetworkValidator, err := GetValidator(chainState, constants.PrimaryNetworkID, chainValidator.NodeID)
 	if err == database.ErrNotFound {
 		return fmt.Errorf(
 			"%s %w of the primary network",
-			subnetValidator.NodeID,
+			chainValidator.NodeID,
 			ErrNotValidator,
 		)
 	}
 	if err != nil {
 		return fmt.Errorf(
 			"failed to fetch the primary network validator for %s: %w",
-			subnetValidator.NodeID,
+			chainValidator.NodeID,
 			err,
 		)
 	}
 
-	// Ensure that the period this validator validates the specified subnet
+	// Ensure that the period this validator validates the specified chain
 	// is a subset of the time they validate the primary network.
 	startTime := chainState.GetTimestamp()
 	if !isDurangoActive {
-		startTime = subnetValidator.StartTime()
+		startTime = chainValidator.StartTime()
 	}
 	if !txs.BoundedBy(
 		startTime,
-		subnetValidator.EndTime(),
+		chainValidator.EndTime(),
 		primaryNetworkValidator.StartTime,
 		primaryNetworkValidator.EndTime,
 	) {
@@ -248,11 +248,11 @@ func verifyAddChainValidatorTx(
 		)
 	}
 
-	if err := verifySubnetValidatorPrimaryNetworkRequirements(isDurangoActive, chainState, tx.Validator); err != nil {
+	if err := verifyChainValidatorPrimaryNetworkRequirements(isDurangoActive, chainState, tx.Validator); err != nil {
 		return err
 	}
 
-	baseTxCreds, err := verifyPoASubnetAuthorization(backend.Fx, chainState, sTx, tx.ChainValidator.Chain, tx.ChainAuth)
+	baseTxCreds, err := verifyPoAChainAuthorization(backend.Fx, chainState, sTx, tx.ChainValidator.Chain, tx.ChainAuth)
 	if err != nil {
 		return err
 	}
@@ -332,7 +332,7 @@ func verifyRemoveChainValidatorTx(
 		return vdr, isCurrentValidator, nil
 	}
 
-	baseTxCreds, err := verifySubnetAuthorization(backend.Fx, chainState, sTx, tx.Chain, tx.ChainAuth)
+	baseTxCreds, err := verifyChainAuthorization(backend.Fx, chainState, sTx, tx.Chain, tx.ChainAuth)
 	if err != nil {
 		return nil, false, err
 	}
@@ -570,7 +570,7 @@ func verifyAddPermissionlessValidatorTx(
 	}
 
 	if tx.Chain != constants.PrimaryNetworkID {
-		if err := verifySubnetValidatorPrimaryNetworkRequirements(isDurangoActive, chainState, tx.Validator); err != nil {
+		if err := verifyChainValidatorPrimaryNetworkRequirements(isDurangoActive, chainState, tx.Validator); err != nil {
 			return err
 		}
 	}
@@ -781,7 +781,7 @@ func verifyTransferChainOwnershipTx(
 		return nil
 	}
 
-	baseTxCreds, err := verifySubnetAuthorization(backend.Fx, chainState, sTx, tx.Chain, tx.ChainAuth)
+	baseTxCreds, err := verifyChainAuthorization(backend.Fx, chainState, sTx, tx.Chain, tx.ChainAuth)
 	if err != nil {
 		return err
 	}

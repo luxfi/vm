@@ -46,18 +46,18 @@ type Network struct {
 	Genesis              interface{} // Can be []byte or *genesis.UnparsedConfig
 	DefaultFlags         Flags
 
-	// Track subnets/chains
-	Subnets []*Subnet
+	// Track chains/chains
+	Chains []*Chain
 }
 
-// Subnet represents a subnet in the network
-type Subnet struct {
-	SubnetID     ids.ID
+// Chain represents a chain in the network
+type Chain struct {
+	ChainID      ids.ID
 	Chains       []*Chain
 	ValidatorIDs []ids.NodeID
 }
 
-// Chain represents a blockchain in a subnet
+// Chain represents a blockchain in a chain
 type Chain struct {
 	ChainID   ids.ID
 	VMID      ids.ID

@@ -30,19 +30,19 @@ func (ls *lockedState) GetCurrentHeight(ctx context.Context) (uint64, error) {
 	return ls.State.GetCurrentHeight(ctx)
 }
 
-func (ls *lockedState) GetValidatorSet(ctx context.Context, height uint64, subnetID ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
+func (ls *lockedState) GetValidatorSet(ctx context.Context, height uint64, chainID ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
 	ls.lock.Lock()
 	defer ls.lock.Unlock()
-	return ls.State.GetValidatorSet(ctx, height, subnetID)
+	return ls.State.GetValidatorSet(ctx, height, chainID)
 }
 
-func (ls *lockedState) GetCurrentValidators(ctx context.Context, height uint64, subnetID ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
+func (ls *lockedState) GetCurrentValidators(ctx context.Context, height uint64, chainID ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
 	ls.lock.Lock()
 	defer ls.lock.Unlock()
 	if state, ok := ls.State.(interface {
 		GetCurrentValidators(context.Context, uint64, ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error)
 	}); ok {
-		return state.GetCurrentValidators(ctx, height, subnetID)
+		return state.GetCurrentValidators(ctx, height, chainID)
 	}
-	return ls.State.GetValidatorSet(ctx, height, subnetID)
+	return ls.State.GetValidatorSet(ctx, height, chainID)
 }

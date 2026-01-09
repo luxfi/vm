@@ -11,7 +11,7 @@ import (
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/vm/utils/wrappers"
+	"github.com/luxfi/utils/wrappers"
 )
 
 // preDelegateeRewardSize is the size of codec marshalling
@@ -154,12 +154,12 @@ func (m *metadata) LoadValidatorMetadata(
 	netID ids.ID,
 	uptime *validatorMetadata,
 ) {
-	subnetMetadata, ok := m.metadata[vdrID]
+	chainMetadata, ok := m.metadata[vdrID]
 	if !ok {
-		subnetMetadata = make(map[ids.ID]*validatorMetadata)
-		m.metadata[vdrID] = subnetMetadata
+		chainMetadata = make(map[ids.ID]*validatorMetadata)
+		m.metadata[vdrID] = chainMetadata
 	}
-	subnetMetadata[netID] = uptime
+	chainMetadata[netID] = uptime
 }
 
 func (m *metadata) GetUptime(
@@ -217,15 +217,15 @@ func (m *metadata) SetDelegateeReward(
 }
 
 func (m *metadata) DeleteValidatorMetadata(vdrID ids.NodeID, netID ids.ID) {
-	subnetMetadata := m.metadata[vdrID]
-	delete(subnetMetadata, netID)
-	if len(subnetMetadata) == 0 {
+	chainMetadata := m.metadata[vdrID]
+	delete(chainMetadata, netID)
+	if len(chainMetadata) == 0 {
 		delete(m.metadata, vdrID)
 	}
 
-	subnetUpdatedMetadata := m.updatedMetadata[vdrID]
-	subnetUpdatedMetadata.Remove(netID)
-	if subnetUpdatedMetadata.Len() == 0 {
+	chainUpdatedMetadata := m.updatedMetadata[vdrID]
+	chainUpdatedMetadata.Remove(netID)
+	if chainUpdatedMetadata.Len() == 0 {
 		delete(m.updatedMetadata, vdrID)
 	}
 }

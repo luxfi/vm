@@ -12,14 +12,14 @@ import (
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/utils/math"
+	"github.com/luxfi/utils/wrappers"
 	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/platformvm/fx"
 	"github.com/luxfi/vm/platformvm/signer"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils/math"
-	"github.com/luxfi/vm/utils/wrappers"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 	"github.com/luxfi/vm/vms/platformvm/warp"
@@ -34,7 +34,7 @@ const (
 		wrappers.LongLen // weight
 
 	intrinsicNetValidatorBandwidth = intrinsicValidatorBandwidth + // validator
-		ids.IDLen // subsubnetID
+		ids.IDLen // subchainID
 
 	intrinsicOutputBandwidth = ids.IDLen + // assetID
 		wrappers.IntLen // output typeID
@@ -82,7 +82,7 @@ const (
 	intrinsicBLSPublicKeyValidationCompute = 50    // BLS public key validation time is around 50us
 	intrinsicBLSPoPVerifyCompute           = intrinsicBLSPublicKeyValidationCompute + intrinsicBLSVerifyCompute
 
-	intrinsicWarpDBReads = 3 + 20 // chainID -> subsubnetID mapping + apply weight diffs + apply pk diffs + diff application reads
+	intrinsicWarpDBReads = 3 + 20 // chainID -> subchainID mapping + apply weight diffs + apply pk diffs + diff application reads
 
 	intrinsicPoPBandwidth = bls.PublicKeyLen + // public key
 		bls.SignatureLen // signature
@@ -91,7 +91,7 @@ const (
 
 	intrinsicInputDBWrite                     = 1
 	intrinsicOutputDBWrite                    = 1
-	intrinsicConvertChainToL1ValidatorDBWrite = 4 // weight diff + pub key diff + subnetID/nodeID + validationID
+	intrinsicConvertChainToL1ValidatorDBWrite = 4 // weight diff + pub key diff + chainID/nodeID + validationID
 )
 
 var (
@@ -107,20 +107,20 @@ var (
 	}
 	IntrinsicCreateChainTxComplexities = gas.Dimensions{
 		gas.Bandwidth: IntrinsicBaseTxComplexities[gas.Bandwidth] +
-			ids.IDLen + // subsubnetID
+			ids.IDLen + // subchainID
 			wrappers.ShortLen + // chainName length
 			ids.IDLen + // vmID
 			wrappers.IntLen + // num fxIDs
 			wrappers.IntLen + // genesis length
-			wrappers.IntLen + // subnetAuth typeID
-			wrappers.IntLen, // subnetAuthCredential typeID
-		gas.DBRead:  3, // get subnet auth + check for subnet transformation + check for subnet conversion
+			wrappers.IntLen + // chainAuth typeID
+			wrappers.IntLen, // chainAuthCredential typeID
+		gas.DBRead:  3, // get chain auth + check for chain transformation + check for chain conversion
 		gas.DBWrite: 1, // put chain
 	}
-	IntrinsicCreateSubnetTxComplexities = gas.Dimensions{
+	IntrinsicCreateChainTxComplexities = gas.Dimensions{
 		gas.Bandwidth: IntrinsicBaseTxComplexities[gas.Bandwidth] +
 			wrappers.IntLen, // owner typeID
-		gas.DBWrite: 1, // write subnet owner
+		gas.DBWrite: 1, // write chain owner
 	}
 	IntrinsicImportTxComplexities = gas.Dimensions{
 		gas.Bandwidth: IntrinsicBaseTxComplexities[gas.Bandwidth] +
@@ -144,7 +144,7 @@ var (
 	IntrinsicAddPermissionlessValidatorTxComplexities = gas.Dimensions{
 		gas.Bandwidth: IntrinsicBaseTxComplexities[gas.Bandwidth] +
 			intrinsicValidatorBandwidth + // validator
-			ids.IDLen + // subsubnetID
+			ids.IDLen + // subchainID
 			wrappers.IntLen + // signer typeID
 			wrappers.IntLen + // num stake outs
 			wrappers.IntLen + // validator rewards typeID
@@ -156,7 +156,7 @@ var (
 	IntrinsicAddPermissionlessDelegatorTxComplexities = gas.Dimensions{
 		gas.Bandwidth: IntrinsicBaseTxComplexities[gas.Bandwidth] +
 			intrinsicValidatorBandwidth + // validator
-			ids.IDLen + // subsubnetID
+			ids.IDLen + // subchainID
 			wrappers.IntLen + // num stake outs
 			wrappers.IntLen, // delegator rewards typeID
 		gas.DBRead:  1, // get staking config
@@ -204,13 +204,13 @@ var (
 	}
 	IntrinsicConvertChainToL1TxComplexities = gas.Dimensions{
 		gas.Bandwidth: IntrinsicBaseTxComplexities[gas.Bandwidth] +
-			ids.IDLen + // subsubnetID
+			ids.IDLen + // subchainID
 			ids.IDLen + // chainID
 			wrappers.IntLen + // address length
 			wrappers.IntLen + // validators length
-			wrappers.IntLen + // subnetAuth typeID
-			wrappers.IntLen, // subnetAuthCredential typeID
-		gas.DBRead:  3, // subnet auth + transformation lookup + conversion lookup
+			wrappers.IntLen + // chainAuth typeID
+			wrappers.IntLen, // chainAuthCredential typeID
+		gas.DBRead:  3, // chain auth + transformation lookup + conversion lookup
 		gas.DBWrite: 2, // write conversion manager + total weight
 	}
 	IntrinsicRegisterL1ValidatorTxComplexities = gas.Dimensions{
@@ -218,8 +218,8 @@ var (
 			wrappers.LongLen + // balance
 			bls.SignatureLen + // proof of possession
 			wrappers.IntLen, // message length
-		gas.DBRead:  5, // conversion owner + expiry lookup + sov lookup + subsubnetID/nodeID lookup + weight lookup
-		gas.DBWrite: 6, // write current staker + expiry + write weight diff + write pk diff + subsubnetID/nodeID lookup + weight lookup
+		gas.DBRead:  5, // conversion owner + expiry lookup + sov lookup + subchainID/nodeID lookup + weight lookup
+		gas.DBWrite: 6, // write current staker + expiry + write weight diff + write pk diff + subchainID/nodeID lookup + weight lookup
 		gas.Compute: intrinsicBLSPoPVerifyCompute,
 	}
 	IntrinsicSetL1ValidatorWeightTxComplexities = gas.Dimensions{
@@ -857,7 +857,7 @@ func (c *complexityVisitor) AddChainValidatorTx(tx *txs.AddChainValidatorTx) err
 	return err
 }
 
-func (c *complexityVisitor) CreateSubnetTx(tx *txs.CreateSubnetTx) error {
+func (c *complexityVisitor) CreateChainTx(tx *txs.CreateChainTx) error {
 	baseTxComplexity, err := baseTxComplexity(&tx.BaseTx)
 	if err != nil {
 		return err
@@ -866,7 +866,7 @@ func (c *complexityVisitor) CreateSubnetTx(tx *txs.CreateSubnetTx) error {
 	if err != nil {
 		return err
 	}
-	c.output, err = IntrinsicCreateSubnetTxComplexities.Add(
+	c.output, err = IntrinsicCreateChainTxComplexities.Add(
 		&baseTxComplexity,
 		&ownerComplexity,
 	)

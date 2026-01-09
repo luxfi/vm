@@ -14,11 +14,11 @@ import (
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/rpc"
+	"github.com/luxfi/utils/json"
 	"github.com/luxfi/vm/api"
 	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/platformvm/fx"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils/json"
 	"github.com/luxfi/vm/vms/platformvm/status"
 	"github.com/luxfi/vm/vms/platformvm/validators/fee"
 
@@ -164,23 +164,23 @@ func (c *Client) GetAtomicUTXOs(
 type GetNetClientResponse struct {
 	// whether it is permissioned or not
 	IsPermissioned bool
-	// net auth information for a permissioned subnet
+	// net auth information for a permissioned chain
 	ControlKeys []ids.ShortID
 	Threshold   uint32
 	Locktime    uint64
-	// net transformation tx ID for a permissionless subnet
+	// net transformation tx ID for a permissionless chain
 	NetTransformationTxID ids.ID
-	// subnet conversion information for an L1
+	// chain conversion information for an L1
 	ConversionID   ids.ID
 	ManagerChainID ids.ID
 	ManagerAddress []byte
 }
 
-// GetNet returns information about the specified subnet.
-func (c *Client) GetNet(ctx context.Context, subnetID ids.ID, options ...rpc.Option) (GetNetClientResponse, error) {
+// GetNet returns information about the specified chain.
+func (c *Client) GetNet(ctx context.Context, chainID ids.ID, options ...rpc.Option) (GetNetClientResponse, error) {
 	res := &GetNetResponse{}
 	err := c.Requester.SendRequest(ctx, "platform.getNet", &GetNetArgs{
-		NetID: subnetID,
+		NetID: chainID,
 	}, res, options...)
 	if err != nil {
 		return GetNetClientResponse{}, err
@@ -204,7 +204,7 @@ func (c *Client) GetNet(ctx context.Context, subnetID ids.ID, options ...rpc.Opt
 
 // ClientNet is a representation of a net used in client methods
 type ClientNet struct {
-	// ID of the subnet
+	// ID of the chain
 	ID ids.ID
 	// Each element of [ControlKeys] the address of a public key.
 	// A transaction to add a validator to this net requires
@@ -213,7 +213,7 @@ type ClientNet struct {
 	Threshold   uint32
 }
 
-// GetNets returns information about the specified subnets
+// GetNets returns information about the specified chains
 //
 // Deprecated: Nets should be fetched from a dedicated indexer.
 func (c *Client) GetNets(ctx context.Context, ids []ids.ID, options ...rpc.Option) ([]ClientNet, error) {
@@ -224,33 +224,33 @@ func (c *Client) GetNets(ctx context.Context, ids []ids.ID, options ...rpc.Optio
 	if err != nil {
 		return nil, err
 	}
-	subnets := make([]ClientNet, len(res.Nets))
+	chains := make([]ClientNet, len(res.Nets))
 	for i, apiNet := range res.Nets {
 		controlKeys, err := address.ParseToIDs(apiNet.ControlKeys)
 		if err != nil {
 			return nil, err
 		}
 
-		subnets[i] = ClientNet{
+		chains[i] = ClientNet{
 			ID:          apiNet.ID,
 			ControlKeys: controlKeys,
 			Threshold:   uint32(apiNet.Threshold),
 		}
 	}
-	return subnets, nil
+	return chains, nil
 }
 
 // GetStakingAssetID returns the assetID of the asset used for staking on the
-// subnet corresponding to subnetID.
-func (c *Client) GetStakingAssetID(ctx context.Context, subnetID ids.ID, options ...rpc.Option) (ids.ID, error) {
+// chain corresponding to chainID.
+func (c *Client) GetStakingAssetID(ctx context.Context, chainID ids.ID, options ...rpc.Option) (ids.ID, error) {
 	res := &GetStakingAssetIDResponse{}
 	err := c.Requester.SendRequest(ctx, "platform.getStakingAssetID", &GetStakingAssetIDArgs{
-		NetID: subnetID,
+		NetID: chainID,
 	}, res, options...)
 	return res.AssetID, err
 }
 
-// GetCurrentValidators returns the list of current validators for subnetID.
+// GetCurrentValidators returns the list of current validators for chainID.
 func (c *Client) GetCurrentValidators(
 	ctx context.Context,
 	netID ids.ID,
@@ -348,20 +348,20 @@ func (c *Client) GetL1Validator(
 
 // GetCurrentSupply returns an upper bound on the supply of LUX in the system
 // along with the chain height.
-func (c *Client) GetCurrentSupply(ctx context.Context, subnetID ids.ID, options ...rpc.Option) (uint64, uint64, error) {
+func (c *Client) GetCurrentSupply(ctx context.Context, chainID ids.ID, options ...rpc.Option) (uint64, uint64, error) {
 	res := &GetCurrentSupplyReply{}
 	err := c.Requester.SendRequest(ctx, "platform.getCurrentSupply", &GetCurrentSupplyArgs{
-		NetID: subnetID,
+		NetID: chainID,
 	}, res, options...)
 	return uint64(res.Supply), uint64(res.Height), err
 }
 
 // SampleValidators returns the nodeIDs of a sample of sampleSize validators
-// from the current validator set for subnetID.
-func (c *Client) SampleValidators(ctx context.Context, subnetID ids.ID, sampleSize uint16, options ...rpc.Option) ([]ids.NodeID, error) {
+// from the current validator set for chainID.
+func (c *Client) SampleValidators(ctx context.Context, chainID ids.ID, sampleSize uint16, options ...rpc.Option) ([]ids.NodeID, error) {
 	res := &SampleValidatorsReply{}
 	err := c.Requester.SendRequest(ctx, "platform.sampleValidators", &SampleValidatorsArgs{
-		NetID: subnetID,
+		NetID: chainID,
 		Size:  json.Uint16(sampleSize),
 	}, res, options...)
 	return res.Validators, err
@@ -376,7 +376,7 @@ func (c *Client) GetBlockchainStatus(ctx context.Context, blockchainID string, o
 	return res.Status, err
 }
 
-// ValidatedBy returns the subnetID that validates blockchainID.
+// ValidatedBy returns the chainID that validates blockchainID.
 func (c *Client) ValidatedBy(ctx context.Context, blockchainID ids.ID, options ...rpc.Option) (ids.ID, error) {
 	res := &ValidatedByResponse{}
 	err := c.Requester.SendRequest(ctx, "platform.validatedBy", &ValidatedByArgs{
@@ -385,11 +385,11 @@ func (c *Client) ValidatedBy(ctx context.Context, blockchainID ids.ID, options .
 	return res.NetID, err
 }
 
-// Validates returns the list of blockchains that are validated by subnetID.
-func (c *Client) Validates(ctx context.Context, subnetID ids.ID, options ...rpc.Option) ([]ids.ID, error) {
+// Validates returns the list of blockchains that are validated by chainID.
+func (c *Client) Validates(ctx context.Context, chainID ids.ID, options ...rpc.Option) ([]ids.ID, error) {
 	res := &ValidatesResponse{}
 	err := c.Requester.SendRequest(ctx, "platform.validates", &ValidatesArgs{
-		NetID: subnetID,
+		NetID: chainID,
 	}, res, options...)
 	return res.BlockchainIDs, err
 }
@@ -486,10 +486,10 @@ func (c *Client) GetStake(
 
 // GetMinStake returns the minimum staking amount in nLUX for validators and
 // delegators respectively.
-func (c *Client) GetMinStake(ctx context.Context, subnetID ids.ID, options ...rpc.Option) (uint64, uint64, error) {
+func (c *Client) GetMinStake(ctx context.Context, chainID ids.ID, options ...rpc.Option) (uint64, uint64, error) {
 	res := &GetMinStakeReply{}
 	err := c.Requester.SendRequest(ctx, "platform.getMinStake", &GetMinStakeArgs{
-		NetID: subnetID,
+		NetID: chainID,
 	}, res, options...)
 	return uint64(res.MinValidatorStake), uint64(res.MinDelegatorStake), err
 }
@@ -536,18 +536,18 @@ func (c *Client) GetTimestamp(ctx context.Context, options ...rpc.Option) (time.
 	return res.Timestamp, err
 }
 
-// GetValidatorsAt returns the weights of the validator set of a provided subnet
+// GetValidatorsAt returns the weights of the validator set of a provided chain
 // at the specified height or at proposerVM height if set to
 // [platformapi.ProposedHeight].
 func (c *Client) GetValidatorsAt(
 	ctx context.Context,
-	subnetID ids.ID,
+	chainID ids.ID,
 	height platformapi.Height,
 	options ...rpc.Option,
 ) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
 	res := &GetValidatorsAtReply{}
 	err := c.Requester.SendRequest(ctx, "platform.getValidatorsAt", &GetValidatorsAtArgs{
-		NetID:  subnetID,
+		NetID:  chainID,
 		Height: height,
 	}, res, options...)
 	return res.Validators, err
@@ -645,25 +645,25 @@ func AwaitTxAccepted(
 	}
 }
 
-// GetNetOwners returns a map of subnet ID to current subnet's owner
+// GetNetOwners returns a map of chain ID to current chain's owner
 func GetNetOwners(
 	c *Client,
 	ctx context.Context,
-	subnetIDs ...ids.ID,
+	chainIDs ...ids.ID,
 ) (map[ids.ID]fx.Owner, error) {
-	subnetOwners := make(map[ids.ID]fx.Owner, len(subnetIDs))
-	for _, subnetID := range subnetIDs {
-		subnetInfo, err := c.GetNet(ctx, subnetID)
+	chainOwners := make(map[ids.ID]fx.Owner, len(chainIDs))
+	for _, chainID := range chainIDs {
+		chainInfo, err := c.GetNet(ctx, chainID)
 		if err != nil {
 			return nil, err
 		}
-		subnetOwners[subnetID] = &secp256k1fx.OutputOwners{
-			Locktime:  subnetInfo.Locktime,
-			Threshold: subnetInfo.Threshold,
-			Addrs:     subnetInfo.ControlKeys,
+		chainOwners[chainID] = &secp256k1fx.OutputOwners{
+			Locktime:  chainInfo.Locktime,
+			Threshold: chainInfo.Threshold,
+			Addrs:     chainInfo.ControlKeys,
 		}
 	}
-	return subnetOwners, nil
+	return chainOwners, nil
 }
 
 // GetDeactivationOwners returns a map of validation ID to deactivation owners
@@ -687,10 +687,10 @@ func GetDeactivationOwners(
 func GetOwners(
 	c *Client,
 	ctx context.Context,
-	subnetIDs []ids.ID,
+	chainIDs []ids.ID,
 	validationIDs []ids.ID,
 ) (map[ids.ID]fx.Owner, error) {
-	subnetOwners, err := GetNetOwners(c, ctx, subnetIDs...)
+	chainOwners, err := GetNetOwners(c, ctx, chainIDs...)
 	if err != nil {
 		return nil, err
 	}
@@ -699,8 +699,8 @@ func GetOwners(
 		return nil, err
 	}
 
-	owners := make(map[ids.ID]fx.Owner, len(subnetOwners)+len(deactivationOwners))
-	for id, owner := range subnetOwners {
+	owners := make(map[ids.ID]fx.Owner, len(chainOwners)+len(deactivationOwners))
+	for id, owner := range chainOwners {
 		owners[id] = owner
 	}
 	for id, owner := range deactivationOwners {

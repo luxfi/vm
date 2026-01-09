@@ -27,12 +27,12 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
+	"github.com/luxfi/timer/mockable"
 	"github.com/luxfi/upgrade/upgradetest"
+	"github.com/luxfi/utils"
 	"github.com/luxfi/vm/chains"
 	"github.com/luxfi/vm/chains/atomic"
 	"github.com/luxfi/vm/platformvm/fx"
-	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/metrics"
@@ -76,7 +76,7 @@ type staker struct {
 type test struct {
 	description        string
 	stakers            []staker
-	subnetStakers      []staker
+	chainStakers       []staker
 	advanceTimeTo      []time.Time
 	expectedStakers    map[ids.NodeID]stakerStatus
 	expectedNetStakers map[ids.NodeID]stakerStatus
@@ -208,7 +208,7 @@ func newEnvironment(t *testing.T, ctrl *gomock.Controller, f upgradetest.Fork) *
 			res.backend,
 			validatorstest.Manager,
 		)
-		// we do not add any subnet to state, since we can mock
+		// we do not add any chain to state, since we can mock
 		// whatever we need
 	}
 
@@ -236,8 +236,8 @@ func newEnvironment(t *testing.T, ctrl *gomock.Controller, f upgradetest.Fork) *
 }
 
 type walletConfig struct {
-	keys      []*secp256k1.PrivateKey
-	subnetIDs []ids.ID
+	keys     []*secp256k1.PrivateKey
+	chainIDs []ids.ID
 }
 
 func newWallet(t testing.TB, e *environment, c walletConfig) wallet.Wallet {
@@ -258,7 +258,7 @@ func newWallet(t testing.TB, e *environment, c walletConfig) wallet.Wallet {
 		},
 		e.state,
 		secp256k1fx.NewKeychain(c.keys...),
-		c.subnetIDs,
+		c.chainIDs,
 		nil, // validationIDs
 		[]ids.ID{e.ctx.CChainID, e.ctx.XChainID},
 	)
@@ -272,7 +272,7 @@ func addNet(t testing.TB, env *environment) {
 	})
 
 	var err error
-	testNet1, err = wallet.IssueCreateSubnetTx(
+	testNet1, err = wallet.IssueCreateChainTx(
 		&secp256k1fx.OutputOwners{
 			Threshold: 2,
 			Addrs: []ids.ShortID{

@@ -13,7 +13,7 @@ import (
 var _ verify.State = (*MintOutput)(nil)
 
 type MintOutput struct {
-	verify.IsState `json:"-"`
+	verify.IsState `serialize:"-" json:"-"`
 
 	secp256k1fx.OutputOwners `serialize:"true"`
 }

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/luxfi/metric"
 	"github.com/stretchr/testify/require"
 
 	consensusctx "github.com/luxfi/consensus/context"
@@ -27,13 +27,13 @@ import (
 	"github.com/luxfi/codec/linearcodec"
 	"github.com/luxfi/constants"
 	"github.com/luxfi/sdk/wallet/chain/p/wallet"
+	"github.com/luxfi/timer/mockable"
 	"github.com/luxfi/upgrade/upgradetest"
+	"github.com/luxfi/utils"
 	"github.com/luxfi/vm/chains"
 	"github.com/luxfi/vm/chains/atomic"
 	"github.com/luxfi/vm/platformvm/fx"
 	"github.com/luxfi/vm/secp256k1fx"
-	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/metrics"
@@ -77,7 +77,7 @@ func (m *mockValidatorState) GetNetworkID(chainID ids.ID) (ids.ID, error) {
 	return constants.PrimaryNetworkID, nil
 }
 
-func (m *mockValidatorState) GetSubnetID(chainID ids.ID) (ids.ID, error) {
+func (m *mockValidatorState) GetChainID(chainID ids.ID) (ids.ID, error) {
 	// Return Primary Network ID for all chains
 	return constants.PrimaryNetworkID, nil
 }
@@ -203,7 +203,7 @@ func newEnvironment(t *testing.T, f upgradetest.Fork) *environment { //nolint:un
 		Rewards:      rewardsCalc,
 	}
 
-	registerer := prometheus.NewRegistry()
+	registerer := metric.NewRegistry()
 	res.sender = &coremock.MockAppSender{
 		SendGossipF: func(context.Context, p2p.SendConfig, []byte) error {
 			return nil
@@ -298,7 +298,7 @@ func newWallet(t testing.TB, e *environment, c walletConfig) wallet.Wallet {
 		TxFee:                         constants.MilliLux,
 		CreateAssetTxFee:              constants.MilliLux,
 		CreateNetTxFee:                constants.Lux,
-		CreateBlockchainTxFee:         constants.Lux,
+		CreateChainTxFee:         constants.Lux,
 		AddPrimaryNetworkValidatorFee: 0,
 		AddPrimaryNetworkDelegatorFee: 0,
 	}
@@ -322,7 +322,7 @@ func addNet(t *testing.T, env *environment) {
 	})
 
 	var err error
-	testNet1, err = wallet.IssueCreateSubnetTx(
+	testNet1, err = wallet.IssueCreateChainTx(
 		&secp256k1fx.OutputOwners{
 			Threshold: 2,
 			Addrs: []ids.ShortID{

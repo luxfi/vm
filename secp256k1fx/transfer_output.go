@@ -19,7 +19,7 @@ var (
 )
 
 type TransferOutput struct {
-	verify.IsState `json:"-"`
+	verify.IsState `serialize:"-" json:"-"`
 
 	Amt uint64 `serialize:"true" json:"amount"`
 

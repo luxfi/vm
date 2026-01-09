@@ -29,6 +29,8 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/upgrade"
+	"github.com/luxfi/utils/resource"
+	"github.com/luxfi/utils/wrappers"
 	"github.com/luxfi/vm/api/metrics"
 	"github.com/luxfi/vm/chain"
 	"github.com/luxfi/vm/chains/atomic"
@@ -36,8 +38,6 @@ import (
 	"github.com/luxfi/vm/internal/database/rpcdb"
 	"github.com/luxfi/vm/internal/ids/galiasreader"
 	"github.com/luxfi/vm/rpcchainvm/grpcutils"
-	"github.com/luxfi/vm/utils/resource"
-	"github.com/luxfi/vm/utils/wrappers"
 	platformwarp "github.com/luxfi/vm/vms/platformvm/warp"
 	"github.com/luxfi/vm/vms/platformvm/warp/gwarp"
 	"github.com/luxfi/vm/vms/rpcchainvm/appsender"
@@ -46,7 +46,6 @@ import (
 	"github.com/luxfi/vm/vms/rpcchainvm/runtime"
 	"github.com/luxfi/warp"
 
-	grpc_metric "github.com/grpc-ecosystem/go-grpc-prometheus"
 	aliasreaderpb "github.com/luxfi/vm/proto/pb/aliasreader"
 	appsenderpb "github.com/luxfi/vm/proto/pb/appsender"
 	httppb "github.com/luxfi/vm/proto/pb/http"
@@ -55,7 +54,6 @@ import (
 	validatorstatepb "github.com/luxfi/vm/proto/pb/validatorstate"
 	vmpb "github.com/luxfi/vm/proto/pb/vm"
 	warppb "github.com/luxfi/vm/proto/pb/warp"
-	dto "github.com/prometheus/client_model/go"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
@@ -113,8 +111,6 @@ type VMClient struct {
 
 	serverCloser grpcutils.ServerCloser
 	conns        []*grpc.ClientConn
-
-	grpcServerMetrics *grpc_metric.ServerMetrics
 }
 
 // NewClient returns a VM connected to a remote VM
@@ -289,15 +285,10 @@ func (vm *VMClient) Initialize(
 	}
 
 	// Register metrics
-	serverReg, err := metric.MakeAndRegister(
+	if _, err := metric.MakeAndRegister(
 		vm.metricsGatherer,
 		primaryAlias,
-	)
-	if err != nil {
-		return err
-	}
-	vm.grpcServerMetrics = grpc_metric.NewServerMetrics()
-	if err := serverReg.Register(vm.grpcServerMetrics); err != nil {
+	); err != nil {
 		return err
 	}
 
@@ -372,7 +363,6 @@ func (vm *VMClient) Initialize(
 
 	resp, err := vm.client.Initialize(ctx, &vmpb.InitializeRequest{
 		NetworkId:       chainCtx.NetworkID,
-		NetId:           chainCtx.ChainID[:],
 		ChainId:         chainCtx.ChainID[:],
 		NodeId:          chainCtx.NodeID.Bytes(),
 		PublicKey:       publicKeyBytes,
@@ -444,10 +434,7 @@ func (vm *VMClient) Initialize(
 }
 
 func (vm *VMClient) newDBServer(db database.Database) *grpc.Server {
-	server := grpcutils.NewServer(
-		grpcutils.WithUnaryInterceptor(vm.grpcServerMetrics.UnaryServerInterceptor()),
-		grpcutils.WithStreamInterceptor(vm.grpcServerMetrics.StreamServerInterceptor()),
-	)
+	server := grpcutils.NewServer()
 
 	// See https://github.com/grpc/grpc/blob/master/doc/health-checking.md
 	grpcHealth := health.NewServer()
@@ -459,17 +446,11 @@ func (vm *VMClient) newDBServer(db database.Database) *grpc.Server {
 	rpcdbpb.RegisterDatabaseServer(server, rpcdb.NewServer(db))
 	healthpb.RegisterHealthServer(server, grpcHealth)
 
-	// Ensure metric counters are zeroed on restart
-	grpc_metric.Register(server)
-
 	return server
 }
 
 func (vm *VMClient) newInitServer() *grpc.Server {
-	server := grpcutils.NewServer(
-		grpcutils.WithUnaryInterceptor(vm.grpcServerMetrics.UnaryServerInterceptor()),
-		grpcutils.WithStreamInterceptor(vm.grpcServerMetrics.StreamServerInterceptor()),
-	)
+	server := grpcutils.NewServer()
 
 	// See https://github.com/grpc/grpc/blob/master/doc/health-checking.md
 	grpcHealth := health.NewServer()
@@ -484,9 +465,6 @@ func (vm *VMClient) newInitServer() *grpc.Server {
 	healthpb.RegisterHealthServer(server, grpcHealth)
 	validatorstatepb.RegisterValidatorStateServer(server, vm.validatorStateServer)
 	warppb.RegisterSignerServer(server, vm.warpSignerServer)
-
-	// Ensure metric counters are zeroed on restart
-	grpc_metric.Register(server)
 
 	return server
 }
@@ -740,12 +718,12 @@ func (vm *VMClient) AppGossip(ctx context.Context, nodeID ids.NodeID, msg []byte
 	return err
 }
 
-func (vm *VMClient) Gather() ([]*dto.MetricFamily, error) {
+func (vm *VMClient) Gather() ([]*metric.MetricFamily, error) {
 	resp, err := vm.client.Gather(context.Background(), &emptypb.Empty{})
 	if err != nil {
 		return nil, err
 	}
-	return resp.MetricFamilies, nil
+	return metric.DTOToNative(resp.MetricFamilies), nil
 }
 
 func (vm *VMClient) GetAncestors(

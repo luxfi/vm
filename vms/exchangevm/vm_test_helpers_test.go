@@ -138,7 +138,7 @@ func (m *mockValidatorState) GetNetworkID(ids.ID) (ids.ID, error) {
 	return m.chainID, nil
 }
 
-func (m *mockValidatorState) GetSubnetID(chainID ids.ID) (ids.ID, error) {
+func (m *mockValidatorState) GetChainID(chainID ids.ID) (ids.ID, error) {
 	return ids.Empty, nil
 }
 

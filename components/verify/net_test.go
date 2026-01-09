@@ -18,7 +18,7 @@ import (
 type testValidatorState struct {
 	height     uint64
 	validators map[ids.ID]map[ids.NodeID]uint64
-	subnets    map[ids.ID]ids.ID // chainID -> subnetID
+	chains     map[ids.ID]ids.ID // chainID -> chainID
 	err        error
 }
 
@@ -41,8 +41,8 @@ func (s *testValidatorState) GetNetID(ctx context.Context, chainID ids.ID) (ids.
 	if s.err != nil {
 		return ids.Empty, s.err
 	}
-	if subnet, ok := s.subnets[chainID]; ok {
-		return subnet, nil
+	if chain, ok := s.chains[chainID]; ok {
+		return chain, nil
 	}
 	return ids.Empty, errMissing
 }
@@ -51,7 +51,7 @@ func (s *testValidatorState) GetChainID(blockID ids.ID) (ids.ID, error) {
 	return ids.Empty, nil
 }
 
-func (s *testValidatorState) GetCurrentValidators(ctx context.Context, height uint64, subnetID ids.ID) (map[ids.NodeID]*consensuscontext.GetValidatorOutput, error) {
+func (s *testValidatorState) GetCurrentValidators(ctx context.Context, height uint64, chainID ids.ID) (map[ids.NodeID]*consensuscontext.GetValidatorOutput, error) {
 	return nil, nil
 }
 
@@ -85,20 +85,20 @@ func TestSameNet(t *testing.T) {
 				ChainID: chainID0,
 				NetID:   netID0,
 				ValidatorState: &testValidatorState{
-					subnets: map[ids.ID]ids.ID{},
-					err:     errMissing,
+					chains: map[ids.ID]ids.ID{},
+					err:    errMissing,
 				},
 			},
 			chainID: chainID1,
 			result:  errMissing,
 		},
 		{
-			name: "wrong subnet",
+			name: "wrong chain",
 			chainCtx: &ChainContext{
 				ChainID: chainID0,
 				NetID:   netID0,
 				ValidatorState: &testValidatorState{
-					subnets: map[ids.ID]ids.ID{
+					chains: map[ids.ID]ids.ID{
 						chainID1: netID1,
 					},
 				},
@@ -107,12 +107,12 @@ func TestSameNet(t *testing.T) {
 			result:  ErrMismatchedNetIDs,
 		},
 		{
-			name: "same subnet",
+			name: "same chain",
 			chainCtx: &ChainContext{
 				ChainID: chainID0,
 				NetID:   netID0,
 				ValidatorState: &testValidatorState{
-					subnets: map[ids.ID]ids.ID{
+					chains: map[ids.ID]ids.ID{
 						chainID1: netID0,
 					},
 				},

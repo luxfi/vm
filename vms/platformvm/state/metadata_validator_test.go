@@ -13,7 +13,7 @@ import (
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/memdb"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/wrappers"
+	"github.com/luxfi/utils/wrappers"
 )
 
 func TestValidatorUptimes(t *testing.T) {
@@ -80,10 +80,10 @@ func TestWriteValidatorMetadata(t *testing.T) {
 	state := newValidatorState()
 
 	primaryDB := memdb.New()
-	subnetDB := memdb.New()
+	chainDB := memdb.New()
 
 	// write empty uptimes
-	require.NoError(state.WriteValidatorMetadata(primaryDB, subnetDB, CodecVersion1))
+	require.NoError(state.WriteValidatorMetadata(primaryDB, chainDB, CodecVersion1))
 
 	// load uptime
 	nodeID := ids.GenerateTestNodeID()
@@ -97,9 +97,9 @@ func TestWriteValidatorMetadata(t *testing.T) {
 	state.LoadValidatorMetadata(nodeID, netID, testUptimeReward)
 
 	// write state, should not reflect to DB yet
-	require.NoError(state.WriteValidatorMetadata(primaryDB, subnetDB, CodecVersion1))
+	require.NoError(state.WriteValidatorMetadata(primaryDB, chainDB, CodecVersion1))
 	require.False(primaryDB.Has(testUptimeReward.txID[:]))
-	require.False(subnetDB.Has(testUptimeReward.txID[:]))
+	require.False(chainDB.Has(testUptimeReward.txID[:]))
 
 	// get uptime should still return the loaded value
 	upDuration, lastUpdated, err := state.GetUptime(nodeID, netID)
@@ -113,9 +113,9 @@ func TestWriteValidatorMetadata(t *testing.T) {
 	require.NoError(state.SetUptime(nodeID, netID, newUpDuration, newLastUpdated))
 
 	// write uptimes, should reflect to net DB
-	require.NoError(state.WriteValidatorMetadata(primaryDB, subnetDB, CodecVersion1))
+	require.NoError(state.WriteValidatorMetadata(primaryDB, chainDB, CodecVersion1))
 	require.False(primaryDB.Has(testUptimeReward.txID[:]))
-	require.True(subnetDB.Has(testUptimeReward.txID[:]))
+	require.True(chainDB.Has(testUptimeReward.txID[:]))
 }
 
 func TestValidatorDelegateeRewards(t *testing.T) {

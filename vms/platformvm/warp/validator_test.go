@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	subnetID = ids.GenerateTestID()
+	chainID = ids.GenerateTestID()
 )
 
 // testValidatorStateAdapter wraps validators.State to implement ValidatorState
@@ -34,8 +34,8 @@ type testValidatorStateAdapter struct {
 	validators.State
 }
 
-func (t *testValidatorStateAdapter) GetValidatorSet(ctx context.Context, height uint64, subnetID ids.ID) (map[ids.NodeID]*ValidatorData, error) {
-	validatorSet, err := t.State.GetValidatorSet(ctx, height, subnetID)
+func (t *testValidatorStateAdapter) GetValidatorSet(ctx context.Context, height uint64, chainID ids.ID) (map[ids.NodeID]*ValidatorData, error) {
+	validatorSet, err := t.State.GetValidatorSet(ctx, height, chainID)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func TestGetCanonicalValidatorSet(t *testing.T) {
 			name: "can't get validator set",
 			stateF: func(ctrl *gomock.Controller) validators.State {
 				state := validatorsmock.NewState(ctrl)
-				state.EXPECT().GetValidatorSet(gomock.Any(), pChainHeight, subnetID).Return(nil, errTest)
+				state.EXPECT().GetValidatorSet(gomock.Any(), pChainHeight, chainID).Return(nil, errTest)
 				return state
 			},
 			expectedErr: errTest,
@@ -74,7 +74,7 @@ func TestGetCanonicalValidatorSet(t *testing.T) {
 			name: "all validators have public keys; no duplicate pub keys",
 			stateF: func(ctrl *gomock.Controller) validators.State {
 				state := validatorsmock.NewState(ctrl)
-				state.EXPECT().GetValidatorSet(gomock.Any(), pChainHeight, subnetID).Return(
+				state.EXPECT().GetValidatorSet(gomock.Any(), pChainHeight, chainID).Return(
 					map[ids.NodeID]*validators.GetValidatorOutput{
 						testVdrs[0].nodeID: {
 							NodeID:    testVdrs[0].nodeID,
@@ -99,7 +99,7 @@ func TestGetCanonicalValidatorSet(t *testing.T) {
 			name: "all validators have public keys; duplicate pub keys",
 			stateF: func(ctrl *gomock.Controller) validators.State {
 				state := validatorsmock.NewState(ctrl)
-				state.EXPECT().GetValidatorSet(gomock.Any(), pChainHeight, subnetID).Return(
+				state.EXPECT().GetValidatorSet(gomock.Any(), pChainHeight, chainID).Return(
 					map[ids.NodeID]*validators.GetValidatorOutput{
 						testVdrs[0].nodeID: {
 							NodeID:    testVdrs[0].nodeID,
@@ -140,7 +140,7 @@ func TestGetCanonicalValidatorSet(t *testing.T) {
 			name: "validator without public key; no duplicate pub keys",
 			stateF: func(ctrl *gomock.Controller) validators.State {
 				state := validatorsmock.NewState(ctrl)
-				state.EXPECT().GetValidatorSet(gomock.Any(), pChainHeight, subnetID).Return(
+				state.EXPECT().GetValidatorSet(gomock.Any(), pChainHeight, chainID).Return(
 					map[ids.NodeID]*validators.GetValidatorOutput{
 						testVdrs[0].nodeID: {
 							NodeID:    testVdrs[0].nodeID,
@@ -174,7 +174,7 @@ func TestGetCanonicalValidatorSet(t *testing.T) {
 				State: state,
 			}
 
-			validators, err := GetCanonicalValidatorSetFromSubsubnetID(t.Context(), wrappedState, pChainHeight, subnetID)
+			validators, err := GetCanonicalValidatorSetFromSubchainID(t.Context(), wrappedState, pChainHeight, chainID)
 			require.ErrorIs(err, tt.expectedErr)
 			if err != nil {
 				return
@@ -345,7 +345,7 @@ func TestSumWeight(t *testing.T) {
 
 func BenchmarkGetCanonicalValidatorSet(b *testing.B) {
 	pChainHeight := uint64(1)
-	subnetID := ids.GenerateTestID()
+	chainID := ids.GenerateTestID()
 	numNodes := 10_000
 	getValidatorOutputs := make([]*validators.GetValidatorOutput, 0, numNodes)
 	for i := 0; i < numNodes; i++ {
@@ -384,7 +384,7 @@ func BenchmarkGetCanonicalValidatorSet(b *testing.B) {
 
 		b.Run(strconv.Itoa(size), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_, err := GetCanonicalValidatorSetFromSubsubnetID(b.Context(), wrappedState, pChainHeight, subnetID)
+				_, err := GetCanonicalValidatorSetFromSubchainID(b.Context(), wrappedState, pChainHeight, chainID)
 				require.NoError(b, err)
 			}
 		})
@@ -398,7 +398,7 @@ type mockValidatorState struct {
 	err       error
 }
 
-func (m *mockValidatorState) GetValidatorSet(ctx context.Context, height uint64, subnetID ids.ID) (map[ids.NodeID]*ValidatorData, error) {
+func (m *mockValidatorState) GetValidatorSet(ctx context.Context, height uint64, chainID ids.ID) (map[ids.NodeID]*ValidatorData, error) {
 	m.callCount++
 	return m.data, m.err
 }
@@ -410,8 +410,8 @@ func newMockValidatorState(data map[ids.NodeID]*ValidatorData, err error) *mockV
 func TestCachedValidatorState(t *testing.T) {
 	ctx := context.Background()
 	height := uint64(100)
-	subnet1 := ids.GenerateTestID()
-	subnet2 := ids.GenerateTestID()
+	chain1 := ids.GenerateTestID()
+	chain2 := ids.GenerateTestID()
 
 	// Create test validator data
 	nodeID1 := ids.GenerateTestNodeID()
@@ -446,11 +446,11 @@ func TestCachedValidatorState(t *testing.T) {
 			networkID:         constants.MainnetID,
 			expectedCallCount: 2, // Should call underlying state twice (no caching)
 			operations: func(t *testing.T, cached *CachedValidatorState) {
-				vdrs1, err := cached.GetValidatorSet(ctx, height, subnet1)
+				vdrs1, err := cached.GetValidatorSet(ctx, height, chain1)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs1)
 
-				vdrs2, err := cached.GetValidatorSet(ctx, height, subnet1)
+				vdrs2, err := cached.GetValidatorSet(ctx, height, chain1)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs2)
 			},
@@ -462,11 +462,11 @@ func TestCachedValidatorState(t *testing.T) {
 			networkID:         constants.MainnetID,
 			expectedCallCount: 1, // Should call underlying state once, then use cache
 			operations: func(t *testing.T, cached *CachedValidatorState) {
-				vdrs1, err := cached.GetValidatorSet(ctx, height, subnet1)
+				vdrs1, err := cached.GetValidatorSet(ctx, height, chain1)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs1)
 
-				vdrs2, err := cached.GetValidatorSet(ctx, height, subnet1)
+				vdrs2, err := cached.GetValidatorSet(ctx, height, chain1)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs2)
 			},
@@ -478,27 +478,27 @@ func TestCachedValidatorState(t *testing.T) {
 			networkID:         constants.MainnetID,
 			expectedCallCount: 2, // Two different heights = two calls
 			operations: func(t *testing.T, cached *CachedValidatorState) {
-				vdrs1, err := cached.GetValidatorSet(ctx, height, subnet1)
+				vdrs1, err := cached.GetValidatorSet(ctx, height, chain1)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs1)
 
-				vdrs2, err := cached.GetValidatorSet(ctx, height+1, subnet1)
+				vdrs2, err := cached.GetValidatorSet(ctx, height+1, chain1)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs2)
 			},
 		},
 		{
-			name:              "different subnets cached separately",
+			name:              "different chains cached separately",
 			state:             newMockValidatorState(testData, nil),
 			upgradeConfig:     &upgrade.Config{GraniteTime: time.Now().Add(-1 * time.Hour)},
 			networkID:         constants.MainnetID,
-			expectedCallCount: 2, // Two different subnets = two calls
+			expectedCallCount: 2, // Two different chains = two calls
 			operations: func(t *testing.T, cached *CachedValidatorState) {
-				vdrs1, err := cached.GetValidatorSet(ctx, height, subnet1)
+				vdrs1, err := cached.GetValidatorSet(ctx, height, chain1)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs1)
 
-				vdrs2, err := cached.GetValidatorSet(ctx, height, subnet2)
+				vdrs2, err := cached.GetValidatorSet(ctx, height, chain2)
 				require.NoError(t, err)
 				require.Equal(t, testData, vdrs2)
 			},
@@ -510,7 +510,7 @@ func TestCachedValidatorState(t *testing.T) {
 			networkID:         constants.MainnetID,
 			expectedCallCount: 1,
 			operations: func(t *testing.T, cached *CachedValidatorState) {
-				_, err := cached.GetValidatorSet(ctx, height, subnet1)
+				_, err := cached.GetValidatorSet(ctx, height, chain1)
 				require.ErrorIs(t, err, errTest)
 			},
 		},

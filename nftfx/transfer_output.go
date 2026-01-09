@@ -25,7 +25,7 @@ var (
 )
 
 type TransferOutput struct {
-	verify.IsState `json:"-"`
+	verify.IsState `serialize:"-" json:"-"`
 
 	GroupID                  uint32              `serialize:"true" json:"groupID"`
 	Payload                  types.JSONByteSlice `serialize:"true" json:"payload"`

@@ -8,8 +8,8 @@ import (
 
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/crypto/hash"
 	"github.com/luxfi/vm/types"
-	"github.com/luxfi/vm/utils/hashing"
 )
 
 type ChainToL1ConversionValidatorData struct {
@@ -32,7 +32,7 @@ func ChainToL1ConversionID(data ChainToL1ConversionData) (ids.ID, error) {
 	if err != nil {
 		return ids.Empty, err
 	}
-	return hashing.ComputeHash256Array(bytes), nil
+	return hash.ComputeHash256Array(bytes), nil
 }
 
 // ChainToL1Conversion reports the summary of the chain conversion that

@@ -6,10 +6,9 @@ package metrics
 import (
 	"errors"
 	"fmt"
-	"github.com/luxfi/metric"
 	"sync"
 
-	dto "github.com/prometheus/client_model/go"
+	"github.com/luxfi/metric"
 )
 
 var errReregisterGatherer = errors.New("attempted to register a gatherer when one is already registered")
@@ -37,7 +36,7 @@ func NewOptionalGatherer() OptionalGatherer {
 	return &optionalGatherer{}
 }
 
-func (g *optionalGatherer) Gather() ([]*dto.MetricFamily, error) {
+func (g *optionalGatherer) Gather() ([]*metric.MetricFamily, error) {
 	g.lock.RLock()
 	defer g.lock.RUnlock()
 
