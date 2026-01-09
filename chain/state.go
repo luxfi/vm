@@ -12,7 +12,7 @@ import (
 	"github.com/luxfi/cache/lru"
 	"github.com/luxfi/cache/metercacher"
 	"github.com/luxfi/consensus/engine/chain/block"
-	"github.com/luxfi/const"
+	"github.com/luxfi/constantsants"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/metric"
