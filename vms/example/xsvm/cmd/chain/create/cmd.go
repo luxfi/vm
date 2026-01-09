@@ -12,8 +12,8 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/sdk/wallet/primary"
 	"github.com/luxfi/sdk/wallet/primary/common"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/vms/example/xsvm/genesis"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 func Command() *cobra.Command {

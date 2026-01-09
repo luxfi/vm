@@ -15,15 +15,15 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/mock/gomock"
 	"github.com/luxfi/upgrade/upgradetest"
-	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/utils"
+	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/state"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 	"github.com/luxfi/vm/vms/platformvm/utxo/utxomock"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 	"github.com/stretchr/testify/require"
 )
 

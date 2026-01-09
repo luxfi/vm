@@ -17,10 +17,10 @@ import (
 	"github.com/luxfi/vm/chains/atomic"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/vms/exchangevm/config"
 	"github.com/luxfi/vm/vms/exchangevm/state"
 	"github.com/luxfi/vm/vms/exchangevm/txs"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 type Builder struct {

@@ -52,8 +52,8 @@ type Network struct {
 
 // Subnet represents a subnet in the network
 type Subnet struct {
-	SubnetID    ids.ID
-	Chains      []*Chain
+	SubnetID     ids.ID
+	Chains       []*Chain
 	ValidatorIDs []ids.NodeID
 }
 

@@ -10,10 +10,10 @@ import (
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/luxfi/vm/rpcchainvm/grpcutils"
 	"github.com/luxfi/vm/vms/rpcchainvm/ghttp/gconn"
 	"github.com/luxfi/vm/vms/rpcchainvm/ghttp/greader"
 	"github.com/luxfi/vm/vms/rpcchainvm/ghttp/gwriter"
-	"github.com/luxfi/vm/vms/rpcchainvm/grpcutils"
 
 	responsewriterpb "github.com/luxfi/vm/proto/pb/http/responsewriter"
 	readerpb "github.com/luxfi/vm/proto/pb/io/reader"

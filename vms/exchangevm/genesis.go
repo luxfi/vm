@@ -7,14 +7,14 @@ import (
 	"cmp"
 	"fmt"
 
-	"github.com/luxfi/crypto/address"
+	"github.com/luxfi/address"
 	"github.com/luxfi/codec"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/vms/exchangevm/fxs"
 	"github.com/luxfi/vm/vms/exchangevm/txs"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 // Genesis represents the genesis state of the XVM

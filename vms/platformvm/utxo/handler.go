@@ -11,16 +11,16 @@ import (
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
+	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/components/verify"
+	"github.com/luxfi/vm/platformvm/fx"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/utils/hashing"
 	safemath "github.com/luxfi/vm/utils/math"
 	"github.com/luxfi/vm/utils/timer/mockable"
-	"github.com/luxfi/vm/components/lux"
-	"github.com/luxfi/vm/components/verify"
-	"github.com/luxfi/vm/vms/platformvm/fx"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
 	"github.com/luxfi/vm/vms/platformvm/state"
 	"github.com/luxfi/vm/vms/platformvm/txs"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 var (

@@ -16,12 +16,12 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls/signer/localsigner"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/components/lux"
-	"github.com/luxfi/vm/vms/platformvm/signer"
+	"github.com/luxfi/vm/platformvm/signer"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/types"
+	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
-	"github.com/luxfi/vm/vms/secp256k1fx"
-	"github.com/luxfi/vm/vms/types"
 )
 
 //go:embed register_l1_validator_tx_test.json

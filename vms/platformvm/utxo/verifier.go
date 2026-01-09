@@ -7,12 +7,12 @@ import (
 	"fmt"
 
 	"github.com/luxfi/ids"
+	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/components/verify"
+	"github.com/luxfi/vm/platformvm/fx"
 	"github.com/luxfi/vm/utils/hashing"
 	"github.com/luxfi/vm/utils/math"
 	"github.com/luxfi/vm/utils/timer/mockable"
-	"github.com/luxfi/vm/components/lux"
-	"github.com/luxfi/vm/components/verify"
-	"github.com/luxfi/vm/vms/platformvm/fx"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 )

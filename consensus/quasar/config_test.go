@@ -171,10 +171,10 @@ func TestDefaultThresholdParams(t *testing.T) {
 		parties       int
 		wantThreshold int
 	}{
-		{parties: 3, wantThreshold: 3},  // 2/3 of 3 = 2, +1 = 3
-		{parties: 4, wantThreshold: 3},  // 2/3 of 4 = 2, +1 = 3
-		{parties: 5, wantThreshold: 4},  // 2/3 of 5 = 3, +1 = 4
-		{parties: 10, wantThreshold: 7}, // 2/3 of 10 = 6, +1 = 7
+		{parties: 3, wantThreshold: 3},   // 2/3 of 3 = 2, +1 = 3
+		{parties: 4, wantThreshold: 3},   // 2/3 of 4 = 2, +1 = 3
+		{parties: 5, wantThreshold: 4},   // 2/3 of 5 = 3, +1 = 4
+		{parties: 10, wantThreshold: 7},  // 2/3 of 10 = 6, +1 = 7
 		{parties: 21, wantThreshold: 15}, // 2/3 of 21 = 14, +1 = 15
 	}
 

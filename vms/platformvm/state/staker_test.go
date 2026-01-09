@@ -13,8 +13,8 @@ import (
 
 	"github.com/luxfi/crypto/bls/signer/localsigner"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/vms/platformvm/signer"
-	"github.com/luxfi/vm/vms/platformvm/signer/signermock"
+	"github.com/luxfi/vm/platformvm/signer"
+	"github.com/luxfi/vm/platformvm/signer/signermock"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 )
 

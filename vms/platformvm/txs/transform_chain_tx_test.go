@@ -14,13 +14,13 @@ import (
 
 	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify/verifymock"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/types"
+	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/vms/platformvm/reward"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
-	"github.com/luxfi/vm/vms/secp256k1fx"
-	"github.com/luxfi/vm/vms/types"
 )
 
 func TestTransformChainTxSerialization(t *testing.T) {

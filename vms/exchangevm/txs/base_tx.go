@@ -6,7 +6,7 @@ package txs
 import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/components/lux"
-	"github.com/luxfi/vm/vms/secp256k1fx"
+	"github.com/luxfi/vm/secp256k1fx"
 
 	consensusctx "github.com/luxfi/consensus/context"
 	"github.com/luxfi/math/set"
