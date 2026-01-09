@@ -10,7 +10,7 @@ import (
 	"github.com/luxfi/crypto/address/formatting"
 	"net/http"
 
-	"github.com/luxfi/address"
+	"github.com/luxfi/crypto/address"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math"
 	"github.com/luxfi/vm/components/lux"
