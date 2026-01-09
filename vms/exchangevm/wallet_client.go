@@ -6,6 +6,7 @@ package exchangevm
 import (
 	"context"
 	"fmt"
+	"github.com/luxfi/formatting"
 
 	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/address"
