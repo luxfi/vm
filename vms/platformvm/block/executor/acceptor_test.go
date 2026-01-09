@@ -16,7 +16,7 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/chains/atomic"
 	"github.com/luxfi/vm/utils/timer/mockable"
-	"github.com/luxfi/vm/vms/components/verify"
+	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/vms/platformvm/block"
 	"github.com/luxfi/vm/vms/platformvm/metrics"
 	"github.com/luxfi/vm/vms/platformvm/state"

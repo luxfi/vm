@@ -11,25 +11,25 @@ import (
 
 	"github.com/luxfi/cache/lru"
 	"github.com/luxfi/consensus/engine"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/vm/utils/linked"
 	"github.com/luxfi/vm/utils/lock"
 	"github.com/luxfi/vm/utils/setmap"
-	"github.com/luxfi/vm/utils/units"
 )
 
 const (
 	// MaxTxSize is the maximum number of bytes a transaction can use to be
 	// allowed into the mempool. Increased from 64 KiB to 2 MiB to support
 	// large genesis configurations (e.g., ZOO L2 genesis is ~613 KiB).
-	MaxTxSize = 2 * units.MiB
+	MaxTxSize = 2 * constants.MiB
 
 	// droppedTxIDsCacheSize is the maximum number of dropped txIDs to cache
 	droppedTxIDsCacheSize = 64
 
 	// maxMempoolSize is the maximum number of bytes allowed in the mempool
-	maxMempoolSize = 64 * units.MiB
+	maxMempoolSize = 64 * constants.MiB
 )
 
 var (

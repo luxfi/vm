@@ -2295,7 +2295,7 @@ import (
     "sync"
 
     "github.com/luxfi/vm/api"
-    "github.com/luxfi/node/pubsub"
+    "github.com/luxfi/pubsub"
     "github.com/gorilla/websocket"
 )
 

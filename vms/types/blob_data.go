@@ -6,7 +6,7 @@ package types
 import (
 	"encoding/json"
 
-	"github.com/luxfi/formatting"
+	"github.com/luxfi/crypto/address/formatting"
 )
 
 const nullStr = "null"

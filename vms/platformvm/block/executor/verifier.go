@@ -19,7 +19,7 @@ import (
 	"github.com/luxfi/vm/vms/platformvm/txs"
 	txexecutor "github.com/luxfi/vm/vms/platformvm/txs/executor"
 
-	"github.com/luxfi/vm/vms/components/gas"
+	"github.com/luxfi/vm/components/gas"
 	txfee "github.com/luxfi/vm/vms/platformvm/txs/fee"
 	validatorfee "github.com/luxfi/vm/vms/platformvm/validators/fee"
 )

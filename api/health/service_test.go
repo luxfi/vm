@@ -4,8 +4,8 @@
 package health
 
 import (
-	"github.com/luxfi/metric"
 	"context"
+	"github.com/luxfi/metric"
 	"net/http"
 	"testing"
 

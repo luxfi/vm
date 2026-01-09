@@ -15,8 +15,8 @@ import (
 
 	ids "github.com/luxfi/ids"
 	iterator "github.com/luxfi/vm/utils/iterator"
-	gas "github.com/luxfi/vm/vms/components/gas"
-	lux "github.com/luxfi/vm/vms/components/lux"
+	gas "github.com/luxfi/vm/components/gas"
+	lux "github.com/luxfi/vm/components/lux"
 	fx "github.com/luxfi/vm/vms/platformvm/fx"
 	status "github.com/luxfi/vm/vms/platformvm/status"
 	txs "github.com/luxfi/vm/vms/platformvm/txs"

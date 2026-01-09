@@ -13,7 +13,7 @@ import (
 	reflect "reflect"
 
 	consensusctx "github.com/luxfi/consensus/context"
-	verify "github.com/luxfi/vm/vms/components/verify"
+	verify "github.com/luxfi/vm/components/verify"
 	gomock "go.uber.org/mock/gomock"
 )
 

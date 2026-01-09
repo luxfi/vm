@@ -60,14 +60,14 @@ func updateTestFile(testName, actualBytes string) {
 		"TestAddPermissionlessPrimaryDelegatorSerialization": "add_permissionless_delegator_tx_test.go",
 		"TestAddPermissionlessNetDelegatorSerialization":     "add_permissionless_delegator_tx_test.go",
 		"TestBaseTxSerialization":                            "base_tx_test.go",
-		"TestConvertChainToL1TxSerialization":                  "convert_net_to_l1_tx_test.go",
+		"TestConvertChainToL1TxSerialization":                "convert_net_to_l1_tx_test.go",
 		"TestDisableL1ValidatorTxSerialization":              "disable_l1_validator_tx_test.go",
 		"TestIncreaseL1ValidatorBalanceTxSerialization":      "increase_l1_validator_balance_tx_test.go",
 		"TestRegisterL1ValidatorTxSerialization":             "register_l1_validator_tx_test.go",
-		"TestRemoveChainValidatorTxSerialization":              "remove_net_validator_tx_test.go",
+		"TestRemoveChainValidatorTxSerialization":            "remove_net_validator_tx_test.go",
 		"TestSetL1ValidatorWeightTxSerialization":            "set_l1_validator_weight_tx_test.go",
-		"TestTransferChainOwnershipTxSerialization":            "transfer_net_ownership_tx_test.go",
-		"TestTransformChainTxSerialization":                    "transform_net_tx_test.go",
+		"TestTransferChainOwnershipTxSerialization":          "transfer_net_ownership_tx_test.go",
+		"TestTransformChainTxSerialization":                  "transform_net_tx_test.go",
 	}
 
 	fileName, ok := fileMap[testName]

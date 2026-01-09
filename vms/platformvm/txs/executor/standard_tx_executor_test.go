@@ -1,6 +1,3 @@
-//go:build node
-// +build node
-
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
@@ -21,22 +18,21 @@ import (
 	"github.com/luxfi/consensus"
 	consensusctx "github.com/luxfi/consensus/context"
 	consensustest "github.com/luxfi/consensus/test/helpers"
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/crypto/bls/signer/localsigner"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/database"
-	"github.com/luxfi/genesis/builder"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
+	"github.com/luxfi/node/genesis/builder"
 	"github.com/luxfi/sdk/wallet/primary/common"
 	"github.com/luxfi/upgrade/upgradetest"
 	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/utils/hashing"
-	"github.com/luxfi/vm/utils/units"
-	"github.com/luxfi/vm/vms/components/lux"
-	"github.com/luxfi/vm/vms/components/verify"
+	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/fx/fxmock"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
@@ -1302,7 +1298,7 @@ func TestDurangoMemoField(t *testing.T) {
 				var (
 					sourceChain  = env.ctx.XChainID
 					sourceKey    = genesistest.DefaultFundedKeys[1]
-					sourceAmount = 10 * units.Lux
+					sourceAmount = 10 * constants.Lux
 				)
 
 				sharedMemory := fundedSharedMemory(
@@ -1344,7 +1340,7 @@ func TestDurangoMemoField(t *testing.T) {
 					[]*lux.TransferableOutput{{
 						Asset: lux.Asset{ID: env.ctx.XAssetID},
 						Out: &secp256k1fx.TransferOutput{
-							Amt:          units.Lux,
+							Amt:          constants.Lux,
 							OutputOwners: *owners,
 						},
 					}},
@@ -2388,10 +2384,10 @@ func TestStandardExecutorConvertChainToL1Tx(t *testing.T) {
 		})
 		// Create a basic Config for wallet
 		walletConfig = &config.Config{
-			TxFee:                 units.MilliLux,
-			CreateAssetTxFee:      units.MilliLux,
-			CreateNetTxFee:        units.Lux,
-			CreateBlockchainTxFee: units.Lux,
+			TxFee:                 constants.MilliLux,
+			CreateAssetTxFee:      constants.MilliLux,
+			CreateNetTxFee:        constants.Lux,
+			CreateBlockchainTxFee: constants.Lux,
 		}
 		wallet = txstest.NewWalletWithOptions(
 			t,
@@ -2574,10 +2570,10 @@ func TestStandardExecutorConvertChainToL1Tx(t *testing.T) {
 					ctx,
 					txstest.WalletConfig{
 						Config: &config.Config{
-							TxFee:                 units.MilliLux,
-							CreateAssetTxFee:      units.MilliLux,
-							CreateNetTxFee:        units.Lux,
-							CreateBlockchainTxFee: units.Lux,
+							TxFee:                 constants.MilliLux,
+							CreateAssetTxFee:      constants.MilliLux,
+							CreateNetTxFee:        constants.Lux,
+							CreateBlockchainTxFee: constants.Lux,
 						},
 						InternalCfg: defaultConfig, // Pass the internal config with dynamic fees
 					},
@@ -2724,10 +2720,10 @@ func TestStandardExecutorRegisterL1ValidatorTx(t *testing.T) {
 		})
 		// Create a basic Config for wallet
 		walletConfig = &config.Config{
-			TxFee:                 units.MilliLux,
-			CreateAssetTxFee:      units.MilliLux,
-			CreateNetTxFee:        units.Lux,
-			CreateBlockchainTxFee: units.Lux,
+			TxFee:                 constants.MilliLux,
+			CreateAssetTxFee:      constants.MilliLux,
+			CreateNetTxFee:        constants.Lux,
+			CreateBlockchainTxFee: constants.Lux,
 		}
 		wallet = txstest.NewWalletWithOptions(
 			t,
@@ -2784,7 +2780,7 @@ func TestStandardExecutorRegisterL1ValidatorTx(t *testing.T) {
 
 	const (
 		initialWeight  = 1
-		initialBalance = units.Lux
+		initialBalance = constants.Lux
 	)
 	var (
 		subnetID      = createNetTx.ID()
@@ -3260,10 +3256,10 @@ func TestStandardExecutorSetL1ValidatorWeightTx(t *testing.T) {
 		})
 		// Create a basic Config for wallet
 		walletConfig = &config.Config{
-			TxFee:                 units.MilliLux,
-			CreateAssetTxFee:      units.MilliLux,
-			CreateNetTxFee:        units.Lux,
-			CreateBlockchainTxFee: units.Lux,
+			TxFee:                 constants.MilliLux,
+			CreateAssetTxFee:      constants.MilliLux,
+			CreateNetTxFee:        constants.Lux,
+			CreateBlockchainTxFee: constants.Lux,
 		}
 		wallet = txstest.NewWalletWithOptions(
 			t,
@@ -3320,7 +3316,7 @@ func TestStandardExecutorSetL1ValidatorWeightTx(t *testing.T) {
 
 	const (
 		initialWeight = 1
-		balance       = units.Lux
+		balance       = constants.Lux
 	)
 	var (
 		subnetID  = createNetTx.ID()
@@ -3771,10 +3767,10 @@ func TestStandardExecutorIncreaseL1ValidatorBalanceTx(t *testing.T) {
 		})
 		// Create a basic Config for wallet
 		walletConfig = &config.Config{
-			TxFee:                 units.MilliLux,
-			CreateAssetTxFee:      units.MilliLux,
-			CreateNetTxFee:        units.Lux,
-			CreateBlockchainTxFee: units.Lux,
+			TxFee:                 constants.MilliLux,
+			CreateAssetTxFee:      constants.MilliLux,
+			CreateNetTxFee:        constants.Lux,
+			CreateBlockchainTxFee: constants.Lux,
 		}
 		wallet = txstest.NewWalletWithOptions(
 			t,
@@ -3880,7 +3876,7 @@ func TestStandardExecutorIncreaseL1ValidatorBalanceTx(t *testing.T) {
 	initialL1Validator, err := baseState.GetL1Validator(validationID)
 	require.NoError(t, err)
 
-	const balanceIncrease = units.NanoLux
+	const balanceIncrease = constants.NanoLux
 	tests := []struct {
 		name            string
 		validationID    ids.ID
@@ -4073,10 +4069,10 @@ func TestStandardExecutorDisableL1ValidatorTx(t *testing.T) {
 		})
 		// Create a basic Config for wallet
 		walletConfig = &config.Config{
-			TxFee:                 units.MilliLux,
-			CreateAssetTxFee:      units.MilliLux,
-			CreateNetTxFee:        units.Lux,
-			CreateBlockchainTxFee: units.Lux,
+			TxFee:                 constants.MilliLux,
+			CreateAssetTxFee:      constants.MilliLux,
+			CreateNetTxFee:        constants.Lux,
+			CreateBlockchainTxFee: constants.Lux,
 		}
 		wallet = txstest.NewWalletWithOptions(
 			t,
@@ -4133,7 +4129,7 @@ func TestStandardExecutorDisableL1ValidatorTx(t *testing.T) {
 
 	const (
 		weight         = 1
-		initialBalance = units.Lux
+		initialBalance = constants.Lux
 	)
 	var (
 		subnetID  = createNetTx.ID()

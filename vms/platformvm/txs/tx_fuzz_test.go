@@ -12,8 +12,8 @@ import (
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/utils/wrappers"
-	"github.com/luxfi/vm/vms/components/lux"
-	"github.com/luxfi/vm/vms/components/verify"
+	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 

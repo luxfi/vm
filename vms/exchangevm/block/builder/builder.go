@@ -9,10 +9,10 @@ import (
 
 	"github.com/luxfi/consensus/engine"
 	chainblock "github.com/luxfi/consensus/engine/chain/block"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/vm/utils/timer/mockable"
-	"github.com/luxfi/vm/utils/units"
 	"github.com/luxfi/vm/vms/exchangevm/block"
 	"github.com/luxfi/vm/vms/exchangevm/state"
 	"github.com/luxfi/vm/vms/exchangevm/txs"
@@ -23,7 +23,7 @@ import (
 )
 
 // targetBlockSize is the max block size we aim to produce
-const targetBlockSize = 128 * units.KiB
+const targetBlockSize = 128 * constants.KiB
 
 var (
 	_ Builder = (*builder)(nil)

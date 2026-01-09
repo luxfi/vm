@@ -11,11 +11,11 @@ import (
 	gethcommon "github.com/luxfi/geth/common"
 
 	"github.com/luxfi/crypto/secp256k1"
-	"github.com/luxfi/formatting"
+	"github.com/luxfi/crypto/address/formatting"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/keychain"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/vm/vms/components/verify"
+	"github.com/luxfi/vm/components/verify"
 )
 
 var (

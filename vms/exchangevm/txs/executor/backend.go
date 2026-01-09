@@ -11,7 +11,7 @@ import (
 	consContext "github.com/luxfi/consensus/context"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
-	"github.com/luxfi/vm/vms/components/verify"
+	"github.com/luxfi/vm/components/verify"
 	"github.com/luxfi/vm/vms/exchangevm/config"
 	"github.com/luxfi/vm/vms/exchangevm/fxs"
 )

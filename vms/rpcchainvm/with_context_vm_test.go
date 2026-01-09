@@ -11,12 +11,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/luxfi/database/memdb"
-	"github.com/luxfi/ids"
 	"github.com/luxfi/consensus/engine/chain/block"
 	"github.com/luxfi/consensus/engine/chain/block/blockmock"
 	"github.com/luxfi/consensus/engine/chain/block/blocktest"
 	consensustest "github.com/luxfi/consensus/test/helpers"
+	"github.com/luxfi/database/memdb"
+	"github.com/luxfi/ids"
 )
 
 var (
@@ -25,9 +25,9 @@ var (
 			IDV:     ids.ID{'f', 'i', 'r', 's', 't', 'B', 'l', 'K'},
 			StatusV: 0,
 		},
-		HeightV:    1789,
-		ParentV:    ids.ID{'p', 'a', 'r', 'e', 'n', 't', 'B', 'l', 'k'},
-		StatusV:    consensustest.Accepted,
+		HeightV: 1789,
+		ParentV: ids.ID{'p', 'a', 'r', 'e', 'n', 't', 'B', 'l', 'k'},
+		StatusV: consensustest.Accepted,
 	}
 )
 
@@ -48,8 +48,8 @@ type ContextEnabledVMMock struct {
 
 // Ensure ContextEnabledVMMock implements the required interfaces
 var (
-	_ block.ChainVM                         = (*ContextEnabledVMMock)(nil)
-	_ block.BuildBlockWithContextChainVM    = (*ContextEnabledVMMock)(nil)
+	_ block.ChainVM                      = (*ContextEnabledVMMock)(nil)
+	_ block.BuildBlockWithContextChainVM = (*ContextEnabledVMMock)(nil)
 )
 
 // Forward ChainVM methods

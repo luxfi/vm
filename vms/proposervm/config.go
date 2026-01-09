@@ -1,0 +1,39 @@
+// Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
+// See the file LICENSE for licensing terms.
+
+package proposervm
+
+import (
+	"crypto"
+	"time"
+
+	"github.com/luxfi/metric"
+
+	"github.com/luxfi/staking"
+	"github.com/luxfi/upgrade"
+)
+
+type Config struct {
+	Upgrades upgrade.Config
+
+	// Configurable minimal delay among blocks issued consecutively
+	MinBlkDelay time.Duration
+
+	// Maximal number of block indexed.
+	// Zero signals all blocks are indexed.
+	NumHistoricalBlocks uint64
+
+	// Block signer
+	StakingLeafSigner crypto.Signer
+
+	// Block certificate
+	StakingCertLeaf *staking.Certificate
+
+	// Registerer for metric metrics
+	Registerer metric.Registerer
+
+	// Automining configuration
+	AutominingEnabled bool
+	// AutominingInterval is the interval between automatic block production
+	AutominingInterval time.Duration
+}

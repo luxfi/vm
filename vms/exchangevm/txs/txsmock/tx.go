@@ -14,7 +14,7 @@ import (
 
 	ids "github.com/luxfi/ids"
 	set "github.com/luxfi/math/set"
-	lux "github.com/luxfi/vm/vms/components/lux"
+	lux "github.com/luxfi/vm/components/lux"
 	txs "github.com/luxfi/vm/vms/exchangevm/txs"
 	gomock "go.uber.org/mock/gomock"
 )

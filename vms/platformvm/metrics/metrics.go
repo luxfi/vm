@@ -12,7 +12,7 @@ import (
 	"github.com/luxfi/ids"
 	utilmetric "github.com/luxfi/vm/utils/metric"
 	"github.com/luxfi/vm/utils/wrappers"
-	"github.com/luxfi/vm/vms/components/gas"
+	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/vms/platformvm/block"
 )
 

@@ -7,32 +7,32 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/vm/chains"
-	"github.com/luxfi/vm/utils/units"
 )
 
 var Default = Config{
 	Network:                       DefaultNetwork,
-	BlockCacheSize:                64 * units.MiB,
-	TxCacheSize:                   128 * units.MiB,
-	TransformedNetTxCacheSize:     4 * units.MiB,
+	BlockCacheSize:                64 * constants.MiB,
+	TxCacheSize:                   128 * constants.MiB,
+	TransformedNetTxCacheSize:     4 * constants.MiB,
 	RewardUTXOsCacheSize:          2048,
 	ChainCacheSize:                2048,
 	ChainDBCacheSize:              2048,
 	BlockIDCacheSize:              8192,
-	FxOwnerCacheSize:              4 * units.MiB,
-	NetToL1ConversionCacheSize:    4 * units.MiB,
-	L1WeightsCacheSize:            16 * units.KiB,
-	L1InactiveValidatorsCacheSize: 256 * units.KiB,
-	L1NetIDNodeIDCacheSize:        16 * units.KiB,
+	FxOwnerCacheSize:              4 * constants.MiB,
+	NetToL1ConversionCacheSize:    4 * constants.MiB,
+	L1WeightsCacheSize:            16 * constants.KiB,
+	L1InactiveValidatorsCacheSize: 256 * constants.KiB,
+	L1NetIDNodeIDCacheSize:        16 * constants.KiB,
 	ChecksumsEnabled:              false,
 	MempoolPruneFrequency:         30 * time.Minute,
-	TxFee:                         units.MilliLux,
-	CreateAssetTxFee:              units.MilliLux,
-	CreateNetTxFee:                units.Lux,
-	CreateBlockchainTxFee:         units.Lux,
+	TxFee:                         constants.MilliLux,
+	CreateAssetTxFee:              constants.MilliLux,
+	CreateNetTxFee:                constants.Lux,
+	CreateBlockchainTxFee:         constants.Lux,
 	AddPrimaryNetworkValidatorFee: 0,
 	AddPrimaryNetworkDelegatorFee: 0,
 }

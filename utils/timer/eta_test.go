@@ -66,7 +66,7 @@ func TestEtaTracker(t *testing.T) {
 			// should return 0s ETA and 100% complete since we're at the end
 			name:            "sample 5: at the end",
 			completed:       1000,
-			timestamp:       now.Add(60 * time.Second),  // Fixed: was 1s which went backwards
+			timestamp:       now.Add(60 * time.Second), // Fixed: was 1s which went backwards
 			expectedEta:     timePtr(0),
 			expectedPercent: 100.0,
 		},
@@ -74,7 +74,7 @@ func TestEtaTracker(t *testing.T) {
 			// should return 0s ETA and 100% complete
 			name:            "sample 6: past the end",
 			completed:       2000,
-			timestamp:       now.Add(70 * time.Second),  // Fixed: was 1s which went backwards
+			timestamp:       now.Add(70 * time.Second), // Fixed: was 1s which went backwards
 			expectedEta:     timePtr(0),
 			expectedPercent: 100.0,
 		},

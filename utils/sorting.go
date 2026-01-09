@@ -8,7 +8,7 @@ import (
 	"cmp"
 	"slices"
 
-	"github.com/luxfi/vm/utils/hashing"
+	hashing "github.com/luxfi/crypto/hash"
 )
 
 // TODO can we handle sorting where the Compare function relies on a codec?

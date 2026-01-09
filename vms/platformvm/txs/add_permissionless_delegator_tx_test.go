@@ -13,12 +13,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	consensusctx "github.com/luxfi/consensus/context"
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/utils"
-	"github.com/luxfi/vm/utils/units"
-	"github.com/luxfi/vm/vms/components/lux"
-	"github.com/luxfi/vm/vms/components/lux/luxmock"
+	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/components/lux/luxmock"
 	"github.com/luxfi/vm/vms/platformvm/fx/fxmock"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
 	"github.com/luxfi/vm/vms/secp256k1fx"
@@ -89,7 +88,7 @@ func TestAddPermissionlessPrimaryDelegatorSerialization(t *testing.T) {
 							ID: luxAssetID,
 						},
 						In: &secp256k1fx.TransferInput{
-							Amt: 2 * units.KiloLux,
+							Amt: 2 * constants.KiloLux,
 							Input: secp256k1fx.Input{
 								SigIndices: []uint32{1},
 							},
@@ -103,7 +102,7 @@ func TestAddPermissionlessPrimaryDelegatorSerialization(t *testing.T) {
 			NodeID: nodeID,
 			Start:  12345,
 			End:    12345 + 200*24*60*60,
-			Wght:   2 * units.KiloLux,
+			Wght:   2 * constants.KiloLux,
 		},
 		Chain: constants.PrimaryNetworkID,
 		StakeOuts: []*lux.TransferableOutput{
@@ -112,7 +111,7 @@ func TestAddPermissionlessPrimaryDelegatorSerialization(t *testing.T) {
 					ID: luxAssetID,
 				},
 				Out: &secp256k1fx.TransferOutput{
-					Amt: 2 * units.KiloLux,
+					Amt: 2 * constants.KiloLux,
 					OutputOwners: secp256k1fx.OutputOwners{
 						Locktime:  0,
 						Threshold: 1,
@@ -301,7 +300,7 @@ func TestAddPermissionlessPrimaryDelegatorSerialization(t *testing.T) {
 							ID: luxAssetID,
 						},
 						In: &secp256k1fx.TransferInput{
-							Amt: units.MegaLux,
+							Amt: constants.MegaLux,
 							Input: secp256k1fx.Input{
 								SigIndices: []uint32{2, 5},
 							},
@@ -348,7 +347,7 @@ func TestAddPermissionlessPrimaryDelegatorSerialization(t *testing.T) {
 			NodeID: nodeID,
 			Start:  12345,
 			End:    12345 + 200*24*60*60,
-			Wght:   5 * units.KiloLux,
+			Wght:   5 * constants.KiloLux,
 		},
 		Chain: constants.PrimaryNetworkID,
 		StakeOuts: []*lux.TransferableOutput{
@@ -357,7 +356,7 @@ func TestAddPermissionlessPrimaryDelegatorSerialization(t *testing.T) {
 					ID: luxAssetID,
 				},
 				Out: &secp256k1fx.TransferOutput{
-					Amt: 2 * units.KiloLux,
+					Amt: 2 * constants.KiloLux,
 					OutputOwners: secp256k1fx.OutputOwners{
 						Locktime:  0,
 						Threshold: 1,
@@ -374,7 +373,7 @@ func TestAddPermissionlessPrimaryDelegatorSerialization(t *testing.T) {
 				Out: &stakeable.LockOut{
 					Locktime: 987654321,
 					TransferableOut: &secp256k1fx.TransferOutput{
-						Amt: 3 * units.KiloLux,
+						Amt: 3 * constants.KiloLux,
 						OutputOwners: secp256k1fx.OutputOwners{
 							Locktime:  87654321,
 							Threshold: 0,
@@ -816,7 +815,7 @@ func TestAddPermissionlessNetDelegatorSerialization(t *testing.T) {
 							ID: luxAssetID,
 						},
 						In: &secp256k1fx.TransferInput{
-							Amt: units.MilliLux,
+							Amt: constants.MilliLux,
 							Input: secp256k1fx.Input{
 								SigIndices: []uint32{1},
 							},
@@ -1069,7 +1068,7 @@ func TestAddPermissionlessNetDelegatorSerialization(t *testing.T) {
 							ID: luxAssetID,
 						},
 						In: &secp256k1fx.TransferInput{
-							Amt: units.MegaLux,
+							Amt: constants.MegaLux,
 							Input: secp256k1fx.Input{
 								SigIndices: []uint32{2, 5},
 							},

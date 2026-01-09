@@ -6,12 +6,12 @@ package network
 import (
 	"time"
 
-	"github.com/luxfi/vm/utils/units"
+	"github.com/luxfi/constants"
 )
 
 var DefaultConfig = Config{
 	MaxValidatorSetStaleness:                    time.Minute,
-	TargetGossipSize:                            20 * units.KiB,
+	TargetGossipSize:                            20 * constants.KiB,
 	PushGossipPercentStake:                      .9,
 	PushGossipNumValidators:                     100,
 	PushGossipNumPeers:                          0,

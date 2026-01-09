@@ -11,37 +11,37 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/vm/utils/units"
+	"github.com/luxfi/constants"
 )
 
 const (
 	defaultMinStakingDuration = 24 * time.Hour
 	defaultMaxStakingDuration = 365 * 24 * time.Hour
 
-	defaultMinValidatorStake = 5 * units.MilliLux
+	defaultMinValidatorStake = 5 * constants.MilliLux
 )
 
 var defaultConfig = Config{
 	MaxConsumptionRate: .12 * PercentDenominator,
 	MinConsumptionRate: .10 * PercentDenominator,
 	MintingPeriod:      365 * 24 * time.Hour,
-	SupplyCap:          720 * units.MegaLux,
+	SupplyCap:          720 * constants.MegaLux,
 }
 
 func TestLongerDurationBonus(t *testing.T) {
 	c := NewCalculator(defaultConfig)
 	shortDuration := 24 * time.Hour
 	totalDuration := 365 * 24 * time.Hour
-	shortBalance := units.KiloLux
+	shortBalance := constants.KiloLux
 	for i := 0; i < int(totalDuration/shortDuration); i++ {
-		r := c.Calculate(shortDuration, shortBalance, 359*units.MegaLux+shortBalance)
+		r := c.Calculate(shortDuration, shortBalance, 359*constants.MegaLux+shortBalance)
 		shortBalance += r
 	}
-	reward := c.Calculate(totalDuration%shortDuration, shortBalance, 359*units.MegaLux+shortBalance)
+	reward := c.Calculate(totalDuration%shortDuration, shortBalance, 359*constants.MegaLux+shortBalance)
 	shortBalance += reward
 
-	longBalance := units.KiloLux
-	longBalance += c.Calculate(totalDuration, longBalance, 359*units.MegaLux+longBalance)
+	longBalance := constants.KiloLux
+	longBalance += c.Calculate(totalDuration, longBalance, 359*constants.MegaLux+longBalance)
 	require.Less(t, shortBalance, longBalance, "should promote stakers to stake longer")
 }
 
@@ -56,25 +56,25 @@ func TestRewards(t *testing.T) {
 		// Max duration:
 		{ // (720M - 360M) * (1M / 360M) * 12%
 			duration:       defaultMaxStakingDuration,
-			stakeAmount:    units.MegaLux,
-			existingAmount: 360 * units.MegaLux,
-			expectedReward: 120 * units.KiloLux,
+			stakeAmount:    constants.MegaLux,
+			existingAmount: 360 * constants.MegaLux,
+			expectedReward: 120 * constants.KiloLux,
 		},
 		{ // (720M - 400M) * (1M / 400M) * 12%
 			duration:       defaultMaxStakingDuration,
-			stakeAmount:    units.MegaLux,
-			existingAmount: 400 * units.MegaLux,
-			expectedReward: 96 * units.KiloLux,
+			stakeAmount:    constants.MegaLux,
+			existingAmount: 400 * constants.MegaLux,
+			expectedReward: 96 * constants.KiloLux,
 		},
 		{ // (720M - 400M) * (2M / 400M) * 12%
 			duration:       defaultMaxStakingDuration,
-			stakeAmount:    2 * units.MegaLux,
-			existingAmount: 400 * units.MegaLux,
-			expectedReward: 192 * units.KiloLux,
+			stakeAmount:    2 * constants.MegaLux,
+			existingAmount: 400 * constants.MegaLux,
+			expectedReward: 192 * constants.KiloLux,
 		},
 		{ // (720M - 720M) * (1M / 720M) * 12%
 			duration:       defaultMaxStakingDuration,
-			stakeAmount:    units.MegaLux,
+			stakeAmount:    constants.MegaLux,
 			existingAmount: defaultConfig.SupplyCap,
 			expectedReward: 0,
 		},
@@ -83,8 +83,8 @@ func TestRewards(t *testing.T) {
 		// With 6 decimal precision (microLUX base unit)
 		{
 			duration:       defaultMinStakingDuration,
-			stakeAmount:    units.MegaLux,
-			existingAmount: 360 * units.MegaLux,
+			stakeAmount:    constants.MegaLux,
+			existingAmount: 360 * constants.MegaLux,
 			expectedReward: 274122724,
 		},
 		// (720M - 360M) * (.005 / 360M) * (10% + 2% * MinimumStakingDuration / MaximumStakingDuration) * MinimumStakingDuration / MaximumStakingDuration
@@ -92,27 +92,27 @@ func TestRewards(t *testing.T) {
 		{
 			duration:       defaultMinStakingDuration,
 			stakeAmount:    defaultMinValidatorStake,
-			existingAmount: 360 * units.MegaLux,
+			existingAmount: 360 * constants.MegaLux,
 			expectedReward: 1,
 		},
 		// (720M - 400M) * (1M / 400M) * (10% + 2% * MinimumStakingDuration / MaximumStakingDuration) * MinimumStakingDuration / MaximumStakingDuration
 		{
 			duration:       defaultMinStakingDuration,
-			stakeAmount:    units.MegaLux,
-			existingAmount: 400 * units.MegaLux,
+			stakeAmount:    constants.MegaLux,
+			existingAmount: 400 * constants.MegaLux,
 			expectedReward: 219298179,
 		},
 		// (720M - 400M) * (2M / 400M) * (10% + 2% * MinimumStakingDuration / MaximumStakingDuration) * MinimumStakingDuration / MaximumStakingDuration
 		{
 			duration:       defaultMinStakingDuration,
-			stakeAmount:    2 * units.MegaLux,
-			existingAmount: 400 * units.MegaLux,
+			stakeAmount:    2 * constants.MegaLux,
+			existingAmount: 400 * constants.MegaLux,
 			expectedReward: 438596359,
 		},
 		// (720M - 720M) * (1M / 720M) * (10% + 2% * MinimumStakingDuration / MaximumStakingDuration) * MinimumStakingDuration / MaximumStakingDuration
 		{
 			duration:       defaultMinStakingDuration,
-			stakeAmount:    units.MegaLux,
+			stakeAmount:    constants.MegaLux,
 			existingAmount: defaultConfig.SupplyCap,
 			expectedReward: 0,
 		},

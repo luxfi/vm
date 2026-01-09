@@ -13,7 +13,7 @@ import (
 	"github.com/luxfi/cache"
 	"github.com/luxfi/cache/lru"
 	validators "github.com/luxfi/consensus/validator"
-	"github.com/luxfi/constantsants"
+	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/utils/timer/mockable"

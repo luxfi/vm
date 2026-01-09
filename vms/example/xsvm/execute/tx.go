@@ -1,0 +1,212 @@
+// Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
+// See the file LICENSE for licensing terms.
+
+package execute
+
+import (
+	"context"
+	"errors"
+
+	consensusctx "github.com/luxfi/consensus/context"
+	"github.com/luxfi/consensus/engine/chain/block"
+	validators "github.com/luxfi/consensus/validator"
+	"github.com/luxfi/database"
+	"github.com/luxfi/ids"
+	"github.com/luxfi/vm/utils/hashing"
+	"github.com/luxfi/vm/utils/wrappers"
+	"github.com/luxfi/vm/vms/example/xsvm/state"
+	"github.com/luxfi/vm/vms/example/xsvm/tx"
+	"github.com/luxfi/vm/vms/platformvm/warp"
+)
+
+const (
+	QuorumNumerator   = 2
+	QuorumDenominator = 3
+)
+
+var (
+	_ tx.Visitor = (*Tx)(nil)
+
+	errFeeTooHigh          = errors.New("fee too high")
+	errWrongChainID        = errors.New("wrong chainID")
+	errMissingBlockContext = errors.New("missing block context")
+	errDuplicateImport     = errors.New("duplicate import")
+)
+
+type Tx struct {
+	Context      context.Context
+	ChainContext *consensusctx.Context
+	Database     database.KeyValueReaderWriterDeleter
+
+	SkipVerify   bool
+	BlockContext *block.Context
+
+	TxID        ids.ID
+	Sender      ids.ShortID
+	TransferFee uint64
+	ExportFee   uint64
+	ImportFee   uint64
+}
+
+func (t *Tx) Transfer(tf *tx.Transfer) error {
+	if tf.MaxFee < t.TransferFee {
+		return errFeeTooHigh
+	}
+	if tf.ChainID != t.ChainContext.ChainID {
+		return errWrongChainID
+	}
+
+	return errors.Join(
+		state.IncrementNonce(t.Database, t.Sender, tf.Nonce),
+		state.DecreaseBalance(t.Database, t.Sender, tf.ChainID, t.TransferFee),
+		state.DecreaseBalance(t.Database, t.Sender, tf.AssetID, tf.Amount),
+		state.IncreaseBalance(t.Database, tf.To, tf.AssetID, tf.Amount),
+	)
+}
+
+func (t *Tx) Export(e *tx.Export) error {
+	if e.MaxFee < t.ExportFee {
+		return errFeeTooHigh
+	}
+	if e.ChainID != t.ChainContext.ChainID {
+		return errWrongChainID
+	}
+
+	payload, err := tx.NewPayload(
+		t.Sender,
+		e.Nonce,
+		e.IsReturn,
+		e.Amount,
+		e.To,
+	)
+	if err != nil {
+		return err
+	}
+
+	message, err := warp.NewUnsignedMessage(
+		t.ChainContext.NetworkID,
+		e.ChainID,
+		payload.Bytes(),
+	)
+	if err != nil {
+		return err
+	}
+
+	var errs wrappers.Errs
+	errs.Add(
+		state.IncrementNonce(t.Database, t.Sender, e.Nonce),
+		state.DecreaseBalance(t.Database, t.Sender, e.ChainID, t.ExportFee),
+	)
+
+	if e.IsReturn {
+		errs.Add(
+			state.DecreaseBalance(t.Database, t.Sender, e.PeerChainID, e.Amount),
+		)
+	} else {
+		errs.Add(
+			state.DecreaseBalance(t.Database, t.Sender, e.ChainID, e.Amount),
+			state.IncreaseLoan(t.Database, e.PeerChainID, e.Amount),
+		)
+	}
+
+	errs.Add(
+		state.SetMessage(t.Database, t.TxID, message),
+	)
+	return errs.Err
+}
+
+func (t *Tx) Import(i *tx.Import) error {
+	if i.MaxFee < t.ImportFee {
+		return errFeeTooHigh
+	}
+	if t.BlockContext == nil {
+		return errMissingBlockContext
+	}
+
+	message, err := warp.ParseMessage(i.Message)
+	if err != nil {
+		return err
+	}
+
+	var errs wrappers.Errs
+	errs.Add(
+		state.IncrementNonce(t.Database, t.Sender, i.Nonce),
+		state.DecreaseBalance(t.Database, t.Sender, t.ChainContext.ChainID, t.ImportFee),
+	)
+
+	payload, err := tx.ParsePayload(message.Payload)
+	if err != nil {
+		return err
+	}
+
+	if payload.IsReturn {
+		errs.Add(
+			state.IncreaseBalance(t.Database, payload.To, t.ChainContext.ChainID, payload.Amount),
+			state.DecreaseLoan(t.Database, message.SourceChainID, payload.Amount),
+		)
+	} else {
+		errs.Add(
+			state.IncreaseBalance(t.Database, payload.To, message.SourceChainID, payload.Amount),
+		)
+	}
+
+	var loanID ids.ID = hashing.ComputeHash256Array(message.UnsignedMessage.Bytes())
+	hasLoanID, err := state.HasLoanID(t.Database, message.SourceChainID, loanID)
+	if hasLoanID {
+		return errDuplicateImport
+	}
+
+	errs.Add(
+		err,
+		state.AddLoanID(t.Database, message.SourceChainID, loanID),
+	)
+
+	if t.SkipVerify || errs.Errored() {
+		return errs.Err
+	}
+
+	validatorSet, err := warp.GetCanonicalValidatorSetFromChainID(
+		t.Context,
+		t.ChainContext.ValidatorState.(validators.State),
+		t.BlockContext.PChainHeight,
+		message.SourceChainID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return message.Signature.Verify(
+		&message.UnsignedMessage,
+		t.ChainContext.NetworkID,
+		validatorSet,
+		QuorumNumerator,
+		QuorumDenominator,
+	)
+}
+
+// warpValidatorStateAdapter adapts consensusctx.ValidatorState to warp.ValidatorState
+type warpValidatorStateAdapter struct {
+	ctx context.Context
+	vs  consensusctx.ValidatorState
+}
+
+func (w *warpValidatorStateAdapter) GetValidatorSet(ctx context.Context, height uint64, netID ids.ID) (map[ids.NodeID]*warp.ValidatorData, error) {
+	validatorSet, err := w.vs.GetValidatorSet(height, netID)
+	if err != nil {
+		return nil, err
+	}
+	// Convert from weight map to ValidatorData map
+	result := make(map[ids.NodeID]*warp.ValidatorData, len(validatorSet))
+	for nodeID, weight := range validatorSet {
+		result[nodeID] = &warp.ValidatorData{
+			NodeID:    nodeID,
+			PublicKey: nil, // We don't have public key info here
+			Weight:    weight,
+		}
+	}
+	return result, nil
+}
+
+func (w *warpValidatorStateAdapter) GetNetworkID(ctx context.Context, chainID ids.ID) (ids.ID, error) {
+	return w.vs.GetNetworkID(chainID)
+}

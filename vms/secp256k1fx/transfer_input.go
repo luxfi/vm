@@ -4,9 +4,8 @@
 package secp256k1fx
 
 import (
-	consensusctx "github.com/luxfi/consensus/context"
 	"errors"
-
+	consensusctx "github.com/luxfi/consensus/context"
 )
 
 var ErrNoValueInput = errors.New("input has no value")
