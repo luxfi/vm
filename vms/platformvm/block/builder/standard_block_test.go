@@ -15,10 +15,10 @@ import (
 	"github.com/luxfi/upgrade/upgradetest"
 	"github.com/luxfi/vm/chains/atomic"
 	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/status"
 	"github.com/luxfi/vm/vms/platformvm/txs"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 func TestAtomicTxImports(t *testing.T) {

@@ -11,11 +11,11 @@ import (
 
 	"github.com/luxfi/constants"
 	"github.com/luxfi/database/memdb"
+	"github.com/luxfi/genesis/builder"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/node/genesis/builder"
 	"github.com/luxfi/upgrade/upgradetest"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/components/gas"
+	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/txs"

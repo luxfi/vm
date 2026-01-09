@@ -12,17 +12,17 @@ import (
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/math"
-	"github.com/luxfi/vm/utils/wrappers"
 	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
-	"github.com/luxfi/vm/vms/platformvm/fx"
-	"github.com/luxfi/vm/vms/platformvm/signer"
+	"github.com/luxfi/vm/platformvm/fx"
+	"github.com/luxfi/vm/platformvm/signer"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/utils/math"
+	"github.com/luxfi/vm/utils/wrappers"
 	"github.com/luxfi/vm/vms/platformvm/stakeable"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 	"github.com/luxfi/vm/vms/platformvm/warp"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 // Signature verification costs were conservatively based on benchmarks run on

@@ -11,7 +11,7 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/rpc"
 	"github.com/luxfi/upgrade"
-	"github.com/luxfi/vm/vms/platformvm/signer"
+	"github.com/luxfi/vm/platformvm/signer"
 )
 
 type Client struct {

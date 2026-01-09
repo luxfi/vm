@@ -8,9 +8,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/nets"
-	"github.com/luxfi/constants"
 )
 
 func TestNewNets(t *testing.T) {

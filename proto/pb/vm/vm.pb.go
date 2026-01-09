@@ -235,7 +235,7 @@ type InitializeRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	NetworkId uint32 `protobuf:"varint,1,opt,name=network_id,json=networkId,proto3" json:"network_id,omitempty"`
-	NetId  []byte `protobuf:"bytes,2,opt,name=subnet_id,json=subnetId,proto3" json:"subnet_id,omitempty"`
+	NetId     []byte `protobuf:"bytes,2,opt,name=subnet_id,json=subnetId,proto3" json:"subnet_id,omitempty"`
 	ChainId   []byte `protobuf:"bytes,3,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 	NodeId    []byte `protobuf:"bytes,4,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
 	// public_key is the BLS public key that would correspond with any signatures

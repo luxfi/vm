@@ -22,7 +22,7 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/vm/api/metrics"
-	"github.com/luxfi/vm/vms/rpcchainvm/grpcutils"
+	"github.com/luxfi/vm/rpcchainvm/grpcutils"
 	"github.com/luxfi/vm/vms/rpcchainvm/runtime"
 	"github.com/luxfi/vm/vms/rpcchainvm/runtime/subprocess"
 )

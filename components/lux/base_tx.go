@@ -9,7 +9,7 @@ import (
 	consensusctx "github.com/luxfi/consensus/context"
 
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/vms/types"
+	"github.com/luxfi/vm/types"
 )
 
 // MaxMemoSize is the maximum number of bytes in the memo field

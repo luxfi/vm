@@ -14,9 +14,9 @@ import (
 	"github.com/luxfi/sdk/wallet/chain/p/builder"
 	"github.com/luxfi/sdk/wallet/chain/p/signer"
 	"github.com/luxfi/vm/chains/atomic"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/vms/platformvm/config"
 	"github.com/luxfi/vm/vms/platformvm/state"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 func NewWalletFactory(

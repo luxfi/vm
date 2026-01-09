@@ -31,7 +31,7 @@ import (
 
 	"github.com/luxfi/vm/components/lux"
 
-	"github.com/luxfi/vm/vms/secp256k1fx"
+	"github.com/luxfi/vm/secp256k1fx"
 )
 
 func TestIndexTransaction_Ordered(t *testing.T) {

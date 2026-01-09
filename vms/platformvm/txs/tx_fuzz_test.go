@@ -11,10 +11,10 @@ import (
 	"github.com/luxfi/codec/linearcodec"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/wrappers"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
-	"github.com/luxfi/vm/vms/secp256k1fx"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/utils/wrappers"
 )
 
 // FuzzTransactionParsing tests transaction parsing with random data

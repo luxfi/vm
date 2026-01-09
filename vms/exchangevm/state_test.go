@@ -16,8 +16,8 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/upgrade/upgradetest"
 	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/vms/exchangevm/txs"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 func TestSetsAndGets(t *testing.T) {

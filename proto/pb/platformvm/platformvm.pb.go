@@ -114,7 +114,7 @@ type NetIDIndex struct {
 	unknownFields protoimpl.UnknownFields
 
 	NetId []byte `protobuf:"bytes,1,opt,name=subnet_id,json=subnetId,proto3" json:"subnet_id,omitempty"`
-	Index    uint32 `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
+	Index uint32 `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
 }
 
 func (x *NetIDIndex) Reset() {
@@ -206,7 +206,7 @@ func file_platformvm_platformvm_proto_rawDescGZIP() []byte {
 var file_platformvm_platformvm_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_platformvm_platformvm_proto_goTypes = []any{
 	(*L1ValidatorRegistrationJustification)(nil), // 0: platformvm.L1ValidatorRegistrationJustification
-	(*NetIDIndex)(nil),                        // 1: platformvm.NetIDIndex
+	(*NetIDIndex)(nil),                           // 1: platformvm.NetIDIndex
 }
 var file_platformvm_platformvm_proto_depIdxs = []int32{
 	1, // 0: platformvm.L1ValidatorRegistrationJustification.convert_subnet_to_l1_tx_data:type_name -> platformvm.NetIDIndex

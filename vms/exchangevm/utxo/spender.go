@@ -11,11 +11,11 @@ import (
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math"
-	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/components/lux"
+	"github.com/luxfi/vm/nftfx"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/exchangevm/txs"
-	"github.com/luxfi/vm/vms/nftfx"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 var (

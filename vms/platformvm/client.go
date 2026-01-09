@@ -8,19 +8,19 @@ import (
 	"github.com/luxfi/formatting"
 	"time"
 
+	"github.com/luxfi/address"
 	validators "github.com/luxfi/consensus/validator"
 	"github.com/luxfi/constants"
-	"github.com/luxfi/crypto/address"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/rpc"
 	"github.com/luxfi/vm/api"
 	"github.com/luxfi/vm/components/gas"
+	"github.com/luxfi/vm/platformvm/fx"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/utils/json"
-	"github.com/luxfi/vm/vms/platformvm/fx"
 	"github.com/luxfi/vm/vms/platformvm/status"
 	"github.com/luxfi/vm/vms/platformvm/validators/fee"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 
 	platformapi "github.com/luxfi/vm/vms/platformvm/api"
 )

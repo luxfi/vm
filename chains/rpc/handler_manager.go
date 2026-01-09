@@ -25,11 +25,11 @@ import (
 
 var (
 	// Errors follow Go convention: lowercase, descriptive, actionable
-	errNilHandler        = errors.New("handler is nil")
-	errNilServer         = errors.New("server is nil")
-	errEmptyEndpoint     = errors.New("endpoint is empty")
+	errNilHandler         = errors.New("handler is nil")
+	errNilServer          = errors.New("server is nil")
+	errEmptyEndpoint      = errors.New("endpoint is empty")
 	errRegistrationFailed = errors.New("handler registration failed")
-	errHealthCheckFailed = errors.New("health check failed")
+	errHealthCheckFailed  = errors.New("health check failed")
 )
 
 // HandlerManager manages RPC handler registration with robust error handling and health checks.
@@ -39,20 +39,20 @@ type HandlerManager struct {
 	log       log.Logger
 	mu        sync.RWMutex
 	routes    map[string]*RouteInfo // chainID -> route info
-	retries   int                    // max registration retries
-	retryWait time.Duration          // initial retry wait time
+	retries   int                   // max registration retries
+	retryWait time.Duration         // initial retry wait time
 }
 
 // RouteInfo contains complete information about a registered route.
 // Everything needed for debugging in one place.
 type RouteInfo struct {
-	ChainID   ids.ID
+	ChainID    ids.ID
 	ChainAlias string
-	Base      string   // e.g., "bc/C" or "bc/<chainID>"
-	Endpoints []string // e.g., ["/rpc", "/ws"]
-	Handler   http.Handler
-	Healthy   bool
-	LastCheck time.Time
+	Base       string   // e.g., "bc/C" or "bc/<chainID>"
+	Endpoints  []string // e.g., ["/rpc", "/ws"]
+	Handler    http.Handler
+	Healthy    bool
+	LastCheck  time.Time
 }
 
 // NewHandlerManager creates a handler manager with sensible defaults.
@@ -122,7 +122,7 @@ func (m *HandlerManager) RegisterChainHandlers(
 
 	// Store route info for monitoring
 	m.mu.Lock()
-	info.Base = bases[0] // Primary base
+	info.Base = bases[0]            // Primary base
 	info.Handler = handlers["/rpc"] // Store primary handler for health checks
 	m.routes[chainID.String()] = info
 	m.mu.Unlock()

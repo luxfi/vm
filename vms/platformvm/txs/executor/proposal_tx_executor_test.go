@@ -14,13 +14,13 @@ import (
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/upgrade/upgradetest"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/utils/hashing"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/reward"
 	"github.com/luxfi/vm/vms/platformvm/state"
 	"github.com/luxfi/vm/vms/platformvm/status"
 	"github.com/luxfi/vm/vms/platformvm/txs"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 )
 
 func TestProposalTxExecuteAddDelegator(t *testing.T) {

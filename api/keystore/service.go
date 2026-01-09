@@ -5,10 +5,9 @@ package keystore
 
 import (
 	"fmt"
-	"github.com/luxfi/formatting"
 	"net/http"
 
-	"github.com/luxfi/crypto/address"
+	"github.com/luxfi/formatting"
 	"github.com/luxfi/log"
 	"github.com/luxfi/vm/api"
 )

@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	"github.com/luxfi/log"
-	"github.com/luxfi/vm/vms/rpcchainvm/grpcutils"
+	"github.com/luxfi/vm/rpcchainvm/grpcutils"
 
 	httppb "github.com/luxfi/vm/proto/pb/http"
 )

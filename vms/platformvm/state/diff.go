@@ -13,10 +13,10 @@ import (
 
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/utils/iterator"
 	"github.com/luxfi/vm/components/gas"
 	"github.com/luxfi/vm/components/lux"
-	"github.com/luxfi/vm/vms/platformvm/fx"
+	"github.com/luxfi/vm/platformvm/fx"
+	"github.com/luxfi/vm/utils/iterator"
 	"github.com/luxfi/vm/vms/platformvm/status"
 	"github.com/luxfi/vm/vms/platformvm/txs"
 )

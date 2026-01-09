@@ -5,9 +5,8 @@ package keystore
 
 import (
 	"context"
-	"github.com/luxfi/formatting"
 
-	"github.com/luxfi/crypto/address"
+	"github.com/luxfi/formatting"
 	"github.com/luxfi/rpc"
 	"github.com/luxfi/vm/api"
 )

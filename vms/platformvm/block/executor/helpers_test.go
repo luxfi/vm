@@ -30,10 +30,10 @@ import (
 	"github.com/luxfi/upgrade/upgradetest"
 	"github.com/luxfi/vm/chains"
 	"github.com/luxfi/vm/chains/atomic"
+	"github.com/luxfi/vm/platformvm/fx"
 	"github.com/luxfi/vm/utils"
 	"github.com/luxfi/vm/utils/timer/mockable"
 	"github.com/luxfi/vm/vms/platformvm/config"
-	"github.com/luxfi/vm/vms/platformvm/fx"
 	"github.com/luxfi/vm/vms/platformvm/genesis/genesistest"
 	"github.com/luxfi/vm/vms/platformvm/metrics"
 	"github.com/luxfi/vm/vms/platformvm/reward"
@@ -45,10 +45,10 @@ import (
 	"github.com/luxfi/vm/vms/platformvm/txs/mempool"
 
 	"github.com/luxfi/sdk/wallet/chain/p/wallet"
+	"github.com/luxfi/vm/secp256k1fx"
 	"github.com/luxfi/vm/vms/platformvm/txs/txstest"
 	"github.com/luxfi/vm/vms/platformvm/utxo"
 	"github.com/luxfi/vm/vms/platformvm/validators/validatorstest"
-	"github.com/luxfi/vm/vms/secp256k1fx"
 
 	txmempool "github.com/luxfi/vm/vms/txs/mempool"
 )

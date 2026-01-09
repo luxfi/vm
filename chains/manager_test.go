@@ -1,7 +1,6 @@
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-
 package chains
 
 import (
@@ -95,7 +94,7 @@ func TestQueueChainCreation(t *testing.T) {
 		Metrics:      metric.NewMultiGatherer(),
 		VMManager:    vms.NewManager(nil, ids.NewAliaser()),
 		ChainDataDir: t.TempDir(),
-		Nets:      subnets,
+		Nets:         subnets,
 	}
 
 	m, err := New(config)
@@ -107,9 +106,9 @@ func TestQueueChainCreation(t *testing.T) {
 	chainID := ids.GenerateTestID()
 	netID := ids.GenerateTestID()
 	chainParams := ChainParameters{
-		ID:    chainID,
+		ID:      chainID,
 		ChainID: netID,
-		VMID:  ids.GenerateTestID(),
+		VMID:    ids.GenerateTestID(),
 	}
 
 	// Queue the chain
@@ -271,4 +270,3 @@ func TestToEngineMessageTypes(t *testing.T) {
 	require.Equal(2, pendingCount, "Expected 2 PendingTxs messages")
 	require.Equal(2, otherCount, "Expected 2 other messages")
 }
-

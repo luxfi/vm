@@ -13,10 +13,10 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/p2p/gossip"
-	"github.com/luxfi/vm/utils/hashing"
 	"github.com/luxfi/vm/components/lux"
 	"github.com/luxfi/vm/components/verify"
-	"github.com/luxfi/vm/vms/secp256k1fx"
+	"github.com/luxfi/vm/secp256k1fx"
+	"github.com/luxfi/vm/utils/hashing"
 )
 
 var (

@@ -10,7 +10,7 @@ import (
 	"github.com/luxfi/database/encdb"
 	"github.com/luxfi/vm/api/keystore"
 	"github.com/luxfi/vm/internal/database/rpcdb"
-	"github.com/luxfi/vm/vms/rpcchainvm/grpcutils"
+	"github.com/luxfi/vm/rpcchainvm/grpcutils"
 
 	keystorepb "github.com/luxfi/vm/proto/pb/keystore"
 	rpcdbpb "github.com/luxfi/vm/proto/pb/rpcdb"

@@ -206,8 +206,8 @@ type GetValidatorSetRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Height   uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
-	NetId []byte `protobuf:"bytes,2,opt,name=subnet_id,json=subnetId,proto3" json:"subnet_id,omitempty"`
+	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
+	NetId  []byte `protobuf:"bytes,2,opt,name=subnet_id,json=subnetId,proto3" json:"subnet_id,omitempty"`
 }
 
 func (x *GetValidatorSetRequest) Reset() {
@@ -612,8 +612,8 @@ var file_validatorstate_validator_state_proto_msgTypes = make([]protoimpl.Messag
 var file_validatorstate_validator_state_proto_goTypes = []any{
 	(*GetMinimumHeightResponse)(nil),       // 0: validatorstate.GetMinimumHeightResponse
 	(*GetCurrentHeightResponse)(nil),       // 1: validatorstate.GetCurrentHeightResponse
-	(*GetNetIDRequest)(nil),             // 2: validatorstate.GetNetIDRequest
-	(*GetNetIDResponse)(nil),            // 3: validatorstate.GetNetIDResponse
+	(*GetNetIDRequest)(nil),                // 2: validatorstate.GetNetIDRequest
+	(*GetNetIDResponse)(nil),               // 3: validatorstate.GetNetIDResponse
 	(*GetValidatorSetRequest)(nil),         // 4: validatorstate.GetValidatorSetRequest
 	(*GetCurrentValidatorSetRequest)(nil),  // 5: validatorstate.GetCurrentValidatorSetRequest
 	(*Validator)(nil),                      // 6: validatorstate.Validator
