@@ -5,8 +5,8 @@ package types
 
 import (
 	"encoding/json"
+	"github.com/luxfi/formatting"
 
-	"github.com/luxfi/crypto/address"
 )
 
 const nullStr = "null"

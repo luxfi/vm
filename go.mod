@@ -34,7 +34,7 @@ require (
 	github.com/luxfi/metric v1.4.9
 	github.com/luxfi/mock v0.1.0
 	github.com/luxfi/node v1.22.81
-	github.com/luxfi/p2p v1.18.6
+	github.com/luxfi/p2p v1.18.7
 	github.com/luxfi/pubsub v1.0.0
 	github.com/luxfi/rpc v1.0.0
 	github.com/luxfi/sdk v1.16.40
@@ -135,6 +135,7 @@ require (
 	github.com/luxfi/address v1.0.0 // indirect
 	github.com/luxfi/const v1.4.1 // indirect
 	github.com/luxfi/evm v0.8.28 // indirect
+	github.com/luxfi/formatting v1.0.0
 	github.com/luxfi/genesis v1.5.19 // indirect
 	github.com/luxfi/go-bip32 v1.0.2 // indirect
 	github.com/luxfi/go-bip39 v1.1.2 // indirect

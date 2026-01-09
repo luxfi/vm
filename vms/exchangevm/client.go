@@ -7,11 +7,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/luxfi/formatting"
 	"time"
 
 	"github.com/luxfi/consensus/core/choices"
 	"github.com/luxfi/constants"
-	"github.com/luxfi/crypto/address"
 	"github.com/luxfi/crypto/address"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/rpc"

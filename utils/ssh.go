@@ -11,7 +11,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/luxfi/sdk/constants"
+	"github.com/luxfi/constants"
 
 	"golang.org/x/crypto/ssh/agent"
 )
