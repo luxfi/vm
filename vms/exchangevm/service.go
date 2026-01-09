@@ -10,7 +10,7 @@ import (
 	"github.com/luxfi/consensus/core/choices"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/database"
-	"github.com/luxfi/formatting"
+	"github.com/luxfi/crypto/address/formatting"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
