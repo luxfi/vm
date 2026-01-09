@@ -5,7 +5,7 @@ package keystore
 
 import (
 	"encoding/hex"
-	"github.com/luxfi/crypto/address/formatting"
+	"github.com/luxfi/address/formatting"
 	"math/rand"
 	"testing"
 

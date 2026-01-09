@@ -14,10 +14,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/luxfi/sdk/types"
-
-	"github.com/luxfi/sdk/ux"
-
 	"github.com/posthog/posthog-go"
 	"github.com/spf13/cobra"
 )
@@ -27,6 +23,22 @@ var (
 	telemetryToken    = ""
 	telemetryInstance = "https://app.posthog.com"
 )
+
+type Config struct {
+	MetricsEnabled bool `json:"metricsEnabled"`
+}
+
+type ConfigWriter interface {
+	WriteConfigFile([]byte) error
+}
+
+type ConfigLoader interface {
+	LoadConfig() (Config, error)
+}
+
+type PrompterInterface interface {
+	CaptureYesNo(string) (bool, error)
+}
 
 func GetCLIVersion() string {
 	wdPath, err := os.Getwd()
@@ -42,7 +54,7 @@ func GetCLIVersion() string {
 }
 
 func PrintMetricsOptOutPrompt() {
-	ux.Logger.PrintToUser(
+	fmt.Printf(
 		"Lux CLI (the \"software\") may collect statistical data on how the software is used on an anonymous " +
 			"basis for purposes of product improvement.  This data will not (i) include any passwords, scripts, or data " +
 			"files, (ii) be associated with any particular user or entity, or (iii) include any personally identifiable " +
@@ -50,22 +62,22 @@ func PrintMetricsOptOutPrompt() {
 			"collection with `lux config metrics disable` command, which will result in no data being collected; " +
 			"by using the software without so disabling such data collection you expressly consent to the collection of " +
 			"such data.  You can also read our privacy statement <https://lux.network/privacy> to learn more. \n")
-	ux.Logger.PrintToUser("You can disable data collection with `lux config metrics disable` command. " +
+	fmt.Printf("You can disable data collection with `lux config metrics disable` command. " +
 		"You can also read our privacy statement <https://lux.network/privacy> to learn more.\n")
 }
 
-func saveMetricsConfig(writer types.ConfigWriter, metricsEnabled bool) {
-	cfg := types.Config{MetricsEnabled: metricsEnabled}
+func saveMetricsConfig(writer ConfigWriter, metricsEnabled bool) {
+	cfg := Config{MetricsEnabled: metricsEnabled}
 	jsonBytes, _ := json.Marshal(&cfg)
 	_ = writer.WriteConfigFile(jsonBytes)
 }
 
 func HandleUserMetricsPreference(app interface{}) error {
-	writer, ok := app.(types.ConfigWriter)
+	writer, ok := app.(ConfigWriter)
 	if !ok {
 		return fmt.Errorf("app does not implement ConfigWriter")
 	}
-	prompter, ok := app.(types.PrompterInterface)
+	prompter, ok := app.(PrompterInterface)
 	if !ok {
 		return fmt.Errorf("app does not implement PrompterInterface")
 	}
@@ -77,16 +89,16 @@ func HandleUserMetricsPreference(app interface{}) error {
 		return err
 	}
 	if !yes {
-		ux.Logger.PrintToUser("Lux CLI usage metrics will not be collected")
+		fmt.Printf("Lux CLI usage metrics will not be collected\n")
 	} else {
-		ux.Logger.PrintToUser("Thank you for opting in Lux CLI usage metrics collection")
+		fmt.Printf("Thank you for opting in Lux CLI usage metrics collection\n")
 	}
 	saveMetricsConfig(writer, yes)
 	return nil
 }
 
 func userIsOptedIn(app interface{}) bool {
-	loader, ok := app.(types.ConfigLoader)
+	loader, ok := app.(ConfigLoader)
 	if !ok {
 		return false
 	}

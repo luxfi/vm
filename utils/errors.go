@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/luxfi/sdk/ux"
 )
 
 const (
@@ -78,19 +77,19 @@ func FindErrorLogs(rootDirs ...string) {
 					}
 					if !alreadyNotified {
 						fmt.Println()
-						ux.Logger.PrintToUser("================================= !!! ================================")
-						ux.Logger.PrintToUser("Found some error strings in the logs, check these for possible causes:")
+						fmt.Printf("================================= !!! ================================\n")
+						fmt.Printf("Found some error strings in the logs, check these for possible causes:\n")
 						alreadyNotified = true
 						foundErrors = append(foundErrors, removeTimestamp(o))
 					}
 					if !thisFileNotified {
-						ux.Logger.PrintToUser("----------------------------------------------------------------------")
-						ux.Logger.PrintToUser("-- Found error logs in file at path %s:", path)
+						fmt.Printf("----------------------------------------------------------------------\n")
+						fmt.Printf("-- Found error logs in file at path %s:\n", path)
 						thisFileNotified = true
 						fmt.Println()
 					}
-					ux.Logger.PrintToUser("%s", o)
-					ux.Logger.PrintToUser("----------------------------------------------------------------------")
+					fmt.Printf("%s\n", o)
+					fmt.Printf("----------------------------------------------------------------------\n")
 					fmt.Println()
 				}
 			}
@@ -98,7 +97,7 @@ func FindErrorLogs(rootDirs ...string) {
 		})
 	}
 	if len(foundErrors) > 0 {
-		ux.Logger.PrintToUser("================!!! end of errors in logs !!! ========================")
+		fmt.Printf("================!!! end of errors in logs !!! ========================\n")
 	}
 }
 

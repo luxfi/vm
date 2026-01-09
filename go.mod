@@ -17,6 +17,7 @@ require (
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/holiman/uint256 v1.3.2
 	github.com/klauspost/compress v1.18.2
+	github.com/luxfi/address v1.0.1
 	github.com/luxfi/ai v0.0.0-20251225021023-3f15131f2bd1
 	github.com/luxfi/cache v1.1.0
 	github.com/luxfi/codec v1.1.2
@@ -25,6 +26,7 @@ require (
 	github.com/luxfi/constants v1.4.2
 	github.com/luxfi/crypto v1.17.38
 	github.com/luxfi/database v1.17.35
+	github.com/luxfi/genesis v1.5.21
 	github.com/luxfi/geth v1.16.69
 	github.com/luxfi/ids v1.2.8
 	github.com/luxfi/keychain v1.0.1
@@ -83,9 +85,6 @@ require (
 	github.com/btcsuite/btcutil v1.0.2 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/chelnak/ysmrr v0.6.0 // indirect
-	github.com/clipperhouse/stringish v0.1.1 // indirect
-	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
 	github.com/cockroachdb/errors v1.12.0 // indirect
 	github.com/cockroachdb/fifo v0.0.0-20240816210425-c5d0cb0b6fc0 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20241215232642-bb51bb14a506 // indirect
@@ -105,7 +104,6 @@ require (
 	github.com/ethereum/c-kzg-4844/v2 v2.1.5 // indirect
 	github.com/ethereum/go-bigmodexpfix v0.0.0-20250911101455-f9e208c548ab // indirect
 	github.com/ethereum/go-verkle v0.2.2 // indirect
-	github.com/fatih/color v1.18.0 // indirect
 	github.com/ferranbt/fastssz v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
@@ -126,37 +124,28 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/holiman/bloomfilter/v2 v2.0.3 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/k0kubun/go-ansi v0.0.0-20180517002512-3bf9e2903213 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/luxfi/const v1.4.1 // indirect
 	github.com/luxfi/evm v0.8.28 // indirect
-	github.com/luxfi/genesis v1.5.19 // indirect
 	github.com/luxfi/go-bip32 v1.0.2 // indirect
 	github.com/luxfi/go-bip39 v1.1.2 // indirect
 	github.com/luxfi/gpu v0.30.0 // indirect
 	github.com/luxfi/math/big v0.1.0 // indirect
 	github.com/luxfi/math/safe v0.0.0-20260105093802-21b7243e9ffb // indirect
-	github.com/luxfi/netrunner v1.14.35 // indirect
+	github.com/luxfi/node v1.22.81 // indirect
 	github.com/luxfi/precompile v0.4.1 // indirect
 	github.com/luxfi/ringtail v0.2.0 // indirect
 	github.com/luxfi/sampler v1.0.0 // indirect
 	github.com/luxfi/sdk/api v0.0.1 // indirect
 	github.com/luxfi/units v1.0.0 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-runewidth v0.0.19 // indirect
 	github.com/melbahja/goph v1.4.0 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
-	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/olekukonko/errors v1.1.0 // indirect
-	github.com/olekukonko/ll v0.0.9 // indirect
-	github.com/olekukonko/tablewriter v1.0.9 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pires/go-proxyproto v0.8.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -164,11 +153,9 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
-	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
 	github.com/sanity-io/litter v1.5.5 // indirect
-	github.com/schollz/progressbar/v3 v3.18.0 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/viper v1.21.0 // indirect
@@ -195,7 +182,6 @@ require (
 	golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93 // indirect
 	golang.org/x/mod v0.31.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/term v0.38.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251222181119-0a764e51fe1b // indirect
