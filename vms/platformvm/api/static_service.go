@@ -7,7 +7,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
-	"github.com/luxfi/formatting"
+	"github.com/luxfi/crypto/address/formatting"
 	"net/http"
 
 	"github.com/luxfi/crypto/address"
