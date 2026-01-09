@@ -8,7 +8,7 @@ import (
 	"github.com/luxfi/formatting"
 	"time"
 
-	"github.com/luxfi/address"
+	"github.com/luxfi/crypto/address"
 	validators "github.com/luxfi/consensus/validator"
 	"github.com/luxfi/constants"
 	"github.com/luxfi/crypto/bls"
