@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	consensuscontext "github.com/luxfi/consensus/context"
+	"github.com/luxfi/consensus/runtime"
 	"github.com/luxfi/ids"
 )
 
@@ -51,7 +51,7 @@ func (s *testValidatorState) GetChainID(blockID ids.ID) (ids.ID, error) {
 	return ids.Empty, nil
 }
 
-func (s *testValidatorState) GetCurrentValidators(ctx context.Context, height uint64, chainID ids.ID) (map[ids.NodeID]*consensuscontext.GetValidatorOutput, error) {
+func (s *testValidatorState) GetCurrentValidators(ctx context.Context, height uint64, chainID ids.ID) (map[ids.NodeID]*runtime.GetValidatorOutput, error) {
 	return nil, nil
 }
 

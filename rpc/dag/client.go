@@ -19,7 +19,7 @@ import (
 	"google.golang.org/grpc/health"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	consensuscontext "github.com/luxfi/consensus/context"
+	apiruntime "github.com/luxfi/consensus/runtime"
 	"github.com/luxfi/consensus/core/choices"
 	validators "github.com/luxfi/consensus/validator"
 	"github.com/luxfi/database"
@@ -58,6 +58,24 @@ var (
 	_ DAGVM           = (*Client)(nil)
 	_ metric.Gatherer = (*Client)(nil)
 )
+
+// platformWarpSignerAdapter adapts warp.Signer (luxfi/warp) to platformwarp.Signer (luxfi/protocol/p/warp).
+// Both have the same Sign method signature but with different UnsignedMessage types.
+// This is needed because the client receives runtime.WarpSigner (= warp.Signer from luxfi/warp)
+// but gwarp.NewServer expects platformwarp.Signer from luxfi/protocol/p/warp.
+type platformWarpSignerAdapter struct {
+	signer warp.Signer
+}
+
+func (a *platformWarpSignerAdapter) Sign(msg *platformwarp.UnsignedMessage) ([]byte, error) {
+	// Convert platformwarp.UnsignedMessage to warp.UnsignedMessage
+	// Both have the same structure: NetworkID, SourceChainID, Payload
+	warpMsg, err := warp.NewUnsignedMessage(msg.NetworkID, msg.SourceChainID, msg.Payload)
+	if err != nil {
+		return nil, err
+	}
+	return a.signer.Sign(warpMsg)
+}
 
 // Client is an implementation of a DAGVM that talks over RPC.
 // This is the client-side of the RPC DAGVM interface, running in the node process.
@@ -113,10 +131,10 @@ func (vm *Client) Initialize(
 	appSender interface{},
 ) error {
 	// Type assert to get concrete types
-	var consensusCtx *consensuscontext.Context
-	if cc, ok := chainCtxIface.(*consensuscontext.Context); ok && cc != nil {
+	var consensusCtx *apiruntime.Runtime
+	if cc, ok := chainCtxIface.(*apiruntime.Runtime); ok && cc != nil {
 		consensusCtx = cc
-		ctx = consensuscontext.WithIDs(ctx, consensuscontext.IDs{
+		ctx = apiruntime.WithIDs(ctx, apiruntime.IDs{
 			NetworkID: consensusCtx.NetworkID,
 			ChainID:   consensusCtx.ChainID,
 			NodeID:    consensusCtx.NodeID,
@@ -207,9 +225,10 @@ func (vm *Client) Initialize(
 		}
 	}
 	if consensusCtx.WarpSigner != nil {
-		if ws, ok := consensusCtx.WarpSigner.(platformwarp.Signer); ok {
-			vm.warpSignerServer = gwarp.NewServer(ws)
-		}
+		// WarpSigner is warp.Signer from luxfi/warp, but gwarp.NewServer expects
+		// platformwarp.Signer from luxfi/protocol/p/warp. Use adapter to bridge.
+		adapter := &platformWarpSignerAdapter{signer: consensusCtx.WarpSigner}
+		vm.warpSignerServer = gwarp.NewServer(adapter)
 	}
 
 	serverListener, err := grpcutils.NewListener()

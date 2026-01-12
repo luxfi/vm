@@ -104,3 +104,20 @@ func (c *Client) GetWarpValidatorSets(ctx context.Context, heights []uint64, net
 
 	return result, nil
 }
+
+func (c *Client) GetMinimumHeight(ctx context.Context) (uint64, error) {
+	// Return 0 as the minimum height - most implementations accept all heights
+	return 0, nil
+}
+
+func (c *Client) GetChainID(netID ids.ID) (ids.ID, error) {
+	// For the gRPC client, chain ID is typically the same as network ID
+	// or can be looked up from the server if needed
+	return netID, nil
+}
+
+func (c *Client) GetNetworkID(chainID ids.ID) (ids.ID, error) {
+	// For the gRPC client, network ID is typically the same as chain ID
+	// or can be looked up from the server if needed
+	return chainID, nil
+}

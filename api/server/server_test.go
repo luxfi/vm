@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	consensuscontext "github.com/luxfi/consensus/context"
+	"github.com/luxfi/consensus/runtime"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 )
@@ -24,7 +24,7 @@ func TestRejectMiddleware(t *testing.T) {
 	})
 
 	// Create a consensus context
-	ctx := &consensuscontext.Context{
+	ctx := &runtime.Runtime{
 		NetworkID: 1,
 		ChainID:   ids.Empty,
 		NodeID:    ids.EmptyNodeID,
