@@ -25,7 +25,7 @@ import (
 	"github.com/luxfi/vm/chains/atomic"
 
 	// "github.com/luxfi/database/badgerdb" // Unused
-	consensusctx "github.com/luxfi/consensus/context"
+	"github.com/luxfi/consensus/runtime"
 	dbmanager "github.com/luxfi/database/manager"
 
 	// "github.com/luxfi/database/meterdb" // Unused
@@ -204,7 +204,7 @@ type ChainParameters struct {
 
 type chainInfo struct {
 	Name    string
-	Context *consensusctx.Context
+	Context *runtime.Runtime
 	VM      interface{} // Use interface{} since VM implementations vary
 	Handler handler.Handler
 	Engine  Engine // Added to handle Start/Stop operations
@@ -257,6 +257,14 @@ func (n *noopValidatorState) GetWarpValidatorSet(ctx context.Context, height uin
 		Height:     height,
 		Validators: make(map[ids.NodeID]*validators.WarpValidator),
 	}, nil
+}
+
+func (n *noopValidatorState) GetChainID(netID ids.ID) (ids.ID, error) {
+	return ids.Empty, nil
+}
+
+func (n *noopValidatorState) GetNetworkID(chainID ids.ID) (ids.ID, error) {
+	return ids.Empty, nil
 }
 
 // getValidatorState returns the validator state or a no-op implementation if nil
@@ -814,7 +822,7 @@ func (m *manager) buildChain(chainParams ChainParameters, sb nets.Net) (*chainIn
 	// Create warp signer for this chain using the node's BLS key
 	warpSigner := createWarpSigner(m.StakingBLSKey, m.NetworkID, chainParams.ID)
 
-	chainCtx := &consensusctx.Context{
+	chainCtx := &runtime.Runtime{
 		NetworkID: m.NetworkID,
 		ChainID:   chainParams.ID,
 		NodeID:    m.NodeID,
@@ -830,7 +838,7 @@ func (m *manager) buildChain(chainParams ChainParameters, sb nets.Net) (*chainIn
 		Metrics:         chainMetricsGatherer,
 		Log:             chainLog,
 		WarpSigner:      warpSigner,
-		NetworkUpgrades: m.Upgrades,
+		NetworkUpgrades: &m.Upgrades,
 	}
 
 	// Get a factory for the vm we want to use on our chain
@@ -1154,7 +1162,7 @@ func (v *dagVMAdapter) Version(ctx context.Context) (string, error) {
 
 func (v *dagVMAdapter) Initialize(
 	ctx context.Context,
-	chainCtx *consensusctx.Context,
+	chainCtx *runtime.Runtime,
 	dbMgr dbmanager.Manager,
 	genesisBytes []byte,
 	upgradeBytes []byte,
@@ -1168,7 +1176,7 @@ func (v *dagVMAdapter) Initialize(
 
 // createDAG creates a DAG chain (X-Chain, Q-Chain) using the VM's DAG engine
 func (m *manager) createDAG(
-	ctx *consensusctx.Context,
+	ctx *runtime.Runtime,
 	chainParams ChainParameters,
 	vm interface{},
 	fxs []*engine.Fx,
@@ -1585,7 +1593,7 @@ func (m *manager) GetPendingChains(vmID ids.ID) []ChainParameters {
 
 // Notify registrants [those who want to know about the creation of chains]
 // that the specified chain has been created
-func (m *manager) notifyRegistrants(name string, ctx *consensusctx.Context, vm interface{}) {
+func (m *manager) notifyRegistrants(name string, ctx *runtime.Runtime, vm interface{}) {
 	for _, registrant := range m.registrants {
 		if coreVM, ok := vm.(interfaces.VM); ok {
 			registrant.RegisterChain(name, ctx, coreVM)
@@ -2007,7 +2015,7 @@ func (b *blockHandler) requestContext(ctx context.Context, nodeID ids.NodeID, bl
 		log.Int("sentTo", sentTo.Len()))
 }
 
-func (b *blockHandler) Context() *consensusctx.Context                { return nil }
+func (b *blockHandler) Context() *runtime.Runtime                { return nil }
 func (b *blockHandler) Start(ctx context.Context, startReqID uint32)  {}
 func (b *blockHandler) Push(ctx context.Context, msg handler.Message) {}
 func (b *blockHandler) Len() int                                      { return 0 }
@@ -2442,7 +2450,7 @@ func (b *blockHandler) HandleOutbound(ctx context.Context, msg handler.Message) 
 // placeholderHandler implements handler.Handler interface
 type placeholderHandler struct{}
 
-func (p *placeholderHandler) Context() *consensusctx.Context                { return nil }
+func (p *placeholderHandler) Context() *runtime.Runtime                { return nil }
 func (p *placeholderHandler) Start(ctx context.Context, startReqID uint32)  {}
 func (p *placeholderHandler) Push(ctx context.Context, msg handler.Message) {}
 func (p *placeholderHandler) Len() int                                      { return 0 }

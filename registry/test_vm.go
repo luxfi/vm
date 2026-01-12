@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	consensuscontext "github.com/luxfi/consensus/context"
+	"github.com/luxfi/consensus/runtime"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/version"
@@ -26,7 +26,7 @@ func newTestVM() *testVM {
 
 func (vm *testVM) Initialize(
 	ctx context.Context,
-	chainCtx *consensuscontext.Context,
+	chainCtx *runtime.Runtime,
 	db database.Database,
 	genesisBytes []byte,
 	upgradeBytes []byte,

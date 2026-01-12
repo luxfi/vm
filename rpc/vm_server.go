@@ -16,8 +16,8 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	consensuscontext "github.com/luxfi/consensus/context"
 	"github.com/luxfi/consensus/engine/chain/block"
+	"github.com/luxfi/consensus/runtime"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/corruptabledb"
@@ -97,7 +97,7 @@ type VMServer struct {
 	serverCloser grpcutils.ServerCloser
 	connCloser   wrappers.Closer
 
-	ctx    *consensuscontext.Context
+	rt     *runtime.Runtime
 	closed chan struct{}
 
 	// Network information
@@ -239,18 +239,18 @@ func (vm *VMServer) Initialize(ctx context.Context, req *vmpb.InitializeRequest)
 
 	vm.closed = make(chan struct{})
 
-	// Convert public key to bytes for consensuscontext.Context
+	// Convert public key to bytes for runtime.Runtime
 	var publicKeyBytes []byte
 	if publicKey != nil {
 		publicKeyBytes = bls.PublicKeyToCompressedBytes(publicKey)
 	}
 
-	vm.ctx = &consensuscontext.Context{
+	vm.rt = &runtime.Runtime{
 		NetworkID:       req.NetworkId,
 		ChainID:         chainID,
 		NodeID:          nodeID,
 		PublicKey:       publicKeyBytes,
-		NetworkUpgrades: networkUpgrades,
+		NetworkUpgrades: &networkUpgrades,
 		XChainID:        xChainID,
 		CChainID:        cChainID,
 		XAssetID:        luxAssetID, // Use XAssetID for the primary asset
@@ -269,7 +269,7 @@ func (vm *VMServer) Initialize(ctx context.Context, req *vmpb.InitializeRequest)
 	vm.nodeID = nodeID
 
 	vm.log.Info("initializing VM via gRPC", log.Stringer("chainID", chainID))
-	if err := vm.vm.Initialize(ctx, vm.ctx, vm.db, req.GenesisBytes, req.UpgradeBytes, req.ConfigBytes, nil, nil, appSenderClient); err != nil {
+	if err := vm.vm.Initialize(ctx, vm.rt, vm.db, req.GenesisBytes, req.UpgradeBytes, req.ConfigBytes, nil, nil, appSenderClient); err != nil {
 		// DEBUG: Write actual error to file since log is no-op
 		if f, ferr := os.OpenFile("/tmp/vm-server-init-error.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); ferr == nil {
 			fmt.Fprintf(f, "[%s] VM Initialize failed for chain %s: %v\n", time.Now().Format(time.RFC3339), chainID, err)

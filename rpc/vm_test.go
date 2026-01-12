@@ -12,7 +12,6 @@ import (
 
 	"github.com/luxfi/consensus/engine/chain/block"
 	"github.com/luxfi/log"
-	"github.com/luxfi/log/level"
 )
 
 const (
@@ -89,7 +88,7 @@ func TestHelperProcess(t *testing.T) {
 		fmt.Fprintf(os.Stderr, "test plugin returned nil for key: %s\n", testKey)
 		os.Exit(2)
 	}
-	err := Serve(context.Background(), log.NewTestLogger(level.Debug), mockedVM)
+	err := Serve(context.Background(), log.NewTestLogger(log.DebugLevel), mockedVM)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Serve failed: %v\n", err)
 		os.Exit(1)

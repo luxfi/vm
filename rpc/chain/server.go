@@ -18,7 +18,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	consensuscontext "github.com/luxfi/consensus/context"
+	"github.com/luxfi/consensus/runtime"
 	"github.com/luxfi/consensus/engine/chain/block"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/database"
@@ -121,7 +121,7 @@ type Server struct {
 	serverCloser grpcutils.ServerCloser
 	connCloser   wrappers.Closer
 
-	ctx    *consensuscontext.Context
+	ctx    *runtime.Runtime
 	closed chan struct{}
 
 	// Network information
@@ -264,18 +264,18 @@ func (vm *Server) Initialize(ctx context.Context, req *vmpb.InitializeRequest) (
 
 	vm.closed = make(chan struct{})
 
-	// Convert public key to bytes for consensuscontext.Context
+	// Convert public key to bytes for runtime.Context
 	var publicKeyBytes []byte
 	if publicKey != nil {
 		publicKeyBytes = bls.PublicKeyToCompressedBytes(publicKey)
 	}
 
-	vm.ctx = &consensuscontext.Context{
+	vm.ctx = &runtime.Runtime{
 		NetworkID:       req.NetworkId,
 		ChainID:         chainID,
 		NodeID:          nodeID,
 		PublicKey:       publicKeyBytes,
-		NetworkUpgrades: networkUpgrades,
+		NetworkUpgrades: &networkUpgrades,
 		XChainID:        xChainID,
 		CChainID:        cChainID,
 		XAssetID:        luxAssetID, // Use XAssetID for the primary asset
