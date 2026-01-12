@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"sync"
 
-	consensuscontext "github.com/luxfi/consensus/context"
+	"github.com/luxfi/consensus/runtime"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 )
@@ -29,7 +29,7 @@ type Acceptor interface {
 	// If the returned error is non-nil, the chain associated with [ctx] should
 	// shut down and not commit [container] or any other container to its
 	// database as accepted.
-	Accept(ctx *consensuscontext.Context, containerID ids.ID, container []byte) error
+	Accept(ctx *runtime.Runtime, containerID ids.ID, container []byte) error
 }
 
 type acceptorWrapper struct {
@@ -69,7 +69,7 @@ func NewAcceptorGroup(log log.Logger) AcceptorGroup {
 	}
 }
 
-func (a *acceptorGroup) Accept(ctx *consensuscontext.Context, containerID ids.ID, container []byte) error {
+func (a *acceptorGroup) Accept(ctx *runtime.Runtime, containerID ids.ID, container []byte) error {
 	a.lock.RLock()
 	defer a.lock.RUnlock()
 

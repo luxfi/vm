@@ -22,7 +22,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	consensuscontext "github.com/luxfi/consensus/context"
+	apiruntime "github.com/luxfi/consensus/runtime"
 	"github.com/luxfi/consensus/engine"
 	chainblock "github.com/luxfi/consensus/engine/chain/block"
 	validators "github.com/luxfi/consensus/validator"
@@ -157,11 +157,11 @@ func (vm *Client) Initialize(
 	appSender interface{},
 ) error {
 	// Type assert to get concrete types
-	var consensusCtx *consensuscontext.Context
+	var consensusCtx *apiruntime.Runtime
 	if cc, ok := chainCtxIface.(*chainblock.ChainContext); ok && cc != nil {
-		consensusCtx = cc.Context
+		consensusCtx = cc.Runtime
 		if consensusCtx != nil {
-			ctx = consensuscontext.WithIDs(ctx, consensuscontext.IDs{
+			ctx = apiruntime.WithIDs(ctx, apiruntime.IDs{
 				NetworkID: consensusCtx.NetworkID,
 				ChainID:   consensusCtx.ChainID,
 				NodeID:    consensusCtx.NodeID,
@@ -185,95 +185,90 @@ func (vm *Client) Initialize(
 		return errUnsupportedFXs
 	}
 
-	// Convert interface{} parameters to concrete types
-	// Handle both *Context and *consensuscontext.Context
+	// Convert interface{} parameters to concrete types using VMContext interface
+	// Any type implementing apiruntime.VMContext will work
 	var chainCtx *vmrpc.Context
-	switch ctx := chainCtxIface.(type) {
-	case *vmrpc.Context:
+
+	// Check if it's already our native Context type
+	if ctx, ok := chainCtxIface.(*vmrpc.Context); ok {
 		chainCtx = ctx
-	case *consensuscontext.Context:
-		// Convert consensus context to chain context
+	} else if vmCtx, ok := chainCtxIface.(apiruntime.VMContext); ok {
+		// Use VMContext interface to build local context
 		chainCtx = &vmrpc.Context{
-			NetworkID:    ctx.NetworkID,
-			NetID:        ctx.ChainID,
-			ChainID:      ctx.ChainID,
-			NodeID:       ctx.NodeID,
-			XChainID:     ctx.XChainID,
-			CChainID:     ctx.CChainID,
-			LUXAssetID:   ctx.XAssetID, // Use XAssetID as the primary asset
-			ChainDataDir: ctx.ChainDataDir,
+			NetworkID:    vmCtx.GetNetworkID(),
+			NetID:        vmCtx.GetChainID(),
+			ChainID:      vmCtx.GetChainID(),
+			NodeID:       vmCtx.GetNodeID(),
+			XChainID:     vmCtx.GetXChainID(),
+			CChainID:     vmCtx.GetCChainID(),
+			LUXAssetID:   vmCtx.GetAssetID(),
+			ChainDataDir: vmCtx.GetChainDataDir(),
 		}
-		// Handle type conversions for interface fields
-		if ctx.Log != nil {
-			if l, ok := ctx.Log.(log.Logger); ok {
+		// Handle type conversions for interface fields using VMContext getters
+		if logIface := vmCtx.GetLog(); logIface != nil {
+			if l, ok := logIface.(log.Logger); ok {
 				chainCtx.Log = l
 			}
 		}
-		if ctx.SharedMemory != nil {
-			if sm, ok := ctx.SharedMemory.(atomic.SharedMemory); ok {
+		if smIface := vmCtx.GetSharedMemory(); smIface != nil {
+			if sm, ok := smIface.(atomic.SharedMemory); ok {
 				chainCtx.SharedMemory = sm
 			}
 		}
-		if ctx.Metrics != nil {
-			if m, ok := ctx.Metrics.(metrics.MultiGatherer); ok {
+		if mIface := vmCtx.GetMetrics(); mIface != nil {
+			if m, ok := mIface.(metrics.MultiGatherer); ok {
 				chainCtx.Metrics = m
 			}
 		}
-		if ctx.ValidatorState != nil {
-			if vs, ok := ctx.ValidatorState.(validators.State); ok {
+		if vsIface := vmCtx.GetValidatorState(); vsIface != nil {
+			if vs, ok := vsIface.(validators.State); ok {
 				chainCtx.ValidatorState = vs
 			}
 		}
 		// BCLookup conversion - critical for plugin VM alias resolution
-		if ctx.BCLookup != nil {
-			// Try direct type assertion to ids.AliaserReader first
-			if bcl, ok := ctx.BCLookup.(ids.AliaserReader); ok {
+		if bclIface := vmCtx.GetBCLookup(); bclIface != nil {
+			if bcl, ok := bclIface.(ids.AliaserReader); ok {
 				chainCtx.BCLookup = bcl
-			} else if bcl, ok := ctx.BCLookup.(consensuscontext.BCLookup); ok {
-				// Wrap the consensus context BCLookup interface
+			} else if bcl, ok := bclIface.(apiruntime.BCLookup); ok {
 				chainCtx.BCLookup = &bcLookupWrapper{bc: bcl}
-			} else {
-				// BCLookup is set but not a recognized type - log warning but continue
-				if !vm.logger.IsZero() {
-					vm.logger.Warn("BCLookup has unrecognized type, alias resolution may fail",
-						log.String("type", fmt.Sprintf("%T", ctx.BCLookup)))
-				}
+			} else if !vm.logger.IsZero() {
+				vm.logger.Warn("BCLookup has unrecognized type, alias resolution may fail",
+					log.String("type", fmt.Sprintf("%T", bclIface)))
 			}
 		}
 		// WarpSigner conversion - for BLS signing of warp messages
-		if ctx.WarpSigner != nil {
-			if ws, ok := ctx.WarpSigner.(platformwarp.Signer); ok {
+		if wsIface := vmCtx.GetWarpSigner(); wsIface != nil {
+			if ws, ok := wsIface.(platformwarp.Signer); ok {
 				chainCtx.WarpSigner = ws
 			}
 		}
 		// PublicKey conversion from []byte
-		if len(ctx.PublicKey) > 0 {
-			pk, err := bls.PublicKeyFromCompressedBytes(ctx.PublicKey)
-			if err == nil {
-				chainCtx.PublicKey = pk
+		if pk := vmCtx.GetPublicKey(); len(pk) > 0 {
+			if pubKey, err := bls.PublicKeyFromCompressedBytes(pk); err == nil {
+				chainCtx.PublicKey = pubKey
 			}
 		}
 		// NetworkUpgrades conversion - critical for plugin VMs
-		if ctx.NetworkUpgrades != nil {
-			if upgrades, ok := ctx.NetworkUpgrades.(upgrade.Config); ok {
+		if nuIface := vmCtx.GetNetworkUpgrades(); nuIface != nil {
+			if upgrades, ok := nuIface.(upgrade.Config); ok {
 				chainCtx.NetworkUpgrades = upgrades
-			} else if upgradesPtr, ok := ctx.NetworkUpgrades.(*upgrade.Config); ok && upgradesPtr != nil {
+			} else if upgradesPtr, ok := nuIface.(*upgrade.Config); ok && upgradesPtr != nil {
 				chainCtx.NetworkUpgrades = *upgradesPtr
 			} else {
 				// Fall back to network-specific defaults
-				chainCtx.NetworkUpgrades = upgrade.GetConfig(ctx.NetworkID)
+				chainCtx.NetworkUpgrades = upgrade.GetConfig(vmCtx.GetNetworkID())
 				if !vm.logger.IsZero() {
 					vm.logger.Warn("NetworkUpgrades has unrecognized type, using network defaults",
-						log.String("type", fmt.Sprintf("%T", ctx.NetworkUpgrades)),
-						log.Uint32("networkID", ctx.NetworkID))
+						log.String("type", fmt.Sprintf("%T", nuIface)),
+						log.Uint32("networkID", vmCtx.GetNetworkID()))
 				}
 			}
 		} else {
 			// No NetworkUpgrades provided, use network-specific defaults
-			chainCtx.NetworkUpgrades = upgrade.GetConfig(ctx.NetworkID)
+			chainCtx.NetworkUpgrades = upgrade.GetConfig(vmCtx.GetNetworkID())
 		}
-	default:
-		return fmt.Errorf("invalid chain context type: expected *vmrpc.Context or *consensuscontext.Context, got %T", chainCtxIface)
+	} else {
+		return fmt.Errorf("chain context must implement VMContext interface, got %T", chainCtxIface)
 	}
 
 	// Convert appSender to concrete type
@@ -1248,9 +1243,9 @@ func (b *componentsBlockWrapper) Status() uint8 {
 }
 
 // bcLookupWrapper wraps consensus context BCLookup to match ids.AliaserReader
-// This handles the case where BCLookup is passed as consensuscontext.BCLookup interface
+// This handles the case where BCLookup is passed as apiruntime.BCLookup interface
 type bcLookupWrapper struct {
-	bc consensuscontext.BCLookup
+	bc apiruntime.BCLookup
 }
 
 func (b *bcLookupWrapper) Lookup(alias string) (ids.ID, error) {
