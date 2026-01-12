@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/luxfi/consensus"
-	consensuscontext "github.com/luxfi/consensus/context"
+	"github.com/luxfi/consensus/runtime"
 	"github.com/luxfi/consensus/engine/interfaces"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/trace"
@@ -68,7 +68,7 @@ type Server interface {
 	// RegisterChain registers the API endpoints associated with this chain.
 	// That is, add <route, handler> pairs to server so that API calls can be
 	// made to the VM.
-	RegisterChain(chainName string, ctx *consensuscontext.Context, vm interfaces.VM)
+	RegisterChain(chainName string, ctx *runtime.Runtime, vm interfaces.VM)
 	// Shutdown this server
 	Shutdown() error
 }
@@ -154,7 +154,7 @@ func (s *server) Dispatch() error {
 	return s.srv.Serve(s.listener)
 }
 
-func (s *server) RegisterChain(chainName string, ctx *consensuscontext.Context, vm interfaces.VM) {
+func (s *server) RegisterChain(chainName string, ctx *runtime.Runtime, vm interfaces.VM) {
 	// Note: HTTP handler registration is now done in chains/manager.go:createChain()
 	// after VM initialization. This RegisterChain method is called too early (before
 	// VM initialization) and would cause nil pointer dereference if we call CreateHandlers here.
@@ -214,7 +214,7 @@ func (s *server) RegisterChain(chainName string, ctx *consensuscontext.Context, 
 	*/
 }
 
-func (s *server) addChainRoute(chainName string, handler http.Handler, ctx *consensuscontext.Context, base, endpoint string) error {
+func (s *server) addChainRoute(chainName string, handler http.Handler, ctx *runtime.Runtime, base, endpoint string) error {
 	url := fmt.Sprintf("%s/%s", baseURL, base)
 	s.log.Info("adding route",
 		log.UserString("url", url),
@@ -224,7 +224,7 @@ func (s *server) addChainRoute(chainName string, handler http.Handler, ctx *cons
 	return s.router.AddRouter(url, endpoint, handler)
 }
 
-func (s *server) wrapMiddleware(chainName string, handler http.Handler, ctx *consensuscontext.Context) http.Handler {
+func (s *server) wrapMiddleware(chainName string, handler http.Handler, ctx *runtime.Runtime) http.Handler {
 	if s.tracingEnabled {
 		handler = api.TraceHandler(handler, chainName, s.tracer)
 	}
@@ -271,7 +271,7 @@ const stateHolderKey contextKey = "stateHolder"
 
 // Reject middleware wraps a handler. If the chain that the context describes is
 // not done state-syncing/bootstrapping, writes back an error.
-func rejectMiddleware(handler http.Handler, ctx *consensuscontext.Context) http.Handler {
+func rejectMiddleware(handler http.Handler, ctx *runtime.Runtime) http.Handler {
 	// TODO: Add state tracking to consensus context to properly check if chain is bootstrapped
 	// For now, allow all requests
 	return handler

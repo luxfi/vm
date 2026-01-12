@@ -8,7 +8,7 @@ import (
 	"errors"
 	"sync"
 
-	consensusctx "github.com/luxfi/consensus/context"
+	"github.com/luxfi/consensus/runtime"
 	"github.com/luxfi/consensus/engine/chain/block"
 	consensusvertex "github.com/luxfi/consensus/engine/vertex"
 	"github.com/luxfi/database"
@@ -36,7 +36,7 @@ type initializeOnLinearizeVM struct {
 	vmToInitialize block.ChainVM
 	vmToLinearize  *linearizeOnInitializeVM
 
-	ctx              *consensusctx.Context
+	ctx              *runtime.Runtime
 	db               database.Database
 	genesisBytes     []byte
 	upgradeBytes     []byte
@@ -130,7 +130,7 @@ func NewLinearizeOnInitializeVM(vm consensusvertex.LinearizableVMWithEngine, toE
 
 func (vm *linearizeOnInitializeVM) Initialize(
 	ctx context.Context,
-	consensusCtx *consensusctx.Context,
+	consensusCtx *runtime.Runtime,
 	db database.Database,
 	genesisBytes []byte,
 	upgradeBytes []byte,

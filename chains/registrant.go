@@ -4,7 +4,7 @@
 package chains
 
 import (
-	consensus "github.com/luxfi/consensus/context"
+	"github.com/luxfi/consensus/runtime"
 	"github.com/luxfi/consensus/engine/interfaces"
 )
 
@@ -13,5 +13,5 @@ type Registrant interface {
 	// Called when a chain is created
 	// This function is called before the chain starts processing messages
 	// [vm] should be a vertex.DAGVM or block.ChainVM
-	RegisterChain(chainName string, ctx *consensus.Context, vm interfaces.VM)
+	RegisterChain(chainName string, ctx *runtime.Runtime, vm interfaces.VM)
 }

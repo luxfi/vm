@@ -132,3 +132,7 @@ require (
 )
 
 replace github.com/luxfi/log => ../log
+
+replace github.com/luxfi/consensus => ../consensus
+
+replace github.com/luxfi/api => ../api
