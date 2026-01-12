@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/luxfi/consensus/engine/chain/block"
+	"github.com/luxfi/crypto/hash"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/crypto/hash"
 	"github.com/luxfi/vm/chain/blocktest"
 )
 

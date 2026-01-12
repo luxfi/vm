@@ -5,7 +5,7 @@ package chains
 
 import (
 	nodeconsensus "github.com/luxfi/vm/consensus"
-	// xvm "github.com/luxfi/vm/vms/exchangevm" // Unused
+	// xvm "github.com/luxfi/node/vms/exchangevm" // Unused
 	"context"
 	"crypto"
 	"encoding/json"
@@ -23,18 +23,21 @@ import (
 	"github.com/luxfi/vm/api/metrics"
 	"github.com/luxfi/vm/api/server"
 	"github.com/luxfi/vm/chains/atomic"
+
 	// "github.com/luxfi/database/badgerdb" // Unused
 	consensusctx "github.com/luxfi/consensus/context"
 	dbmanager "github.com/luxfi/database/manager"
+
 	// "github.com/luxfi/database/meterdb" // Unused
 	// "github.com/luxfi/database/prefixdb" // Unused
 	"github.com/luxfi/consensus"
 	"github.com/luxfi/consensus/engine"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/metric"
+	"github.com/luxfi/node/proto/pb/p2p"
 	"github.com/luxfi/p2p/message"
-	"github.com/luxfi/p2p/proto/pb/p2p"
 	"github.com/luxfi/warp"
+
 	// "github.com/luxfi/consensus/engine/dag/bootstrap/queue" // Unused
 	// "github.com/luxfi/consensus/engine/dag/state" // Unused
 	// "github.com/luxfi/consensus/engine/vertex" // Unused
@@ -44,6 +47,7 @@ import (
 	consensuschain "github.com/luxfi/consensus/engine/chain"
 	"github.com/luxfi/consensus/engine/chain/block"
 	consensusdag "github.com/luxfi/consensus/engine/dag"
+
 	// "github.com/luxfi/consensus/engine/chain/syncer"
 	"github.com/luxfi/consensus/networking/handler"
 	// "github.com/luxfi/consensus/core/router" // Deprecated - using local ChainRouter interface instead
@@ -51,24 +55,24 @@ import (
 	"github.com/luxfi/consensus/networking/timeout"
 	validators "github.com/luxfi/consensus/validator"
 	"github.com/luxfi/constants"
+	"github.com/luxfi/container/buffer"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/staking"
 	"github.com/luxfi/trace"
 	"github.com/luxfi/upgrade"
-	"github.com/luxfi/container/buffer"
-	"github.com/luxfi/utils/perms"
+	"github.com/luxfi/filesystem/perms"
 	"github.com/luxfi/vm/fx"
 	"github.com/luxfi/vm/nets"
-	"github.com/luxfi/vm/vms"
-	// "github.com/luxfi/vm/vms/metervm" // Temporarily disabled - needs consensus package updates
-	"github.com/luxfi/vm/nftfx"
 
-	"github.com/luxfi/vm/propertyfx"
-	// "github.com/luxfi/vm/vms/proposervm"
-	"github.com/luxfi/vm/secp256k1fx"
-	// "github.com/luxfi/vm/vms/tracedvm" // Temporarily disabled - needs consensus package updates
+	// "github.com/luxfi/vm/manager/metervm" // Temporarily disabled - needs consensus package updates
+	"github.com/luxfi/utxo/nftfx"
+
+	"github.com/luxfi/utxo/propertyfx"
+	// "github.com/luxfi/vm/manager/proposervm"
+	"github.com/luxfi/utxo/secp256k1fx"
+	// "github.com/luxfi/vm/manager/tracedvm" // Temporarily disabled - needs consensus package updates
 
 	// "github.com/luxfi/node/proto/p2p" // Available if needed for protobuf parsing
 	// smcon "github.com/luxfi/consensus/engine/chain"
@@ -79,6 +83,7 @@ import (
 	// smbootstrap "github.com/luxfi/consensus/engine/chain/bootstrap"
 	// consensusgetter "github.com/luxfi/consensus/engine/chain/getter"
 	timetracker "github.com/luxfi/p2p/tracker"
+	vmmanager "github.com/luxfi/vm/manager"
 )
 
 const (
@@ -288,7 +293,7 @@ type ManagerConfig struct {
 	Tracer                    trace.Tracer
 	Log                       log.Logger
 	LogFactory                log.Factory
-	VMManager                 vms.Manager // Manage mappings from vm ID --> vm
+	VMManager                 vmmanager.Manager // Manage mappings from vm ID --> vm
 	BlockAcceptorGroup        nodeconsensus.AcceptorGroup
 	TxAcceptorGroup           nodeconsensus.AcceptorGroup
 	VertexAcceptorGroup       nodeconsensus.AcceptorGroup
@@ -833,7 +838,7 @@ func (m *manager) buildChain(chainParams ChainParameters, sb nets.Net) (*chainIn
 	vmFactory, err := m.VMManager.GetFactory(chainParams.VMID)
 	if err != nil {
 		// Check if this is a VM not found error - if so, add to pending chains for hot-loading
-		if errors.Is(err, vms.ErrNotFound) {
+		if errors.Is(err, vmmanager.ErrNotFound) {
 			m.pendingVMChainsLock.Lock()
 			m.pendingVMChains[chainParams.VMID] = append(m.pendingVMChains[chainParams.VMID], chainParams)
 			m.pendingVMChainsLock.Unlock()
@@ -1982,7 +1987,7 @@ func (b *blockHandler) requestContext(ctx context.Context, nodeID ids.NodeID, bl
 		requestID,
 		10*time.Second, // Deadline
 		blockID,
-		p2p.EngineType_ENGINE_TYPE_CONSENSUSMAN, // Use Snowman (chain) engine type
+		p2p.EngineType_ENGINE_TYPE_CHAIN, // Use chain (linear block) engine type
 	)
 	if err != nil {
 		b.logger.Error("failed to create context request message",

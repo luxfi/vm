@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/luxfi/ids"
+	"github.com/luxfi/vm/manager"
+	"github.com/luxfi/vm/manager/vmsmock"
 	"github.com/luxfi/vm/registry/registrymock"
-	"github.com/luxfi/vm/vms"
-	"github.com/luxfi/vm/vms/vmsmock"
 )
 
 var (
@@ -34,12 +34,12 @@ func TestReload_Success(t *testing.T) {
 	factory3 := vmsmock.NewFactory(resources.ctrl)
 	factory4 := vmsmock.NewFactory(resources.ctrl)
 
-	registeredVms := map[ids.ID]vms.Factory{
+	registeredVms := map[ids.ID]manager.Factory{
 		id1: factory1,
 		id2: factory2,
 	}
 
-	unregisteredVms := map[ids.ID]vms.Factory{
+	unregisteredVms := map[ids.ID]manager.Factory{
 		id3: factory3,
 		id4: factory4,
 	}
@@ -88,12 +88,12 @@ func TestReload_PartialRegisterFailure(t *testing.T) {
 	factory3 := vmsmock.NewFactory(resources.ctrl)
 	factory4 := vmsmock.NewFactory(resources.ctrl)
 
-	registeredVms := map[ids.ID]vms.Factory{
+	registeredVms := map[ids.ID]manager.Factory{
 		id1: factory1,
 		id2: factory2,
 	}
 
-	unregisteredVms := map[ids.ID]vms.Factory{
+	unregisteredVms := map[ids.ID]manager.Factory{
 		id3: factory3,
 		id4: factory4,
 	}

@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/luxfi/crypto/hash"
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/linkeddb"
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/crypto/hash"
 )
 
 var (

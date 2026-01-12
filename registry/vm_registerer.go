@@ -15,7 +15,7 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/api/server"
-	"github.com/luxfi/vm/vms"
+	"github.com/luxfi/vm/manager"
 )
 
 var (
@@ -29,12 +29,12 @@ type VMRegisterer interface {
 	registerer
 	// RegisterWithReadLock installs the VM assuming that the http read-lock is
 	// held.
-	RegisterWithReadLock(context.Context, ids.ID, vms.Factory) error
+	RegisterWithReadLock(context.Context, ids.ID, manager.Factory) error
 }
 
 type registerer interface {
 	// Register installs the VM.
-	Register(context.Context, ids.ID, vms.Factory) error
+	Register(context.Context, ids.ID, manager.Factory) error
 }
 
 // VMRegistererConfig configures settings for VMRegisterer.
@@ -42,7 +42,7 @@ type VMRegistererConfig struct {
 	APIServer    server.Server
 	Log          log.Logger
 	VMFactoryLog log.Logger
-	VMManager    vms.Manager
+	VMManager    manager.Manager
 }
 
 type vmRegisterer struct {
@@ -56,15 +56,15 @@ func NewVMRegisterer(config VMRegistererConfig) VMRegisterer {
 	}
 }
 
-func (r *vmRegisterer) Register(ctx context.Context, vmID ids.ID, factory vms.Factory) error {
+func (r *vmRegisterer) Register(ctx context.Context, vmID ids.ID, factory manager.Factory) error {
 	return r.register(ctx, r.config.APIServer, vmID, factory)
 }
 
-func (r *vmRegisterer) RegisterWithReadLock(ctx context.Context, vmID ids.ID, factory vms.Factory) error {
+func (r *vmRegisterer) RegisterWithReadLock(ctx context.Context, vmID ids.ID, factory manager.Factory) error {
 	return r.register(ctx, server.PathWriterFromWithReadLock(r.config.APIServer), vmID, factory)
 }
 
-func (r *vmRegisterer) register(ctx context.Context, pathAdder server.PathAdder, vmID ids.ID, factory vms.Factory) error {
+func (r *vmRegisterer) register(ctx context.Context, pathAdder server.PathAdder, vmID ids.ID, factory manager.Factory) error {
 	if err := r.config.VMManager.RegisterFactory(ctx, vmID, factory); err != nil {
 		return err
 	}
@@ -91,14 +91,14 @@ func (r *vmRegisterer) register(ctx context.Context, pathAdder server.PathAdder,
 func (r *vmRegisterer) createStaticHandlers(
 	ctx context.Context,
 	vmID ids.ID,
-	factory vms.Factory,
+	factory manager.Factory,
 ) (map[string]http.Handler, error) {
 	vm, err := factory.New(r.config.VMFactoryLog)
 	if err != nil {
 		return nil, err
 	}
 
-	handlerProvider, ok := vm.(vms.HandlerProvider)
+	handlerProvider, ok := vm.(manager.HandlerProvider)
 	if !ok {
 		return nil, fmt.Errorf("%s is %w", vmID, errNotVM)
 	}
@@ -163,6 +163,6 @@ type readRegisterer struct {
 	registerer VMRegisterer
 }
 
-func (r readRegisterer) Register(ctx context.Context, vmID ids.ID, factory vms.Factory) error {
+func (r readRegisterer) Register(ctx context.Context, vmID ids.ID, factory manager.Factory) error {
 	return r.registerer.RegisterWithReadLock(ctx, vmID, factory)
 }

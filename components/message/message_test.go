@@ -12,7 +12,7 @@ import (
 
 	"github.com/luxfi/codec"
 
-	pb "github.com/luxfi/vm/proto/pb/message"
+	pb "github.com/luxfi/node/proto/pb/message"
 )
 
 func TestParseGibberish(t *testing.T) {

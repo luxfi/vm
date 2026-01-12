@@ -17,7 +17,7 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/vm/api/server"
-	"github.com/luxfi/vm/vms/vmsmock"
+	"github.com/luxfi/vm/manager/vmsmock"
 )
 
 var id = ids.GenerateTestID()

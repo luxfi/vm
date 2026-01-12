@@ -11,7 +11,7 @@ import (
 
 	"github.com/luxfi/ids"
 
-	pb "github.com/luxfi/vm/proto/pb/message"
+	pb "github.com/luxfi/node/proto/pb/message"
 )
 
 var (

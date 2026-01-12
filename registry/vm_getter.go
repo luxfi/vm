@@ -9,12 +9,12 @@ import (
 	"path/filepath"
 
 	"github.com/luxfi/ids"
-	"github.com/luxfi/utils/filesystem"
-	"github.com/luxfi/utils/resource"
+	"github.com/luxfi/filesystem"
+	"github.com/luxfi/resource"
 	"github.com/luxfi/vm/api/metrics"
-	"github.com/luxfi/vm/vms"
-	"github.com/luxfi/vm/vms/rpcchainvm"
-	"github.com/luxfi/vm/vms/rpcchainvm/runtime"
+	"github.com/luxfi/vm/manager"
+	"github.com/luxfi/vm/rpc"
+	"github.com/luxfi/vm/rpc/runtime"
 )
 
 var (
@@ -28,8 +28,8 @@ type VMGetter interface {
 	// Get fetches the VMs that are registered and the VMs that are not
 	// registered but available to be installed on the node.
 	Get() (
-		registeredVMs map[ids.ID]vms.Factory,
-		unregisteredVMs map[ids.ID]vms.Factory,
+		registeredVMs map[ids.ID]manager.Factory,
+		unregisteredVMs map[ids.ID]manager.Factory,
 		err error,
 	)
 }
@@ -37,7 +37,7 @@ type VMGetter interface {
 // VMGetterConfig defines settings for VMGetter
 type VMGetterConfig struct {
 	FileReader      filesystem.Reader
-	Manager         vms.Manager
+	Manager         manager.Manager
 	PluginDirectory string
 	CPUTracker      resource.ProcessTracker
 	RuntimeTracker  runtime.Tracker
@@ -55,14 +55,14 @@ func NewVMGetter(config VMGetterConfig) VMGetter {
 	}
 }
 
-func (getter *vmGetter) Get() (map[ids.ID]vms.Factory, map[ids.ID]vms.Factory, error) {
+func (getter *vmGetter) Get() (map[ids.ID]manager.Factory, map[ids.ID]manager.Factory, error) {
 	files, err := getter.config.FileReader.ReadDir(getter.config.PluginDirectory)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	registeredVMs := make(map[ids.ID]vms.Factory)
-	unregisteredVMs := make(map[ids.ID]vms.Factory)
+	registeredVMs := make(map[ids.ID]manager.Factory)
+	unregisteredVMs := make(map[ids.ID]manager.Factory)
 	for _, file := range files {
 		if file.IsDir() {
 			continue
@@ -97,11 +97,11 @@ func (getter *vmGetter) Get() (map[ids.ID]vms.Factory, map[ids.ID]vms.Factory, e
 		}
 
 		// If the error isn't "not found", then we should report the error.
-		if !errors.Is(err, vms.ErrNotFound) {
+		if !errors.Is(err, manager.ErrNotFound) {
 			return nil, nil, err
 		}
 
-		unregisteredVMs[vmID] = rpcchainvm.NewFactory(
+		unregisteredVMs[vmID] = rpc.NewFactory(
 			filepath.Join(getter.config.PluginDirectory, file.Name()),
 			getter.config.CPUTracker,
 			getter.config.RuntimeTracker,

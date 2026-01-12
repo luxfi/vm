@@ -19,8 +19,8 @@ import (
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/timer/mockable"
-	"github.com/luxfi/utils/json"
-	"github.com/luxfi/utils/password"
+	"github.com/luxfi/codec/jsonrpc"
+	"github.com/luxfi/password"
 )
 
 const (

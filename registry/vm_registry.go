@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/vms"
+	"github.com/luxfi/vm/manager"
 )
 
 var _ VMRegistry = (*vmRegistry)(nil)
@@ -22,7 +22,7 @@ type VMRegistry interface {
 // VMRegistryConfig defines configurations for VMRegistry
 type VMRegistryConfig struct {
 	VMGetter  VMGetter
-	VMManager vms.Manager
+	VMManager manager.Manager
 }
 
 type vmRegistry struct {

@@ -5,9 +5,10 @@ package health
 
 import (
 	"context"
-	"github.com/luxfi/metric"
 	"net/http"
 	"testing"
+
+	"github.com/luxfi/metric"
 
 	"github.com/stretchr/testify/require"
 

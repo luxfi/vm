@@ -5,12 +5,13 @@ package gkeystore
 
 import (
 	"context"
+
 	"github.com/luxfi/database"
 
 	"github.com/luxfi/vm/api/keystore"
-	"github.com/luxfi/vm/rpcchainvm/grpcutils"
+	"github.com/luxfi/vm/rpc/grpcutils"
 
-	keystorepb "github.com/luxfi/vm/proto/pb/keystore"
+	keystorepb "github.com/luxfi/node/proto/pb/keystore"
 )
 
 var _ keystorepb.KeystoreServer = (*Server)(nil)
