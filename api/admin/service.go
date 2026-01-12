@@ -10,25 +10,25 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime/debug"
 	"sync"
 
 	"github.com/gorilla/rpc/v2"
 
+	"github.com/luxfi/codec/jsonrpc"
 	"github.com/luxfi/constants"
 	"github.com/luxfi/database"
+	"github.com/luxfi/filesystem/perms"
 	"github.com/luxfi/formatting"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/utils"
-	"github.com/luxfi/utils/json"
-	"github.com/luxfi/utils/perms"
-	"github.com/luxfi/utils/profiler"
+	"github.com/luxfi/metric/profiler"
 	"github.com/luxfi/vm/api"
 	"github.com/luxfi/vm/api/server"
 	"github.com/luxfi/vm/chains"
+	"github.com/luxfi/vm/manager"
 	"github.com/luxfi/vm/registry"
-	"github.com/luxfi/vm/vms"
 )
 
 const (
@@ -58,7 +58,7 @@ type Config struct {
 	ChainManager chains.Manager
 	HTTPServer   server.PathAdderWithReadLock
 	VMRegistry   registry.VMRegistry
-	VMManager    vms.Manager
+	VMManager    manager.Manager
 	PluginDir    string
 	Network      ChainTracker
 }
@@ -229,7 +229,7 @@ func (a *Admin) Stacktrace(_ *http.Request, _ *struct{}, _ *api.EmptyReply) erro
 		log.String("method", "stacktrace"),
 	)
 
-	stacktrace := []byte(utils.GetStacktrace(true))
+	stacktrace := debug.Stack()
 
 	a.lock.Lock()
 	defer a.lock.Unlock()

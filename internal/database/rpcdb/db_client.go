@@ -12,11 +12,11 @@ import (
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/luxfi/atomic"
 	"github.com/luxfi/database"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/utils"
 
-	rpcdbpb "github.com/luxfi/vm/proto/pb/rpcdb"
+	rpcdbpb "github.com/luxfi/node/proto/pb/rpcdb"
 )
 
 var (
@@ -29,7 +29,7 @@ var (
 type DatabaseClient struct {
 	client rpcdbpb.DatabaseClient
 
-	closed utils.Atomic[bool]
+	closed atomic.Atomic[bool]
 }
 
 // NewClient returns a database instance connected to a remote database instance

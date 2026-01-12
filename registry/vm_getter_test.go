@@ -14,11 +14,11 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/metric"
-	"github.com/luxfi/utils/filesystem"
-	"github.com/luxfi/utils/filesystem/filesystemmock"
-	"github.com/luxfi/utils/resource"
-	"github.com/luxfi/vm/vms"
-	"github.com/luxfi/vm/vms/vmsmock"
+	"github.com/luxfi/filesystem"
+	"github.com/luxfi/filesystem/filesystemmock"
+	"github.com/luxfi/resource"
+	"github.com/luxfi/vm/manager"
+	"github.com/luxfi/vm/manager/vmsmock"
 )
 
 var (
@@ -112,7 +112,7 @@ func TestGet_Success(t *testing.T) {
 	resources.mockManager.EXPECT().Lookup(registeredVMName).Times(1).Return(registeredVMId, nil)
 	resources.mockManager.EXPECT().GetFactory(registeredVMId).Times(1).Return(registeredVMFactory, nil)
 	resources.mockManager.EXPECT().Lookup(unregisteredVMName).Times(1).Return(unregisteredVMId, nil)
-	resources.mockManager.EXPECT().GetFactory(unregisteredVMId).Times(1).Return(nil, vms.ErrNotFound)
+	resources.mockManager.EXPECT().GetFactory(unregisteredVMId).Times(1).Return(nil, manager.ErrNotFound)
 
 	registeredVMs, unregisteredVMs, err := resources.getter.Get()
 

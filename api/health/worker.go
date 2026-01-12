@@ -12,10 +12,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/luxfi/atomic"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/metric"
-	"github.com/luxfi/utils"
 )
 
 var (
@@ -131,7 +131,7 @@ func (w *worker) RegisterCheck(name string, check Checker, tags ...string) error
 }
 
 func (w *worker) RegisterMonotonicCheck(name string, checker Checker, tags ...string) error {
-	var result utils.Atomic[any]
+	var result atomic.Atomic[any]
 	return w.RegisterCheck(name, CheckerFunc(func(ctx context.Context) (any, error) {
 		details := result.Get()
 		if details != nil {

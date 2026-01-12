@@ -4,21 +4,21 @@
 package admin
 
 import (
-	"github.com/luxfi/formatting"
 	"net/http"
 	"testing"
+
+	"github.com/luxfi/formatting"
 
 	"github.com/luxfi/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/constants"
 	"github.com/luxfi/database/memdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/vm/chains"
+	"github.com/luxfi/vm/manager/vmsmock"
 	"github.com/luxfi/vm/registry/registrymock"
-	"github.com/luxfi/vm/vms/vmsmock"
 )
 
 type loadVMsTest struct {
@@ -77,7 +77,7 @@ func TestLoadVMsSuccess(t *testing.T) {
 	require.Equal(expectedVMRegistry, reply.NewVMs)
 }
 
-// Tests behavior for LoadVMs if we fail to reload vms.
+// Tests behavior for LoadVMs if we fail to reload manager.
 func TestLoadVMsReloadFails(t *testing.T) {
 	require := require.New(t)
 

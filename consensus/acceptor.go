@@ -10,8 +10,6 @@ import (
 	"fmt"
 	"sync"
 
-	"go.uber.org/zap"
-
 	consensuscontext "github.com/luxfi/consensus/context"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
@@ -78,10 +76,10 @@ func (a *acceptorGroup) Accept(ctx *consensuscontext.Context, containerID ids.ID
 	for acceptorName, acceptor := range a.acceptors[ctx.ChainID] {
 		if err := acceptor.Accept(ctx, containerID, container); err != nil {
 			a.log.Error("failed accepting container",
-				zap.String("acceptorName", acceptorName),
-				zap.Stringer("chainID", ctx.ChainID),
-				zap.Stringer("containerID", containerID),
-				zap.Error(err),
+				log.String("acceptorName", acceptorName),
+				log.Stringer("chainID", ctx.ChainID),
+				log.Stringer("containerID", containerID),
+				log.Err(err),
 			)
 			if acceptor.dieOnError {
 				return fmt.Errorf("acceptor %s on chain %s erred while accepting %s: %w", acceptorName, ctx.ChainID, containerID, err)

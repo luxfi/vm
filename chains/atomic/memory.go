@@ -7,10 +7,10 @@ import (
 	"bytes"
 	"sync"
 
+	"github.com/luxfi/crypto/hash"
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/crypto/hash"
 )
 
 type rcLock struct {

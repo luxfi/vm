@@ -5,11 +5,12 @@ package api
 
 import (
 	"encoding/json"
+
 	"github.com/luxfi/formatting"
 
 	"github.com/luxfi/ids"
 
-	avajson "github.com/luxfi/utils/json"
+	avajson "github.com/luxfi/codec/jsonrpc"
 )
 
 // This file contains structs used in arguments and responses in services

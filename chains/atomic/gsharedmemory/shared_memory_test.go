@@ -18,9 +18,9 @@ import (
 
 	"github.com/luxfi/vm/chains/atomic"
 	"github.com/luxfi/vm/chains/atomic/atomictest"
-	"github.com/luxfi/vm/rpcchainvm/grpcutils"
+	"github.com/luxfi/vm/rpc/grpcutils"
 
-	sharedmemorypb "github.com/luxfi/vm/proto/pb/sharedmemory"
+	sharedmemorypb "github.com/luxfi/node/proto/pb/sharedmemory"
 )
 
 func TestInterface(t *testing.T) {

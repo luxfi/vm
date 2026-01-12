@@ -5,12 +5,13 @@
 package xsvmconnect
 
 import (
-	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	xsvm "github.com/luxfi/vm/connectproto/pb/xsvm"
 	http "net/http"
 	strings "strings"
+
+	connect "connectrpc.com/connect"
+	xsvm "github.com/luxfi/vm/connectproto/pb/xsvm"
 )
 
 // This is a compile-time assertion to ensure that this generated file and the connect package are
