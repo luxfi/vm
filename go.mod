@@ -19,7 +19,7 @@ require (
 	github.com/luxfi/database v1.17.38
 	github.com/luxfi/ids v1.2.9
 	github.com/luxfi/lattice/v7 v7.0.0
-	github.com/luxfi/log v1.3.0
+	github.com/luxfi/log v1.3.1
 	github.com/luxfi/math v1.2.3
 	github.com/luxfi/metric v1.4.10
 	github.com/luxfi/mock v0.1.1
