@@ -5,17 +5,17 @@ package keystore
 
 import (
 	"encoding/hex"
-	"github.com/luxfi/formatting"
 	"math/rand"
 	"testing"
 
+	"github.com/luxfi/formatting"
+
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/constants"
 	"github.com/luxfi/database/memdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
-	"github.com/luxfi/utils/password"
+	"github.com/luxfi/password"
 	"github.com/luxfi/vm/api"
 )
 

@@ -397,9 +397,9 @@ info.getTxFee() ->
 {
   txFee: uint64,
   createAssetTxFee: uint64,
-  createNetTxFee: uint64,
+  createNetworkTxFee: uint64,
   transformNetTxFee: uint64,
-  createBlockchainTxFee: uint64,
+  createChainTxFee: uint64,
   addPrimaryNetworkValidatorFee: uint64,
   addPrimaryNetworkDelegatorFee: uint64,
   addNetValidatorFee: uint64,
@@ -409,13 +409,13 @@ info.getTxFee() ->
 
 - `txFee` is the default fee for issuing X-Chain transactions.
 - `createAssetTxFee` is the fee for issuing a `CreateAssetTx` on the X-Chain.
-- `createNetTxFee` is no longer used.
-- `transformNetTxFee` is no longer used.
-- `createBlockchainTxFee` is no longer used.
-- `addPrimaryNetworkValidatorFee` is no longer used.
-- `addPrimaryNetworkDelegatorFee` is no longer used.
-- `addNetValidatorFee` is no longer used.
-- `addNetDelegatorFee` is no longer used.
+- `createNetworkTxFee` is the fee for issuing a `CreateNetworkTx` on the P-Chain.
+- `transformNetTxFee` is the fee for issuing a `TransformChainTx` on the P-Chain.
+- `createChainTxFee` is the fee for issuing a `CreateChainTx` on the P-Chain.
+- `addPrimaryNetworkValidatorFee` is the fee for issuing an `AddValidatorTx` on the P-Chain.
+- `addPrimaryNetworkDelegatorFee` is the fee for issuing an `AddDelegatorTx` on the P-Chain.
+- `addNetValidatorFee` is the fee for issuing an `AddChainValidatorTx` on the P-Chain.
+- `addNetDelegatorFee` is the fee for issuing an `AddChainDelegatorTx` on the P-Chain.
 
 All fees are denominated in nLUX.
 
@@ -438,9 +438,9 @@ curl -X POST --data '{
   "result": {
     "txFee": "1000000",
     "createAssetTxFee": "10000000",
-    "createNetTxFee": "1000000000",
+    "createNetworkTxFee": "1000000000",
     "transformNetTxFee": "10000000000",
-    "createBlockchainTxFee": "1000000000",
+    "createChainTxFee": "1000000000",
     "addPrimaryNetworkValidatorFee": "0",
     "addPrimaryNetworkDelegatorFee": "0",
     "addNetValidatorFee": "1000000",

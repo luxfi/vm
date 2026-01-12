@@ -15,8 +15,8 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/metric"
+	"github.com/luxfi/vm/manager"
 	"github.com/luxfi/vm/nets"
-	"github.com/luxfi/vm/vms"
 )
 
 // TestNew tests creating a new manager
@@ -28,7 +28,7 @@ func TestNew(t *testing.T) {
 		EnableAutomining: true,
 		Log:              log.NewNoOpLogger(),
 		Metrics:          metric.NewMultiGatherer(),
-		VMManager:        vms.NewManager(nil, ids.NewAliaser()),
+		VMManager:        manager.NewManager(nil, ids.NewAliaser()),
 		ChainDataDir:     t.TempDir(),
 	}
 
@@ -54,7 +54,7 @@ func TestSkipBootstrapTracker(t *testing.T) {
 		EnableAutomining: true,
 		Log:              log.NewNoOpLogger(),
 		Metrics:          metric.NewMultiGatherer(),
-		VMManager:        vms.NewManager(nil, ids.NewAliaser()),
+		VMManager:        manager.NewManager(nil, ids.NewAliaser()),
 		ChainDataDir:     t.TempDir(),
 		// Tracker configuration not required for basic manager testing
 	}
@@ -92,7 +92,7 @@ func TestQueueChainCreation(t *testing.T) {
 	config := &ManagerConfig{
 		Log:          log.NewNoOpLogger(),
 		Metrics:      metric.NewMultiGatherer(),
-		VMManager:    vms.NewManager(nil, ids.NewAliaser()),
+		VMManager:    manager.NewManager(nil, ids.NewAliaser()),
 		ChainDataDir: t.TempDir(),
 		Nets:         chains,
 	}
@@ -129,7 +129,7 @@ func TestLookup(t *testing.T) {
 	config := &ManagerConfig{
 		Log:          log.NewNoOpLogger(),
 		Metrics:      metric.NewMultiGatherer(),
-		VMManager:    vms.NewManager(nil, ids.NewAliaser()),
+		VMManager:    manager.NewManager(nil, ids.NewAliaser()),
 		ChainDataDir: t.TempDir(),
 	}
 
@@ -165,7 +165,7 @@ func TestIsBootstrapped(t *testing.T) {
 	config := &ManagerConfig{
 		Log:          log.NewNoOpLogger(),
 		Metrics:      metric.NewMultiGatherer(),
-		VMManager:    vms.NewManager(nil, ids.NewAliaser()),
+		VMManager:    manager.NewManager(nil, ids.NewAliaser()),
 		ChainDataDir: t.TempDir(),
 	}
 

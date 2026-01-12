@@ -6,7 +6,7 @@ package rpcdb
 import (
 	"github.com/luxfi/database"
 
-	rpcdbpb "github.com/luxfi/vm/proto/pb/rpcdb"
+	rpcdbpb "github.com/luxfi/node/proto/pb/rpcdb"
 )
 
 var (

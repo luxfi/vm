@@ -12,7 +12,7 @@ import (
 
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
-	"github.com/luxfi/vm/vms/vmsmock"
+	"github.com/luxfi/vm/manager/vmsmock"
 )
 
 var errTest = errors.New("non-nil error")
@@ -64,7 +64,7 @@ func TestGetVMsSuccess(t *testing.T) {
 	require.Equal(expectedVMRegistry, reply.VMs)
 }
 
-// Tests GetVMs if we fail to list our vms.
+// Tests GetVMs if we fail to list our manager.
 func TestGetVMsVMsListFactoriesFails(t *testing.T) {
 	resources := initGetVMsTest(t)
 

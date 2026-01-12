@@ -50,13 +50,6 @@ type Network struct {
 	Chains []*Chain
 }
 
-// Chain represents a chain in the network
-type Chain struct {
-	ChainID      ids.ID
-	Chains       []*Chain
-	ValidatorIDs []ids.NodeID
-}
-
 // Chain represents a blockchain in a chain
 type Chain struct {
 	ChainID   ids.ID

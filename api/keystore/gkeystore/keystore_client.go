@@ -10,10 +10,10 @@ import (
 	"github.com/luxfi/database/encdb"
 	"github.com/luxfi/vm/api/keystore"
 	"github.com/luxfi/vm/internal/database/rpcdb"
-	"github.com/luxfi/vm/rpcchainvm/grpcutils"
+	"github.com/luxfi/vm/rpc/grpcutils"
 
-	keystorepb "github.com/luxfi/vm/proto/pb/keystore"
-	rpcdbpb "github.com/luxfi/vm/proto/pb/rpcdb"
+	keystorepb "github.com/luxfi/node/proto/pb/keystore"
+	rpcdbpb "github.com/luxfi/node/proto/pb/rpcdb"
 )
 
 var _ keystore.BlockchainKeystore = (*Client)(nil)

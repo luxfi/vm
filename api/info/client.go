@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/luxfi/ids"
+	"github.com/luxfi/protocol/p/signer"
 	"github.com/luxfi/rpc"
 	"github.com/luxfi/upgrade"
-	"github.com/luxfi/vm/platformvm/signer"
 )
 
 type Client struct {

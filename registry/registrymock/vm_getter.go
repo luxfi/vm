@@ -13,7 +13,7 @@ import (
 	reflect "reflect"
 
 	ids "github.com/luxfi/ids"
-	vms "github.com/luxfi/vm/vms"
+	"github.com/luxfi/vm/manager"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,11 +42,11 @@ func (m *VMGetter) EXPECT() *VMGetterMockRecorder {
 }
 
 // Get mocks base method.
-func (m *VMGetter) Get() (map[ids.ID]vms.Factory, map[ids.ID]vms.Factory, error) {
+func (m *VMGetter) Get() (map[ids.ID]manager.Factory, map[ids.ID]manager.Factory, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get")
-	ret0, _ := ret[0].(map[ids.ID]vms.Factory)
-	ret1, _ := ret[1].(map[ids.ID]vms.Factory)
+	ret0, _ := ret[0].(map[ids.ID]manager.Factory)
+	ret1, _ := ret[1].(map[ids.ID]manager.Factory)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
