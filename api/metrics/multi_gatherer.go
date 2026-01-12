@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/luxfi/metric"
-	"github.com/luxfi/utils"
 )
 
 // MultiGatherer extends the Gatherer interface by allowing additional gatherers
@@ -90,8 +89,8 @@ func (g *multiGatherer) Deregister(name string) bool {
 		return false
 	}
 
-	g.names = utils.DeleteIndex(g.names, index)
-	g.gatherers = utils.DeleteIndex(g.gatherers, index)
+	g.names = append(g.names[:index], g.names[index+1:]...)
+	g.gatherers = append(g.gatherers[:index], g.gatherers[index+1:]...)
 	return true
 }
 

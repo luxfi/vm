@@ -174,7 +174,7 @@ func TestPassingChecks(t *testing.T) {
 func TestPassingThenFailingChecks(t *testing.T) {
 	require := require.New(t)
 
-	var shouldCheckErr utils.Atomic[bool]
+	var shouldCheckErr atomic.Atomic[bool]
 	check := CheckerFunc(func(context.Context) (interface{}, error) {
 		if shouldCheckErr.Get() {
 			return errUnhealthy.Error(), errUnhealthy

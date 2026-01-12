@@ -11,7 +11,7 @@ import (
 
 	"github.com/luxfi/log"
 
-	avajson "github.com/luxfi/utils/json"
+	avajson "github.com/luxfi/codec/jsonrpc"
 )
 
 // NewGetAndPostHandler returns a health handler that supports GET and jsonrpc

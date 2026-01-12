@@ -7,7 +7,6 @@ import (
 	"github.com/luxfi/codec"
 	"github.com/luxfi/codec/linearcodec"
 	"github.com/luxfi/constants"
-	"github.com/luxfi/utils"
 )
 
 const (
@@ -23,11 +22,10 @@ func init() {
 	c = codec.NewManager(maxMessageSize)
 	lc := linearcodec.NewDefault()
 
-	err := utils.Err(
-		lc.RegisterType(&Tx{}),
-		c.RegisterCodec(codecVersion, lc),
-	)
-	if err != nil {
+	if err := lc.RegisterType(&Tx{}); err != nil {
+		panic(err)
+	}
+	if err := c.RegisterCodec(codecVersion, lc); err != nil {
 		panic(err)
 	}
 }

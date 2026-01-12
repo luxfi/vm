@@ -13,7 +13,7 @@ import (
 	consensusvertex "github.com/luxfi/consensus/engine/vertex"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/platformvm/fx"
+	"github.com/luxfi/protocol/p/fx"
 	"github.com/luxfi/warp"
 )
 

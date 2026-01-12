@@ -8,7 +8,7 @@ import (
 
 	"github.com/luxfi/ids"
 
-	aliasreaderpb "github.com/luxfi/vm/proto/pb/aliasreader"
+	aliasreaderpb "github.com/luxfi/node/proto/pb/aliasreader"
 )
 
 var _ ids.AliaserReader = (*Client)(nil)

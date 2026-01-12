@@ -15,7 +15,7 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/vm/api/server"
-	"github.com/luxfi/vm/vms"
+	"github.com/luxfi/vm/manager"
 )
 
 // ChainHandlerRegistrar provides a clean interface for chain manager to register handlers.
@@ -88,13 +88,13 @@ func (r *ChainHandlerRegistrar) extractHandlers(
 	vm interface{},
 ) (map[string]http.Handler, error) {
 	// First try direct interface check
-	if provider, ok := vm.(vms.HandlerProvider); ok {
+	if provider, ok := vm.(manager.HandlerProvider); ok {
 		r.log.Debug("VM directly implements HandlerProvider")
 		return provider.CreateHandlers(ctx)
 	}
 
 	// Try using the delegate helper (handles wrapped VMs)
-	handlers, err := vms.DelegateHandlers(ctx, vm)
+	handlers, err := manager.DelegateHandlers(ctx, vm)
 	if err != nil {
 		return nil, fmt.Errorf("handler delegation failed: %w", err)
 	}

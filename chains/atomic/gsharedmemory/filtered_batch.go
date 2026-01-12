@@ -6,7 +6,7 @@ package gsharedmemory
 import (
 	"github.com/luxfi/math/set"
 
-	sharedmemorypb "github.com/luxfi/vm/proto/pb/sharedmemory"
+	sharedmemorypb "github.com/luxfi/node/proto/pb/sharedmemory"
 )
 
 type filteredBatch struct {
