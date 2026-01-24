@@ -12,7 +12,7 @@ import (
 
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
-	"github.com/luxfi/vm/manager/vmsmock"
+	"github.com/luxfi/vm/manager/managermock"
 )
 
 var errTest = errors.New("non-nil error")
