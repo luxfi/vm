@@ -18,7 +18,7 @@ import (
 	"github.com/luxfi/filesystem/filesystemmock"
 	"github.com/luxfi/resource"
 	"github.com/luxfi/vm/manager"
-	"github.com/luxfi/vm/manager/vmsmock"
+	"github.com/luxfi/vm/manager/managermock"
 )
 
 var (

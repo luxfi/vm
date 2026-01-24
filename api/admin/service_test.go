@@ -16,7 +16,7 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/vm/manager/vmsmock"
+	"github.com/luxfi/vm/manager/managermock"
 	"github.com/luxfi/vm/registry/registrymock"
 	vmmanager "github.com/luxfi/vm/manager"
 )
