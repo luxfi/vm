@@ -49,9 +49,9 @@ const (
 	// Context-aware operations
 	FeatureWithContext VMFeature = "with_context"
 
-	// App messaging
-	FeatureAppSender  VMFeature = "app_sender"
-	FeatureAppHandler VMFeature = "app_handler"
+	// Messaging
+	FeatureSender  VMFeature = "sender"
+	FeatureHandler VMFeature = "handler"
 )
 
 // Capabilities describes what a VM supports.
@@ -91,8 +91,8 @@ func NewChainCapabilities() *Capabilities {
 			FeatureRejectBlock,
 			FeatureSetPreference,
 			FeatureGetAncestors,
-			FeatureAppSender,
-			FeatureAppHandler,
+			FeatureSender,
+			FeatureHandler,
 		},
 	}
 }
@@ -113,8 +113,8 @@ func NewDAGCapabilities() *Capabilities {
 			FeatureRejectVertex,
 			FeatureFrontierOps,
 			FeatureGetAncestors,
-			FeatureAppSender,
-			FeatureAppHandler,
+			FeatureSender,
+			FeatureHandler,
 		},
 	}
 }

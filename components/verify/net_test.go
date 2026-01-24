@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/consensus/runtime"
+	"github.com/luxfi/runtime"
 	"github.com/luxfi/ids"
 )
 
@@ -37,7 +37,7 @@ func (s *testValidatorState) GetValidatorSet(height uint64, netID ids.ID) (map[i
 	return s.validators[netID], nil
 }
 
-func (s *testValidatorState) GetNetID(ctx context.Context, chainID ids.ID) (ids.ID, error) {
+func (s *testValidatorState) GetChainID(ctx context.Context, chainID ids.ID) (ids.ID, error) {
 	if s.err != nil {
 		return ids.Empty, s.err
 	}

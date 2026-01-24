@@ -12,7 +12,7 @@ import (
 	"github.com/luxfi/metric"
 	"github.com/stretchr/testify/require"
 
-	"github.com/luxfi/consensus/engine/chain/block"
+	"github.com/luxfi/vm/chain"
 	"github.com/luxfi/crypto/hash"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"

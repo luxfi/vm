@@ -1,3 +1,5 @@
+//go:build grpc
+
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
@@ -8,7 +10,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	validators "github.com/luxfi/consensus/validator"
+	validators "github.com/luxfi/validators"
 	"github.com/luxfi/ids"
 	validatorstatepb "github.com/luxfi/node/proto/pb/validatorstate"
 )

@@ -17,7 +17,7 @@ message PushGossip {
   repeated bytes gossip = 1;
 }
 
-// SignatureRequest is an AppRequest message type for requesting
+// SignatureRequest is a Request message type for requesting
 // a BLS signature over a Warp message, as defined in LP-118:
 // https://github.com/luxfi/LPs/tree/main/LPs/118-warp-signature-request
 message SignatureRequest {
@@ -27,7 +27,7 @@ message SignatureRequest {
   bytes justification = 2;
 }
 
-// SignatureResponse is an AppResponse message type for providing
+// SignatureResponse is a Response message type for providing
 // a requested BLS signature over a Warp message, as defined in LP-118:
 // https://github.com/luxfi/LPs/tree/main/LPs/118-warp-signature-request
 message SignatureResponse {

@@ -4,6 +4,7 @@
 package registry
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -78,7 +79,7 @@ func (getter *vmGetter) Get() (map[ids.ID]manager.Factory, map[ids.ID]manager.Fa
 			continue
 		}
 
-		vmID, err := getter.config.Manager.Lookup(name)
+		vmID, err := getter.config.Manager.Lookup(context.Background(), name)
 		if err != nil {
 			// there is no alias with plugin name, try to use full vmID.
 			vmID, err = ids.FromString(name)
@@ -87,7 +88,7 @@ func (getter *vmGetter) Get() (map[ids.ID]manager.Factory, map[ids.ID]manager.Fa
 			}
 		}
 
-		registeredFactory, err := getter.config.Manager.GetFactory(vmID)
+		registeredFactory, err := getter.config.Manager.GetFactory(context.Background(), vmID)
 
 		if err == nil {
 			// If we already have the VM registered, we shouldn't attempt to

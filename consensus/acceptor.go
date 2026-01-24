@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/luxfi/consensus/runtime"
+	"github.com/luxfi/runtime"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 )
@@ -29,7 +29,7 @@ type Acceptor interface {
 	// If the returned error is non-nil, the chain associated with [ctx] should
 	// shut down and not commit [container] or any other container to its
 	// database as accepted.
-	Accept(ctx *runtime.Runtime, containerID ids.ID, container []byte) error
+	Accept(rt *runtime.Runtime, containerID ids.ID, container []byte) error
 }
 
 type acceptorWrapper struct {
@@ -69,20 +69,20 @@ func NewAcceptorGroup(log log.Logger) AcceptorGroup {
 	}
 }
 
-func (a *acceptorGroup) Accept(ctx *runtime.Runtime, containerID ids.ID, container []byte) error {
+func (a *acceptorGroup) Accept(rt *runtime.Runtime, containerID ids.ID, container []byte) error {
 	a.lock.RLock()
 	defer a.lock.RUnlock()
 
-	for acceptorName, acceptor := range a.acceptors[ctx.ChainID] {
-		if err := acceptor.Accept(ctx, containerID, container); err != nil {
+	for acceptorName, acceptor := range a.acceptors[rt.ChainID] {
+		if err := acceptor.Accept(rt, containerID, container); err != nil {
 			a.log.Error("failed accepting container",
 				log.String("acceptorName", acceptorName),
-				log.Stringer("chainID", ctx.ChainID),
+				log.Stringer("chainID", rt.ChainID),
 				log.Stringer("containerID", containerID),
 				log.Err(err),
 			)
 			if acceptor.dieOnError {
-				return fmt.Errorf("acceptor %s on chain %s erred while accepting %s: %w", acceptorName, ctx.ChainID, containerID, err)
+				return fmt.Errorf("acceptor %s on chain %s erred while accepting %s: %w", acceptorName, rt.ChainID, containerID, err)
 			}
 		}
 	}

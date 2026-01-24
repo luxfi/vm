@@ -1,3 +1,5 @@
+//go:build grpc
+
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
@@ -16,23 +18,24 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/luxfi/atomic"
+	"github.com/luxfi/codec/wrappers"
 	"github.com/luxfi/consensus/engine/chain/block"
-	"github.com/luxfi/consensus/runtime"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/corruptabledb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/metric"
-	"github.com/luxfi/atomic"
-	"github.com/luxfi/codec/wrappers"
+	"github.com/luxfi/runtime"
 	"github.com/luxfi/upgrade"
 	"github.com/luxfi/version"
 	"github.com/luxfi/vm/api/metrics"
+	vmchain "github.com/luxfi/vm/chain"
 	"github.com/luxfi/vm/chains/atomic/gsharedmemory"
 	"github.com/luxfi/vm/internal/database/rpcdb"
 	"github.com/luxfi/vm/internal/ids/galiasreader"
-	"github.com/luxfi/vm/rpc/appsender"
+	"github.com/luxfi/vm/rpc/sender"
 	"github.com/luxfi/vm/rpc/ghttp"
 	"github.com/luxfi/vm/rpc/grpcutils"
 	"github.com/luxfi/vm/rpc/gvalidators"
@@ -40,7 +43,7 @@ import (
 
 	grpc_metric "github.com/grpc-ecosystem/go-grpc-prometheus"
 	aliasreaderpb "github.com/luxfi/node/proto/pb/aliasreader"
-	appsenderpb "github.com/luxfi/node/proto/pb/appsender"
+	senderpb "github.com/luxfi/vm/proto/pb/sender"
 	httppb "github.com/luxfi/node/proto/pb/http"
 	rpcdbpb "github.com/luxfi/node/proto/pb/rpcdb"
 	sharedmemorypb "github.com/luxfi/node/proto/pb/sharedmemory"
@@ -49,11 +52,17 @@ import (
 	warppb "github.com/luxfi/node/proto/pb/warp"
 )
 
+// HealthReport is the typed structure for health check responses.
+type HealthReport struct {
+	Database any `json:"database,omitempty"` // database pkg returns interface{}
+	Health   any `json:"health,omitempty"`   // HealthCheck returns interface{}
+}
+
 var (
 	_ vmpb.VMServer = (*VMServer)(nil)
 	_ warp.Signer   = (*warpSignerAdapter)(nil)
 
-	errExpectedBlockWithVerifyContext = errors.New("expected block.WithVerifyContext")
+	errExpectedBlockWithVerifyRuntime = errors.New("expected vmchain.WithVerifyRuntime")
 	errNilNetworkUpgradesPB           = errors.New("network upgrades protobuf is nil")
 )
 
@@ -80,11 +89,11 @@ func (a *warpSignerAdapter) Sign(msg *warp.UnsignedMessage) ([]byte, error) {
 type VMServer struct {
 	vmpb.UnsafeVMServer
 
-	vm block.ChainVM
+	vm vmchain.ChainVM
 	// If nil, the underlying VM doesn't implement the interface.
-	bVM block.BuildBlockWithContextChainVM
+	bVM vmchain.BuildBlockWithRuntimeChainVM
 	// If nil, the underlying VM doesn't implement the interface.
-	ssVM block.StateSyncableVM
+	ssVM vmchain.StateSyncableVM
 	// If nil, the underlying VM doesn't implement the interface.
 	appHandler warp.Handler
 
@@ -107,9 +116,9 @@ type VMServer struct {
 }
 
 // NewServer returns a vm instance connected to a remote vm instance
-func NewServer(vm block.ChainVM, allowShutdown *atomic.Atomic[bool]) *VMServer {
-	bVM, _ := vm.(block.BuildBlockWithContextChainVM)
-	ssVM, _ := vm.(block.StateSyncableVM)
+func NewServer(vm vmchain.ChainVM, allowShutdown *atomic.Atomic[bool]) *VMServer {
+	bVM, _ := vm.(vmchain.BuildBlockWithRuntimeChainVM)
+	ssVM, _ := vm.(vmchain.StateSyncableVM)
 	appHandler, _ := vm.(warp.Handler)
 	vmSrv := &VMServer{
 		metrics:       metrics.NewPrefixGatherer(),
@@ -232,7 +241,7 @@ func (vm *VMServer) Initialize(ctx context.Context, req *vmpb.InitializeRequest)
 
 	sharedMemoryClient := gsharedmemory.NewClient(sharedmemorypb.NewSharedMemoryClient(clientConn))
 	bcLookupClient := galiasreader.NewClient(aliasreaderpb.NewAliasReaderClient(clientConn))
-	appSenderClient := appsender.NewClient(appsenderpb.NewAppSenderClient(clientConn))
+	senderClient := sender.NewClient(senderpb.NewSenderClient(clientConn))
 	validatorStateClient := gvalidators.NewClient(validatorstatepb.NewValidatorStateClient(clientConn))
 	// Create WarpSigner adapter that implements github.com/luxfi/warp.Signer for plugin compatibility
 	warpSignerClient := &warpSignerAdapter{client: warppb.NewSignerClient(clientConn)}
@@ -269,7 +278,19 @@ func (vm *VMServer) Initialize(ctx context.Context, req *vmpb.InitializeRequest)
 	vm.nodeID = nodeID
 
 	vm.log.Info("initializing VM via gRPC", log.Stringer("chainID", chainID))
-	if err := vm.vm.Initialize(ctx, vm.rt, vm.db, req.GenesisBytes, req.UpgradeBytes, req.ConfigBytes, nil, nil, appSenderClient); err != nil {
+	// Call Initialize with Init struct matching block.ChainVM interface
+	initParams := block.Init{
+		Runtime:  vm.rt,
+		DB:       vm.db,
+		Sender:   senderClient,
+		Log:      vm.log,
+		Genesis:  req.GenesisBytes,
+		Upgrade:  req.UpgradeBytes,
+		Config:   req.ConfigBytes,
+		Fx:       nil, // not used in plugin VMs
+		ToEngine: nil, // not used in plugin VMs
+	}
+	if err := vm.vm.Initialize(ctx, initParams); err != nil {
 		// DEBUG: Write actual error to file since log is no-op
 		if f, ferr := os.OpenFile("/tmp/vm-server-init-error.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); ferr == nil {
 			fmt.Fprintf(f, "[%s] VM Initialize failed for chain %s: %v\n", time.Now().Format(time.RFC3339), chainID, err)
@@ -397,27 +418,19 @@ func (vm *VMServer) CreateHandlers(ctx context.Context, _ *emptypb.Empty) (*vmpb
 }
 
 func (vm *VMServer) NewHTTPHandler(ctx context.Context, _ *emptypb.Empty) (*vmpb.NewHTTPHandlerResponse, error) {
-	type vmWithHTTPHandler interface {
-		NewHTTPHandler(context.Context) (interface{}, error)
-	}
-
-	handlerVM, ok := vm.vm.(vmWithHTTPHandler)
-	if !ok {
-		return &vmpb.NewHTTPHandlerResponse{}, nil
-	}
-
-	handlerIface, err := handlerVM.NewHTTPHandler(ctx)
+	handlerIntf, err := vm.vm.NewHTTPHandler(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if handlerIface == nil {
+	if handlerIntf == nil {
 		return &vmpb.NewHTTPHandlerResponse{}, nil
 	}
 
-	handler, ok := handlerIface.(http.Handler)
+	// Type assert interface{} to http.Handler
+	handler, ok := handlerIntf.(http.Handler)
 	if !ok {
-		return nil, errors.New("NewHTTPHandler did not return http.Handler")
+		return nil, fmt.Errorf("NewHTTPHandler returned non-http.Handler type: %T", handlerIntf)
 	}
 
 	serverListener, err := grpcutils.NewListener()
@@ -437,21 +450,28 @@ func (vm *VMServer) NewHTTPHandler(ctx context.Context, _ *emptypb.Empty) (*vmpb
 }
 
 func (vm *VMServer) WaitForEvent(ctx context.Context, _ *emptypb.Empty) (*vmpb.WaitForEventResponse, error) {
-	message, err := vm.vm.WaitForEvent(ctx)
+	msg, err := vm.vm.WaitForEvent(ctx)
 	if err != nil {
 		vm.log.Debug("Received error while waiting for event", "error", err)
+		return nil, err
 	}
 
+	// Convert block.Message to protobuf Message enum
 	var msgEnum vmpb.Message
-	if message != nil {
-		if msgVal, ok := message.(int32); ok {
-			msgEnum = vmpb.Message(msgVal)
-		}
+	switch msg.Type {
+	case block.PendingTxs:
+		msgEnum = vmpb.Message_MESSAGE_BUILD_BLOCK
+	case block.StateSyncDone:
+		msgEnum = vmpb.Message_MESSAGE_STATE_SYNC_FINISHED
+	default:
+		vm.log.Debug("Unknown MessageType", "value", msg.Type)
+		msgEnum = vmpb.Message_MESSAGE_BUILD_BLOCK
 	}
 
+	vm.log.Debug("WaitForEvent returning", "message", msgEnum.String())
 	return &vmpb.WaitForEventResponse{
 		Message: msgEnum,
-	}, err
+	}, nil
 }
 
 func (vm *VMServer) Connected(ctx context.Context, req *vmpb.ConnectedRequest) (*emptypb.Empty, error) {
@@ -466,7 +486,7 @@ func (vm *VMServer) Connected(ctx context.Context, req *vmpb.ConnectedRequest) (
 		Minor: int(req.Minor),
 		Patch: int(req.Patch),
 	}
-	// Connected is not part of block.ChainVM interface
+	// Connected is not part of vmchain.ChainVM interface
 	return &emptypb.Empty{}, nil
 }
 
@@ -475,7 +495,7 @@ func (vm *VMServer) Disconnected(ctx context.Context, req *vmpb.DisconnectedRequ
 	if err != nil {
 		return nil, err
 	}
-	// Disconnected is not part of block.ChainVM interface
+	// Disconnected is not part of vmchain.ChainVM interface
 	return &emptypb.Empty{}, nil
 }
 
@@ -483,13 +503,13 @@ func (vm *VMServer) Disconnected(ctx context.Context, req *vmpb.DisconnectedRequ
 // method will be called instead.
 func (vm *VMServer) BuildBlock(ctx context.Context, req *vmpb.BuildBlockRequest) (*vmpb.BuildBlockResponse, error) {
 	var (
-		blk block.Block
+		blk vmchain.Block
 		err error
 	)
 	if vm.bVM == nil || req.PChainHeight == nil {
 		blk, err = vm.vm.BuildBlock(ctx)
 	} else {
-		blk, err = vm.bVM.BuildBlockWithContext(ctx, &block.Context{
+		blk, err = vm.bVM.BuildBlockWithRuntime(ctx, &runtime.Runtime{
 			PChainHeight: *req.PChainHeight,
 		})
 	}
@@ -497,9 +517,9 @@ func (vm *VMServer) BuildBlock(ctx context.Context, req *vmpb.BuildBlockRequest)
 		return nil, err
 	}
 
-	blkWithCtx, verifyWithCtx := blk.(block.WithVerifyContext)
+	blkWithCtx, verifyWithCtx := blk.(vmchain.WithVerifyRuntime)
 	if verifyWithCtx {
-		verifyWithCtx, err = blkWithCtx.ShouldVerifyWithContext(ctx)
+		verifyWithCtx, err = blkWithCtx.ShouldVerifyWithRuntime(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -522,7 +542,7 @@ func (vm *VMServer) BuildBlock(ctx context.Context, req *vmpb.BuildBlockRequest)
 		Bytes:             blk.Bytes(),
 		Height:            blk.Height(),
 		Timestamp:         timestamp,
-		VerifyWithContext: verifyWithCtx,
+		VerifyWithRuntime: verifyWithCtx,
 	}, nil
 }
 
@@ -532,9 +552,9 @@ func (vm *VMServer) ParseBlock(ctx context.Context, req *vmpb.ParseBlockRequest)
 		return nil, err
 	}
 
-	blkWithCtx, verifyWithCtx := blk.(block.WithVerifyContext)
+	blkWithCtx, verifyWithCtx := blk.(vmchain.WithVerifyRuntime)
 	if verifyWithCtx {
-		verifyWithCtx, err = blkWithCtx.ShouldVerifyWithContext(ctx)
+		verifyWithCtx, err = blkWithCtx.ShouldVerifyWithRuntime(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -556,7 +576,7 @@ func (vm *VMServer) ParseBlock(ctx context.Context, req *vmpb.ParseBlockRequest)
 		ParentId:          parentID[:],
 		Height:            blk.Height(),
 		Timestamp:         timestamp,
-		VerifyWithContext: verifyWithCtx,
+		VerifyWithRuntime: verifyWithCtx,
 	}, nil
 }
 
@@ -572,9 +592,9 @@ func (vm *VMServer) GetBlock(ctx context.Context, req *vmpb.GetBlockRequest) (*v
 		}, errorToRPCError(err)
 	}
 
-	blkWithCtx, verifyWithCtx := blk.(block.WithVerifyContext)
+	blkWithCtx, verifyWithCtx := blk.(vmchain.WithVerifyRuntime)
 	if verifyWithCtx {
-		verifyWithCtx, err = blkWithCtx.ShouldVerifyWithContext(ctx)
+		verifyWithCtx, err = blkWithCtx.ShouldVerifyWithRuntime(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -593,7 +613,7 @@ func (vm *VMServer) GetBlock(ctx context.Context, req *vmpb.GetBlockRequest) (*v
 		Bytes:             blk.Bytes(),
 		Height:            blk.Height(),
 		Timestamp:         timestamp,
-		VerifyWithContext: verifyWithCtx,
+		VerifyWithRuntime: verifyWithCtx,
 	}, nil
 }
 
@@ -606,26 +626,19 @@ func (vm *VMServer) SetPreference(ctx context.Context, req *vmpb.SetPreferenceRe
 }
 
 func (vm *VMServer) Health(ctx context.Context, _ *emptypb.Empty) (*vmpb.HealthResponse, error) {
-	type vmWithHealthCheck interface {
-		HealthCheck(context.Context) (interface{}, error)
-	}
-
-	var vmHealth interface{}
-	if healthVM, ok := vm.vm.(vmWithHealthCheck); ok {
-		var err error
-		vmHealth, err = healthVM.HealthCheck(ctx)
-		if err != nil {
-			return &vmpb.HealthResponse{}, err
-		}
+	vmHealth, err := vm.vm.HealthCheck(ctx)
+	if err != nil {
+		return &vmpb.HealthResponse{}, err
 	}
 
 	dbHealth, err := vm.db.HealthCheck(ctx)
 	if err != nil {
 		return &vmpb.HealthResponse{}, err
 	}
-	report := map[string]interface{}{
-		"database": dbHealth,
-		"health":   vmHealth,
+
+	report := HealthReport{
+		Database: dbHealth,
+		Health:   vmHealth,
 	}
 
 	details, err := json.Marshal(report)
@@ -653,7 +666,7 @@ func (vm *VMServer) Version(ctx context.Context, _ *emptypb.Empty) (*vmpb.Versio
 	}, err
 }
 
-func (vm *VMServer) AppRequest(ctx context.Context, req *vmpb.AppRequestMsg) (*emptypb.Empty, error) {
+func (vm *VMServer) Request(ctx context.Context, req *vmpb.RequestMsg) (*emptypb.Empty, error) {
 	nodeID, err := ids.ToNodeID(req.NodeId)
 	if err != nil {
 		return nil, err
@@ -663,7 +676,7 @@ func (vm *VMServer) AppRequest(ctx context.Context, req *vmpb.AppRequestMsg) (*e
 		return nil, err
 	}
 	if vm.appHandler == nil {
-		return nil, errors.New("AppRequest not implemented")
+		return nil, errors.New("Request not implemented")
 	}
 	_, appErr := vm.appHandler.Request(ctx, nodeID, req.RequestId, deadline, req.Request)
 	if appErr != nil {
@@ -672,7 +685,7 @@ func (vm *VMServer) AppRequest(ctx context.Context, req *vmpb.AppRequestMsg) (*e
 	return &emptypb.Empty{}, nil
 }
 
-func (vm *VMServer) AppRequestFailed(ctx context.Context, req *vmpb.AppRequestFailedMsg) (*emptypb.Empty, error) {
+func (vm *VMServer) RequestFailed(ctx context.Context, req *vmpb.RequestFailedMsg) (*emptypb.Empty, error) {
 	nodeID, err := ids.ToNodeID(req.NodeId)
 	if err != nil {
 		return nil, err
@@ -683,36 +696,36 @@ func (vm *VMServer) AppRequestFailed(ctx context.Context, req *vmpb.AppRequestFa
 		Message: req.ErrorMessage,
 	}
 
-	type vmWithAppRequestFailed interface {
-		AppRequestFailed(context.Context, ids.NodeID, uint32, *warp.Error) error
+	type vmWithRequestFailed interface {
+		RequestFailed(context.Context, ids.NodeID, uint32, *warp.Error) error
 	}
 
-	if failedVM, ok := vm.vm.(vmWithAppRequestFailed); ok {
-		return &emptypb.Empty{}, failedVM.AppRequestFailed(ctx, nodeID, req.RequestId, appErr)
+	if failedVM, ok := vm.vm.(vmWithRequestFailed); ok {
+		return &emptypb.Empty{}, failedVM.RequestFailed(ctx, nodeID, req.RequestId, appErr)
 	}
 
-	// AppRequestFailed is optional
+	// RequestFailed is optional
 	return &emptypb.Empty{}, nil
 }
 
-func (vm *VMServer) AppResponse(ctx context.Context, req *vmpb.AppResponseMsg) (*emptypb.Empty, error) {
+func (vm *VMServer) Response(ctx context.Context, req *vmpb.ResponseMsg) (*emptypb.Empty, error) {
 	nodeID, err := ids.ToNodeID(req.NodeId)
 	if err != nil {
 		return nil, err
 	}
 	if vm.appHandler == nil {
-		return nil, errors.New("AppResponse not implemented")
+		return nil, errors.New("Response not implemented")
 	}
 	return &emptypb.Empty{}, vm.appHandler.Response(ctx, nodeID, req.RequestId, req.Response)
 }
 
-func (vm *VMServer) AppGossip(ctx context.Context, req *vmpb.AppGossipMsg) (*emptypb.Empty, error) {
+func (vm *VMServer) Gossip(ctx context.Context, req *vmpb.GossipMsg) (*emptypb.Empty, error) {
 	nodeID, err := ids.ToNodeID(req.NodeId)
 	if err != nil {
 		return nil, err
 	}
 	if vm.appHandler == nil {
-		return nil, errors.New("AppGossip not implemented")
+		return nil, errors.New("Gossip not implemented")
 	}
 	return &emptypb.Empty{}, vm.appHandler.Gossip(ctx, nodeID, req.Msg)
 }
@@ -731,7 +744,7 @@ func (vm *VMServer) GetAncestors(ctx context.Context, req *vmpb.GetAncestorsRequ
 	maxBlksSize := int(req.MaxBlocksSize)
 	maxBlocksRetrievalTime := time.Duration(req.MaxBlocksRetrivalTime)
 
-	blocks, err := block.GetAncestors(
+	blocks, err := vmchain.GetAncestors(
 		ctx,
 		vm.vm,
 		blkID,
@@ -797,13 +810,13 @@ func (vm *VMServer) GetOngoingSyncStateSummary(
 	_ *emptypb.Empty,
 ) (*vmpb.GetOngoingSyncStateSummaryResponse, error) {
 	var (
-		summary block.StateSummary
+		summary vmchain.StateSummary
 		err     error
 	)
 	if vm.ssVM != nil {
 		summary, err = vm.ssVM.GetOngoingSyncStateSummary(ctx)
 	} else {
-		err = block.ErrStateSyncableVMNotImplemented
+		err = vmchain.ErrStateSyncableVMNotImplemented
 	}
 
 	if err != nil {
@@ -822,13 +835,13 @@ func (vm *VMServer) GetOngoingSyncStateSummary(
 
 func (vm *VMServer) GetLastStateSummary(ctx context.Context, _ *emptypb.Empty) (*vmpb.GetLastStateSummaryResponse, error) {
 	var (
-		summary block.StateSummary
+		summary vmchain.StateSummary
 		err     error
 	)
 	if vm.ssVM != nil {
 		summary, err = vm.ssVM.GetLastStateSummary(ctx)
 	} else {
-		err = block.ErrStateSyncableVMNotImplemented
+		err = vmchain.ErrStateSyncableVMNotImplemented
 	}
 
 	if err != nil {
@@ -850,13 +863,13 @@ func (vm *VMServer) ParseStateSummary(
 	req *vmpb.ParseStateSummaryRequest,
 ) (*vmpb.ParseStateSummaryResponse, error) {
 	var (
-		summary block.StateSummary
+		summary vmchain.StateSummary
 		err     error
 	)
 	if vm.ssVM != nil {
 		summary, err = vm.ssVM.ParseStateSummary(ctx, req.Bytes)
 	} else {
-		err = block.ErrStateSyncableVMNotImplemented
+		err = vmchain.ErrStateSyncableVMNotImplemented
 	}
 
 	if err != nil {
@@ -877,13 +890,13 @@ func (vm *VMServer) GetStateSummary(
 	req *vmpb.GetStateSummaryRequest,
 ) (*vmpb.GetStateSummaryResponse, error) {
 	var (
-		summary block.StateSummary
+		summary vmchain.StateSummary
 		err     error
 	)
 	if vm.ssVM != nil {
 		summary, err = vm.ssVM.GetStateSummary(ctx, req.Height)
 	} else {
-		err = block.ErrStateSyncableVMNotImplemented
+		err = vmchain.ErrStateSyncableVMNotImplemented
 	}
 
 	if err != nil {
@@ -908,14 +921,14 @@ func (vm *VMServer) BlockVerify(ctx context.Context, req *vmpb.BlockVerifyReques
 	if req.PChainHeight == nil {
 		err = blk.Verify(ctx)
 	} else {
-		blkWithCtx, ok := blk.(block.WithVerifyContext)
+		blkWithCtx, ok := blk.(vmchain.WithVerifyRuntime)
 		if !ok {
-			return nil, fmt.Errorf("%w but got %T", errExpectedBlockWithVerifyContext, blk)
+			return nil, fmt.Errorf("%w but got %T", errExpectedBlockWithVerifyRuntime, blk)
 		}
-		blockCtx := &block.Context{
+		blockCtx := &runtime.Runtime{
 			PChainHeight: *req.PChainHeight,
 		}
-		err = blkWithCtx.VerifyWithContext(ctx, blockCtx)
+		err = blkWithCtx.VerifyWithRuntime(ctx, blockCtx)
 	}
 	if err != nil {
 		return nil, err
@@ -967,17 +980,17 @@ func (vm *VMServer) StateSummaryAccept(
 	req *vmpb.StateSummaryAcceptRequest,
 ) (*vmpb.StateSummaryAcceptResponse, error) {
 	var (
-		mode = block.StateSyncSkipped
+		mode = vmchain.StateSyncSkipped
 		err  error
 	)
 	if vm.ssVM != nil {
-		var summary block.StateSummary
+		var summary vmchain.StateSummary
 		summary, err = vm.ssVM.ParseStateSummary(ctx, req.Bytes)
 		if err == nil {
 			mode, err = summary.Accept(ctx)
 		}
 	} else {
-		err = block.ErrStateSyncableVMNotImplemented
+		err = vmchain.ErrStateSyncableVMNotImplemented
 	}
 
 	return &vmpb.StateSummaryAcceptResponse{

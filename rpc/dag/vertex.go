@@ -53,7 +53,7 @@ type DAGVM interface {
 		configBytes []byte,
 		msgChan interface{},
 		fxs []interface{},
-		appSender interface{},
+		sender interface{},
 	) error
 
 	// ParseVertex parses a vertex from bytes
