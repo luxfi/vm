@@ -13,8 +13,8 @@ import (
 	http "net/http"
 	reflect "reflect"
 
-	"github.com/luxfi/consensus/runtime"
-	"github.com/luxfi/consensus/engine/interfaces"
+	"github.com/luxfi/runtime"
+	vm "github.com/luxfi/vm"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -122,7 +122,7 @@ func (mr *MockServerMockRecorder) Dispatch() *gomock.Call {
 }
 
 // RegisterChain mocks base method.
-func (m *MockServer) RegisterChain(arg0 string, arg1 *runtime.Runtime, arg2 interfaces.VM) {
+func (m *MockServer) RegisterChain(arg0 string, arg1 *runtime.Runtime, arg2 vm.VM) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "RegisterChain", arg0, arg1, arg2)
 }

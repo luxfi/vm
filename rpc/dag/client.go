@@ -1,3 +1,5 @@
+//go:build grpc
+
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
@@ -19,12 +21,11 @@ import (
 	"google.golang.org/grpc/health"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	apiruntime "github.com/luxfi/consensus/runtime"
+	apiruntime "github.com/luxfi/runtime"
 	"github.com/luxfi/consensus/core/choices"
-	validators "github.com/luxfi/consensus/validator"
+	validators "github.com/luxfi/validators"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
-	platformwarp "github.com/luxfi/protocol/p/warp"
 	"github.com/luxfi/protocol/p/warp/gwarp"
 	"github.com/luxfi/resource"
 	"github.com/luxfi/codec/wrappers"
@@ -33,7 +34,7 @@ import (
 	"github.com/luxfi/vm/chains/atomic/gsharedmemory"
 	"github.com/luxfi/vm/internal/database/rpcdb"
 	"github.com/luxfi/vm/internal/ids/galiasreader"
-	"github.com/luxfi/vm/rpc/appsender"
+	senderrpc "github.com/luxfi/vm/rpc/sender"
 	"github.com/luxfi/vm/rpc/ghttp"
 	"github.com/luxfi/vm/rpc/grpcutils"
 	"github.com/luxfi/vm/rpc/gvalidators"
@@ -42,7 +43,7 @@ import (
 
 	grpc_metric "github.com/grpc-ecosystem/go-grpc-prometheus"
 	aliasreaderpb "github.com/luxfi/node/proto/pb/aliasreader"
-	appsenderpb "github.com/luxfi/node/proto/pb/appsender"
+	senderpb "github.com/luxfi/vm/proto/pb/sender"
 	dagpb "github.com/luxfi/vm/proto/pb/dag"
 	httppb "github.com/luxfi/node/proto/pb/http"
 	rpcdbpb "github.com/luxfi/node/proto/pb/rpcdb"
@@ -59,24 +60,6 @@ var (
 	_ metric.Gatherer = (*Client)(nil)
 )
 
-// platformWarpSignerAdapter adapts warp.Signer (luxfi/warp) to platformwarp.Signer (luxfi/protocol/p/warp).
-// Both have the same Sign method signature but with different UnsignedMessage types.
-// This is needed because the client receives runtime.WarpSigner (= warp.Signer from luxfi/warp)
-// but gwarp.NewServer expects platformwarp.Signer from luxfi/protocol/p/warp.
-type platformWarpSignerAdapter struct {
-	signer warp.Signer
-}
-
-func (a *platformWarpSignerAdapter) Sign(msg *platformwarp.UnsignedMessage) ([]byte, error) {
-	// Convert platformwarp.UnsignedMessage to warp.UnsignedMessage
-	// Both have the same structure: NetworkID, SourceChainID, Payload
-	warpMsg, err := warp.NewUnsignedMessage(msg.NetworkID, msg.SourceChainID, msg.Payload)
-	if err != nil {
-		return nil, err
-	}
-	return a.signer.Sign(warpMsg)
-}
-
 // Client is an implementation of a DAGVM that talks over RPC.
 // This is the client-side of the RPC DAGVM interface, running in the node process.
 type Client struct {
@@ -89,7 +72,7 @@ type Client struct {
 
 	sharedMemory         *gsharedmemory.Server
 	bcLookup             *galiasreader.Server
-	appSender            *appsender.Server
+	senderServer         senderrpc.SenderServer
 	validatorStateServer *gvalidators.Server
 	warpSignerServer     *gwarp.Server
 
@@ -128,18 +111,12 @@ func (vm *Client) Initialize(
 	configBytes []byte,
 	msgChan interface{},
 	fxs []interface{},
-	appSender interface{},
+	sender interface{},
 ) error {
 	// Type assert to get concrete types
 	var consensusCtx *apiruntime.Runtime
 	if cc, ok := chainCtxIface.(*apiruntime.Runtime); ok && cc != nil {
 		consensusCtx = cc
-		ctx = apiruntime.WithIDs(ctx, apiruntime.IDs{
-			NetworkID: consensusCtx.NetworkID,
-			ChainID:   consensusCtx.ChainID,
-			NodeID:    consensusCtx.NodeID,
-			PublicKey: consensusCtx.PublicKey,
-		})
 	}
 
 	// Get the current database from the manager
@@ -214,9 +191,9 @@ func (vm *Client) Initialize(
 			vm.bcLookup = galiasreader.NewServer(bcl)
 		}
 	}
-	if appSender != nil {
-		if sender, ok := appSender.(warp.Sender); ok {
-			vm.appSender = appsender.NewServer(sender)
+	if sender != nil {
+		if s, ok := sender.(warp.Sender); ok {
+			vm.senderServer = senderrpc.NewSenderServer(s)
 		}
 	}
 	if consensusCtx.ValidatorState != nil {
@@ -225,10 +202,7 @@ func (vm *Client) Initialize(
 		}
 	}
 	if consensusCtx.WarpSigner != nil {
-		// WarpSigner is warp.Signer from luxfi/warp, but gwarp.NewServer expects
-		// platformwarp.Signer from luxfi/protocol/p/warp. Use adapter to bridge.
-		adapter := &platformWarpSignerAdapter{signer: consensusCtx.WarpSigner}
-		vm.warpSignerServer = gwarp.NewServer(adapter)
+		vm.warpSignerServer = gwarp.NewServer(consensusCtx.WarpSigner)
 	}
 
 	serverListener, err := grpcutils.NewListener()
@@ -313,7 +287,11 @@ func (vm *Client) newInitServer() *grpc.Server {
 
 	sharedmemorypb.RegisterSharedMemoryServer(server, vm.sharedMemory)
 	aliasreaderpb.RegisterAliasReaderServer(server, vm.bcLookup)
-	appsenderpb.RegisterAppSenderServer(server, vm.appSender)
+	if vm.senderServer != nil {
+		if grpcReg := vm.senderServer.GRPCRegistrar(); grpcReg != nil {
+			senderpb.RegisterSenderServer(server, grpcReg.(senderpb.SenderServer))
+		}
+	}
 	healthpb.RegisterHealthServer(server, grpcHealth)
 	validatorstatepb.RegisterValidatorStateServer(server, vm.validatorStateServer)
 	warppb.RegisterSignerServer(server, vm.warpSignerServer)

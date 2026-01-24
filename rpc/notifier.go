@@ -18,12 +18,16 @@ const (
 	_ Message = iota
 	// PendingTxs indicates pending transactions notification
 	PendingTxs
+	// StateSyncDone indicates state sync has completed
+	StateSyncDone
 )
 
 func (m Message) String() string {
 	switch m {
 	case PendingTxs:
 		return "PendingTxs"
+	case StateSyncDone:
+		return "StateSyncDone"
 	default:
 		return fmt.Sprintf("Unknown(%d)", m)
 	}

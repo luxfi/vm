@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	ValidatorState_GetMinimumHeight_FullMethodName       = "/validatorstate.ValidatorState/GetMinimumHeight"
 	ValidatorState_GetCurrentHeight_FullMethodName       = "/validatorstate.ValidatorState/GetCurrentHeight"
-	ValidatorState_GetNetID_FullMethodName               = "/validatorstate.ValidatorState/GetNetID"
+	ValidatorState_GetChainID_FullMethodName             = "/validatorstate.ValidatorState/GetChainID"
 	ValidatorState_GetValidatorSet_FullMethodName        = "/validatorstate.ValidatorState/GetValidatorSet"
 	ValidatorState_GetCurrentValidatorSet_FullMethodName = "/validatorstate.ValidatorState/GetCurrentValidatorSet"
 )
@@ -36,8 +36,8 @@ type ValidatorStateClient interface {
 	GetMinimumHeight(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetMinimumHeightResponse, error)
 	// GetCurrentHeight returns the current height of the P-chain.
 	GetCurrentHeight(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetCurrentHeightResponse, error)
-	// GetNetID returns the chainID of the provided chain.
-	GetNetID(ctx context.Context, in *GetNetIDRequest, opts ...grpc.CallOption) (*GetNetIDResponse, error)
+	// GetChainID returns the chainID of the provided chain.
+	GetChainID(ctx context.Context, in *GetChainIDRequest, opts ...grpc.CallOption) (*GetChainIDResponse, error)
 	// GetValidatorSet returns the weights of the nodeIDs for the provided
 	// chain at the requested P-chain height.
 	GetValidatorSet(ctx context.Context, in *GetValidatorSetRequest, opts ...grpc.CallOption) (*GetValidatorSetResponse, error)
@@ -72,9 +72,9 @@ func (c *validatorStateClient) GetCurrentHeight(ctx context.Context, in *emptypb
 	return out, nil
 }
 
-func (c *validatorStateClient) GetNetID(ctx context.Context, in *GetNetIDRequest, opts ...grpc.CallOption) (*GetNetIDResponse, error) {
-	out := new(GetNetIDResponse)
-	err := c.cc.Invoke(ctx, ValidatorState_GetNetID_FullMethodName, in, out, opts...)
+func (c *validatorStateClient) GetChainID(ctx context.Context, in *GetChainIDRequest, opts ...grpc.CallOption) (*GetChainIDResponse, error) {
+	out := new(GetChainIDResponse)
+	err := c.cc.Invoke(ctx, ValidatorState_GetChainID_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,8 +108,8 @@ type ValidatorStateServer interface {
 	GetMinimumHeight(context.Context, *emptypb.Empty) (*GetMinimumHeightResponse, error)
 	// GetCurrentHeight returns the current height of the P-chain.
 	GetCurrentHeight(context.Context, *emptypb.Empty) (*GetCurrentHeightResponse, error)
-	// GetNetID returns the chainID of the provided chain.
-	GetNetID(context.Context, *GetNetIDRequest) (*GetNetIDResponse, error)
+	// GetChainID returns the chainID of the provided chain.
+	GetChainID(context.Context, *GetChainIDRequest) (*GetChainIDResponse, error)
 	// GetValidatorSet returns the weights of the nodeIDs for the provided
 	// chain at the requested P-chain height.
 	GetValidatorSet(context.Context, *GetValidatorSetRequest) (*GetValidatorSetResponse, error)
@@ -129,8 +129,8 @@ func (UnimplementedValidatorStateServer) GetMinimumHeight(context.Context, *empt
 func (UnimplementedValidatorStateServer) GetCurrentHeight(context.Context, *emptypb.Empty) (*GetCurrentHeightResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCurrentHeight not implemented")
 }
-func (UnimplementedValidatorStateServer) GetNetID(context.Context, *GetNetIDRequest) (*GetNetIDResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetNetID not implemented")
+func (UnimplementedValidatorStateServer) GetChainID(context.Context, *GetChainIDRequest) (*GetChainIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetChainID not implemented")
 }
 func (UnimplementedValidatorStateServer) GetValidatorSet(context.Context, *GetValidatorSetRequest) (*GetValidatorSetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetValidatorSet not implemented")
@@ -187,20 +187,20 @@ func _ValidatorState_GetCurrentHeight_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ValidatorState_GetNetID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetNetIDRequest)
+func _ValidatorState_GetChainID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChainIDRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ValidatorStateServer).GetNetID(ctx, in)
+		return srv.(ValidatorStateServer).GetChainID(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ValidatorState_GetNetID_FullMethodName,
+		FullMethod: ValidatorState_GetChainID_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ValidatorStateServer).GetNetID(ctx, req.(*GetNetIDRequest))
+		return srv.(ValidatorStateServer).GetChainID(ctx, req.(*GetChainIDRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -257,8 +257,8 @@ var ValidatorState_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ValidatorState_GetCurrentHeight_Handler,
 		},
 		{
-			MethodName: "GetNetID",
-			Handler:    _ValidatorState_GetNetID_Handler,
+			MethodName: "GetChainID",
+			Handler:    _ValidatorState_GetChainID_Handler,
 		},
 		{
 			MethodName: "GetValidatorSet",

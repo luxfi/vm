@@ -8,13 +8,13 @@ import "github.com/luxfi/ids"
 // Fx is a feature extension for VMs
 type Fx struct {
 	ID ids.ID
-	Fx interface{}
+	Fx any
 }
 
 // FxLifecycle defines the lifecycle hooks for feature extensions
 type FxLifecycle interface {
 	// Initialize initializes the Fx with the parent VM
-	Initialize(vm interface{}) error
+	Initialize(vm any) error
 
 	// Bootstrapping is called when the VM begins bootstrapping
 	Bootstrapping() error

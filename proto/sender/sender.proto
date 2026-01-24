@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package sender;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/luxfi/vm/proto/pb/sender";
+
+// Sender provides p2p messaging capabilities
+service Sender {
+  rpc SendRequest(SendRequestMsg) returns (google.protobuf.Empty);
+  rpc SendResponse(SendResponseMsg) returns (google.protobuf.Empty);
+  rpc SendError(SendErrorMsg) returns (google.protobuf.Empty);
+  rpc SendGossip(SendGossipMsg) returns (google.protobuf.Empty);
+}
+
+message SendRequestMsg {
+  repeated bytes node_ids = 1;
+  uint32 request_id = 2;
+  bytes request = 3;
+}
+
+message SendResponseMsg {
+  bytes node_id = 1;
+  uint32 request_id = 2;
+  bytes response = 3;
+}
+
+message SendErrorMsg {
+  bytes node_id = 1;
+  uint32 request_id = 2;
+  sint32 error_code = 3;
+  string error_message = 4;
+}
+
+message SendGossipMsg {
+  repeated bytes node_ids = 1;
+  uint64 validators = 2;
+  uint64 non_validators = 3;
+  uint64 peers = 4;
+  bytes msg = 5;
+}

@@ -13,11 +13,10 @@ import (
 
 	"github.com/luxfi/ids"
 	"github.com/luxfi/p2p/peer"
-	"github.com/luxfi/vm/chains"
 
 	// "github.com/luxfi/consensus/networking/benchlist" // Unused
 	"github.com/luxfi/codec/jsonrpc"
-	validators "github.com/luxfi/consensus/validator"
+	validators "github.com/luxfi/validators"
 	"github.com/luxfi/constants"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
@@ -38,28 +37,22 @@ var (
 		CreateNetworkTxFee:            json.Uint64(1 * constants.Lux),
 		TransformChainTxFee:           json.Uint64(10 * constants.Lux),
 		CreateChainTxFee:              json.Uint64(1 * constants.Lux),
-		AddPrimaryNetworkValidatorFee: json.Uint64(0),
-		AddPrimaryNetworkDelegatorFee: json.Uint64(0),
-		AddNetValidatorFee:            json.Uint64(constants.MilliLux),
-		AddNetDelegatorFee:            json.Uint64(constants.MilliLux),
+		AddNetworkValidatorFee:        json.Uint64(constants.MilliLux),
+		AddNetworkDelegatorFee:        json.Uint64(constants.MilliLux),
 	}
 	fujiGetTxFeeResponse = GetTxFeeResponse{
 		CreateNetworkTxFee:            json.Uint64(100 * constants.MilliLux),
 		TransformChainTxFee:           json.Uint64(1 * constants.Lux),
 		CreateChainTxFee:              json.Uint64(100 * constants.MilliLux),
-		AddPrimaryNetworkValidatorFee: json.Uint64(0),
-		AddPrimaryNetworkDelegatorFee: json.Uint64(0),
-		AddNetValidatorFee:            json.Uint64(constants.MilliLux),
-		AddNetDelegatorFee:            json.Uint64(constants.MilliLux),
+		AddNetworkValidatorFee:        json.Uint64(constants.MilliLux),
+		AddNetworkDelegatorFee:        json.Uint64(constants.MilliLux),
 	}
 	defaultGetTxFeeResponse = GetTxFeeResponse{
 		CreateNetworkTxFee:            json.Uint64(100 * constants.MilliLux),
 		TransformChainTxFee:           json.Uint64(100 * constants.MilliLux),
 		CreateChainTxFee:              json.Uint64(100 * constants.MilliLux),
-		AddPrimaryNetworkValidatorFee: json.Uint64(0),
-		AddPrimaryNetworkDelegatorFee: json.Uint64(0),
-		AddNetValidatorFee:            json.Uint64(constants.MilliLux),
-		AddNetDelegatorFee:            json.Uint64(constants.MilliLux),
+		AddNetworkValidatorFee:        json.Uint64(constants.MilliLux),
+		AddNetworkDelegatorFee:        json.Uint64(constants.MilliLux),
 	}
 )
 
@@ -82,7 +75,7 @@ type Info struct {
 	validators   validators.Manager
 	myIP         *atomic.Atomic[netip.AddrPort]
 	networking   Networking
-	chainManager chains.Manager
+	chainManager manager.ChainManager
 	vmManager    manager.Manager
 	// benchlist    benchlist.Manager // benchlist package doesn't exist
 }
@@ -103,7 +96,7 @@ func NewService(
 	parameters Parameters,
 	log log.Logger,
 	validators validators.Manager,
-	chainManager chains.Manager,
+	chainManager manager.ChainManager,
 	vmManager manager.Manager,
 	myIP *atomic.Atomic[netip.AddrPort],
 	network Networking,
@@ -138,13 +131,13 @@ type GetNodeVersionReply struct {
 }
 
 // GetNodeVersion returns the version this node is running
-func (i *Info) GetNodeVersion(_ *http.Request, _ *struct{}, reply *GetNodeVersionReply) error {
+func (i *Info) GetNodeVersion(r *http.Request, _ *struct{}, reply *GetNodeVersionReply) error {
 	i.log.Debug("API called",
 		log.String("service", "info"),
 		log.String("method", "getNodeVersion"),
 	)
 
-	vmVersions, err := i.vmManager.Versions()
+	vmVersions, err := i.vmManager.Versions(r.Context())
 	if err != nil {
 		return err
 	}
@@ -436,12 +429,10 @@ type GetTxFeeResponse struct {
 	TxFee                         json.Uint64 `json:"txFee"`
 	CreateAssetTxFee              json.Uint64 `json:"createAssetTxFee"`
 	CreateNetworkTxFee            json.Uint64 `json:"createNetworkTxFee"`
-	TransformChainTxFee           json.Uint64 `json:"transformNetTxFee"`
+	TransformChainTxFee           json.Uint64 `json:"transformChainTxFee"`
 	CreateChainTxFee              json.Uint64 `json:"createChainTxFee"`
-	AddPrimaryNetworkValidatorFee json.Uint64 `json:"addPrimaryNetworkValidatorFee"`
-	AddPrimaryNetworkDelegatorFee json.Uint64 `json:"addPrimaryNetworkDelegatorFee"`
-	AddNetValidatorFee            json.Uint64 `json:"addNetValidatorFee"`
-	AddNetDelegatorFee            json.Uint64 `json:"addNetDelegatorFee"`
+	AddNetworkValidatorFee        json.Uint64 `json:"addNetworkValidatorFee"`
+	AddNetworkDelegatorFee        json.Uint64 `json:"addNetworkDelegatorFee"`
 }
 
 // GetTxFee returns the transaction fee in nLUX.
@@ -471,19 +462,27 @@ type GetVMsReply struct {
 }
 
 // GetVMs lists the virtual machines installed on the node
-func (i *Info) GetVMs(_ *http.Request, _ *struct{}, reply *GetVMsReply) error {
+func (i *Info) GetVMs(r *http.Request, _ *struct{}, reply *GetVMsReply) error {
 	i.log.Debug("API called",
 		log.String("service", "info"),
 		log.String("method", "getVMs"),
 	)
 
 	// Fetch the VMs registered on this node.
-	vmIDs, err := i.VMManager.ListFactories()
+	vmIDs, err := i.VMManager.ListFactories(r.Context())
 	if err != nil {
 		return err
 	}
 
-	reply.VMs, err = ids.GetRelevantAliases(i.VMManager, vmIDs)
+	vms := make(map[ids.ID][]string, len(vmIDs))
+	for _, vmID := range vmIDs {
+		aliases, err := i.VMManager.Aliases(r.Context(), vmID)
+		if err != nil {
+			return err
+		}
+		vms[vmID] = aliases
+	}
+	reply.VMs = vms
 	reply.Fxs = map[ids.ID]string{
 		secp256k1fx.ID: secp256k1fx.Name,
 		nftfx.ID:       nftfx.Name,

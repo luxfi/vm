@@ -20,28 +20,28 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	DAGVM_Initialize_FullMethodName       = "/dag.DAGVM/Initialize"
-	DAGVM_SetState_FullMethodName         = "/dag.DAGVM/SetState"
-	DAGVM_Shutdown_FullMethodName         = "/dag.DAGVM/Shutdown"
-	DAGVM_CreateHandlers_FullMethodName   = "/dag.DAGVM/CreateHandlers"
-	DAGVM_WaitForEvent_FullMethodName     = "/dag.DAGVM/WaitForEvent"
-	DAGVM_Connected_FullMethodName        = "/dag.DAGVM/Connected"
-	DAGVM_Disconnected_FullMethodName     = "/dag.DAGVM/Disconnected"
-	DAGVM_BuildVertex_FullMethodName      = "/dag.DAGVM/BuildVertex"
-	DAGVM_ParseVertex_FullMethodName      = "/dag.DAGVM/ParseVertex"
-	DAGVM_GetVertex_FullMethodName        = "/dag.DAGVM/GetVertex"
-	DAGVM_SetPreference_FullMethodName    = "/dag.DAGVM/SetPreference"
-	DAGVM_LastAccepted_FullMethodName     = "/dag.DAGVM/LastAccepted"
-	DAGVM_Health_FullMethodName           = "/dag.DAGVM/Health"
-	DAGVM_Version_FullMethodName          = "/dag.DAGVM/Version"
-	DAGVM_AppRequest_FullMethodName       = "/dag.DAGVM/AppRequest"
-	DAGVM_AppRequestFailed_FullMethodName = "/dag.DAGVM/AppRequestFailed"
-	DAGVM_AppResponse_FullMethodName      = "/dag.DAGVM/AppResponse"
-	DAGVM_AppGossip_FullMethodName        = "/dag.DAGVM/AppGossip"
-	DAGVM_Gather_FullMethodName           = "/dag.DAGVM/Gather"
-	DAGVM_VertexVerify_FullMethodName     = "/dag.DAGVM/VertexVerify"
-	DAGVM_VertexAccept_FullMethodName     = "/dag.DAGVM/VertexAccept"
-	DAGVM_VertexReject_FullMethodName     = "/dag.DAGVM/VertexReject"
+	DAGVM_Initialize_FullMethodName     = "/dag.DAGVM/Initialize"
+	DAGVM_SetState_FullMethodName       = "/dag.DAGVM/SetState"
+	DAGVM_Shutdown_FullMethodName       = "/dag.DAGVM/Shutdown"
+	DAGVM_CreateHandlers_FullMethodName = "/dag.DAGVM/CreateHandlers"
+	DAGVM_WaitForEvent_FullMethodName   = "/dag.DAGVM/WaitForEvent"
+	DAGVM_Connected_FullMethodName      = "/dag.DAGVM/Connected"
+	DAGVM_Disconnected_FullMethodName   = "/dag.DAGVM/Disconnected"
+	DAGVM_BuildVertex_FullMethodName    = "/dag.DAGVM/BuildVertex"
+	DAGVM_ParseVertex_FullMethodName    = "/dag.DAGVM/ParseVertex"
+	DAGVM_GetVertex_FullMethodName      = "/dag.DAGVM/GetVertex"
+	DAGVM_SetPreference_FullMethodName  = "/dag.DAGVM/SetPreference"
+	DAGVM_LastAccepted_FullMethodName   = "/dag.DAGVM/LastAccepted"
+	DAGVM_Health_FullMethodName         = "/dag.DAGVM/Health"
+	DAGVM_Version_FullMethodName        = "/dag.DAGVM/Version"
+	DAGVM_Request_FullMethodName        = "/dag.DAGVM/Request"
+	DAGVM_RequestFailed_FullMethodName  = "/dag.DAGVM/RequestFailed"
+	DAGVM_Response_FullMethodName       = "/dag.DAGVM/Response"
+	DAGVM_Gossip_FullMethodName         = "/dag.DAGVM/Gossip"
+	DAGVM_Gather_FullMethodName         = "/dag.DAGVM/Gather"
+	DAGVM_VertexVerify_FullMethodName   = "/dag.DAGVM/VertexVerify"
+	DAGVM_VertexAccept_FullMethodName   = "/dag.DAGVM/VertexAccept"
+	DAGVM_VertexReject_FullMethodName   = "/dag.DAGVM/VertexReject"
 )
 
 // DAGVMClient is the client API for DAGVM service.
@@ -75,10 +75,10 @@ type DAGVMClient interface {
 	Health(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*HealthResponse, error)
 	Version(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*VersionResponse, error)
 	// App messaging
-	AppRequest(ctx context.Context, in *AppRequestMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	AppRequestFailed(ctx context.Context, in *AppRequestFailedMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	AppResponse(ctx context.Context, in *AppResponseMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	AppGossip(ctx context.Context, in *AppGossipMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Request(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	RequestFailed(ctx context.Context, in *RequestFailedMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Response(ctx context.Context, in *ResponseMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Gossip(ctx context.Context, in *GossipMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Metrics
 	Gather(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GatherResponse, error)
 	// Vertex lifecycle
@@ -221,36 +221,36 @@ func (c *dAGVMClient) Version(ctx context.Context, in *emptypb.Empty, opts ...gr
 	return out, nil
 }
 
-func (c *dAGVMClient) AppRequest(ctx context.Context, in *AppRequestMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *dAGVMClient) Request(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, DAGVM_AppRequest_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, DAGVM_Request_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *dAGVMClient) AppRequestFailed(ctx context.Context, in *AppRequestFailedMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *dAGVMClient) RequestFailed(ctx context.Context, in *RequestFailedMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, DAGVM_AppRequestFailed_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, DAGVM_RequestFailed_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *dAGVMClient) AppResponse(ctx context.Context, in *AppResponseMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *dAGVMClient) Response(ctx context.Context, in *ResponseMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, DAGVM_AppResponse_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, DAGVM_Response_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *dAGVMClient) AppGossip(ctx context.Context, in *AppGossipMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *dAGVMClient) Gossip(ctx context.Context, in *GossipMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, DAGVM_AppGossip_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, DAGVM_Gossip_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -324,10 +324,10 @@ type DAGVMServer interface {
 	Health(context.Context, *emptypb.Empty) (*HealthResponse, error)
 	Version(context.Context, *emptypb.Empty) (*VersionResponse, error)
 	// App messaging
-	AppRequest(context.Context, *AppRequestMsg) (*emptypb.Empty, error)
-	AppRequestFailed(context.Context, *AppRequestFailedMsg) (*emptypb.Empty, error)
-	AppResponse(context.Context, *AppResponseMsg) (*emptypb.Empty, error)
-	AppGossip(context.Context, *AppGossipMsg) (*emptypb.Empty, error)
+	Request(context.Context, *RequestMsg) (*emptypb.Empty, error)
+	RequestFailed(context.Context, *RequestFailedMsg) (*emptypb.Empty, error)
+	Response(context.Context, *ResponseMsg) (*emptypb.Empty, error)
+	Gossip(context.Context, *GossipMsg) (*emptypb.Empty, error)
 	// Metrics
 	Gather(context.Context, *emptypb.Empty) (*GatherResponse, error)
 	// Vertex lifecycle
@@ -383,17 +383,17 @@ func (UnimplementedDAGVMServer) Health(context.Context, *emptypb.Empty) (*Health
 func (UnimplementedDAGVMServer) Version(context.Context, *emptypb.Empty) (*VersionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Version not implemented")
 }
-func (UnimplementedDAGVMServer) AppRequest(context.Context, *AppRequestMsg) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AppRequest not implemented")
+func (UnimplementedDAGVMServer) Request(context.Context, *RequestMsg) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Request not implemented")
 }
-func (UnimplementedDAGVMServer) AppRequestFailed(context.Context, *AppRequestFailedMsg) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AppRequestFailed not implemented")
+func (UnimplementedDAGVMServer) RequestFailed(context.Context, *RequestFailedMsg) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestFailed not implemented")
 }
-func (UnimplementedDAGVMServer) AppResponse(context.Context, *AppResponseMsg) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AppResponse not implemented")
+func (UnimplementedDAGVMServer) Response(context.Context, *ResponseMsg) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Response not implemented")
 }
-func (UnimplementedDAGVMServer) AppGossip(context.Context, *AppGossipMsg) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AppGossip not implemented")
+func (UnimplementedDAGVMServer) Gossip(context.Context, *GossipMsg) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Gossip not implemented")
 }
 func (UnimplementedDAGVMServer) Gather(context.Context, *emptypb.Empty) (*GatherResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Gather not implemented")
@@ -672,74 +672,74 @@ func _DAGVM_Version_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DAGVM_AppRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AppRequestMsg)
+func _DAGVM_Request_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestMsg)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DAGVMServer).AppRequest(ctx, in)
+		return srv.(DAGVMServer).Request(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DAGVM_AppRequest_FullMethodName,
+		FullMethod: DAGVM_Request_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DAGVMServer).AppRequest(ctx, req.(*AppRequestMsg))
+		return srv.(DAGVMServer).Request(ctx, req.(*RequestMsg))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DAGVM_AppRequestFailed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AppRequestFailedMsg)
+func _DAGVM_RequestFailed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestFailedMsg)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DAGVMServer).AppRequestFailed(ctx, in)
+		return srv.(DAGVMServer).RequestFailed(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DAGVM_AppRequestFailed_FullMethodName,
+		FullMethod: DAGVM_RequestFailed_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DAGVMServer).AppRequestFailed(ctx, req.(*AppRequestFailedMsg))
+		return srv.(DAGVMServer).RequestFailed(ctx, req.(*RequestFailedMsg))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DAGVM_AppResponse_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AppResponseMsg)
+func _DAGVM_Response_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResponseMsg)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DAGVMServer).AppResponse(ctx, in)
+		return srv.(DAGVMServer).Response(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DAGVM_AppResponse_FullMethodName,
+		FullMethod: DAGVM_Response_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DAGVMServer).AppResponse(ctx, req.(*AppResponseMsg))
+		return srv.(DAGVMServer).Response(ctx, req.(*ResponseMsg))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DAGVM_AppGossip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AppGossipMsg)
+func _DAGVM_Gossip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GossipMsg)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DAGVMServer).AppGossip(ctx, in)
+		return srv.(DAGVMServer).Gossip(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DAGVM_AppGossip_FullMethodName,
+		FullMethod: DAGVM_Gossip_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DAGVMServer).AppGossip(ctx, req.(*AppGossipMsg))
+		return srv.(DAGVMServer).Gossip(ctx, req.(*GossipMsg))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -880,20 +880,20 @@ var DAGVM_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DAGVM_Version_Handler,
 		},
 		{
-			MethodName: "AppRequest",
-			Handler:    _DAGVM_AppRequest_Handler,
+			MethodName: "Request",
+			Handler:    _DAGVM_Request_Handler,
 		},
 		{
-			MethodName: "AppRequestFailed",
-			Handler:    _DAGVM_AppRequestFailed_Handler,
+			MethodName: "RequestFailed",
+			Handler:    _DAGVM_RequestFailed_Handler,
 		},
 		{
-			MethodName: "AppResponse",
-			Handler:    _DAGVM_AppResponse_Handler,
+			MethodName: "Response",
+			Handler:    _DAGVM_Response_Handler,
 		},
 		{
-			MethodName: "AppGossip",
-			Handler:    _DAGVM_AppGossip_Handler,
+			MethodName: "Gossip",
+			Handler:    _DAGVM_Gossip_Handler,
 		},
 		{
 			MethodName: "Gather",

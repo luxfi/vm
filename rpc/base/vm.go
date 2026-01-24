@@ -29,7 +29,7 @@ type VM interface {
 		configBytes []byte,
 		msgChan interface{},
 		fxs []interface{},
-		appSender interface{},
+		sender interface{},
 	) error
 
 	// Shutdown gracefully shuts down the VM
