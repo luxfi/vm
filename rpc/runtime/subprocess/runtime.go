@@ -1,3 +1,5 @@
+//go:build grpc
+
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
@@ -12,30 +14,12 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/luxfi/log"
 	"github.com/luxfi/vm/rpc/grpcutils"
 	"github.com/luxfi/vm/rpc/gruntime"
 	"github.com/luxfi/vm/rpc/runtime"
 
 	pb "github.com/luxfi/node/proto/pb/vm/runtime"
 )
-
-type Config struct {
-	// Stderr of the VM process written to this writer.
-	Stderr io.Writer
-	// Stdout of the VM process written to this writer.
-	Stdout io.Writer
-	// Duration engine server will wait for handshake success.
-	HandshakeTimeout time.Duration
-	Log              log.Logger
-}
-
-type Status struct {
-	// Id of the process.
-	Pid int
-	// Address of the VM gRPC service.
-	Addr string
-}
 
 // Bootstrap starts a VM as a subprocess after initialization completes and
 // pipes the IO to the appropriate writers.

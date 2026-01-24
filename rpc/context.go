@@ -4,15 +4,15 @@
 package rpc
 
 import (
-	"github.com/luxfi/consensus/runtime"
-	validators "github.com/luxfi/consensus/validator"
+	"github.com/luxfi/runtime"
+	validators "github.com/luxfi/validators"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
-	"github.com/luxfi/protocol/p/warp"
 	"github.com/luxfi/upgrade"
 	"github.com/luxfi/vm/api/metrics"
 	"github.com/luxfi/vm/chains/atomic"
+	"github.com/luxfi/warp"
 )
 
 // Context is the node-specific context for RPC chain VM
@@ -34,6 +34,7 @@ type Context struct {
 	BCLookup       ids.AliaserReader
 	Metrics        metrics.MultiGatherer
 	WarpSigner     warp.Signer
+	Sender         warp.Sender
 	ValidatorState validators.State
 }
 
@@ -42,7 +43,7 @@ var _ runtime.VMContext = (*Context)(nil)
 
 // ToConsensusContext converts node Context to consensus Context
 // This is explicit - we know exactly what we're doing
-func (c *Context) ToConsensusContext() interface{} {
+func (c *Context) ToConsensusRuntime() interface{} {
 	// Return as interface{} - consensus layer decides how to use it
 	// We don't pretend the types match - they don't
 	return c
@@ -83,22 +84,25 @@ func (c *Context) GetAssetID() ids.ID { return c.LUXAssetID }
 func (c *Context) GetChainDataDir() string { return c.ChainDataDir }
 
 // GetLog implements VMContext
-func (c *Context) GetLog() interface{} { return c.Log }
+func (c *Context) GetLog() runtime.Logger { return c.Log }
 
 // GetSharedMemory implements VMContext
-func (c *Context) GetSharedMemory() interface{} { return c.SharedMemory }
+func (c *Context) GetSharedMemory() runtime.SharedMemory { return c.SharedMemory }
 
 // GetMetrics implements VMContext
-func (c *Context) GetMetrics() interface{} { return c.Metrics }
+func (c *Context) GetMetrics() runtime.Metrics { return c.Metrics }
 
 // GetValidatorState implements VMContext
-func (c *Context) GetValidatorState() interface{} { return c.ValidatorState }
+func (c *Context) GetValidatorState() runtime.ValidatorState { return c.ValidatorState }
 
 // GetBCLookup implements VMContext
-func (c *Context) GetBCLookup() interface{} { return c.BCLookup }
+func (c *Context) GetBCLookup() runtime.BCLookup { return c.BCLookup }
 
 // GetWarpSigner implements VMContext
-func (c *Context) GetWarpSigner() interface{} { return c.WarpSigner }
+func (c *Context) GetWarpSigner() runtime.WarpSigner { return c.WarpSigner }
+
+// GetSender implements VMContext
+func (c *Context) GetSender() warp.Sender { return c.Sender }
 
 // GetNetworkUpgrades implements VMContext
-func (c *Context) GetNetworkUpgrades() interface{} { return c.NetworkUpgrades }
+func (c *Context) GetNetworkUpgrades() runtime.NetworkUpgrades { return &c.NetworkUpgrades }

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/luxfi/consensus/runtime"
+	"github.com/luxfi/runtime"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/version"
@@ -33,7 +33,7 @@ func (vm *testVM) Initialize(
 	configBytes []byte,
 	msgChan chan<- interface{},
 	fxs []interface{},
-	appSender interface{},
+	sender interface{},
 ) error {
 	return nil
 }
@@ -82,22 +82,22 @@ func (vm *testVM) Disconnected(ctx context.Context, nodeID ids.NodeID) error {
 
 // AppHandler interface methods
 
-func (vm *testVM) AppRequest(ctx context.Context, nodeID ids.NodeID, requestID uint32, deadline time.Time, request []byte) error {
+func (vm *testVM) Request(ctx context.Context, nodeID ids.NodeID, requestID uint32, deadline time.Time, request []byte) error {
 	// No-op implementation for test VM
 	return nil
 }
 
-func (vm *testVM) AppResponse(ctx context.Context, nodeID ids.NodeID, requestID uint32, response []byte) error {
+func (vm *testVM) Response(ctx context.Context, nodeID ids.NodeID, requestID uint32, response []byte) error {
 	// No-op implementation for test VM
 	return nil
 }
 
-func (vm *testVM) AppRequestFailed(ctx context.Context, nodeID ids.NodeID, requestID uint32) error {
+func (vm *testVM) RequestFailed(ctx context.Context, nodeID ids.NodeID, requestID uint32) error {
 	// No-op implementation for test VM
 	return nil
 }
 
-func (vm *testVM) AppGossip(ctx context.Context, nodeID ids.NodeID, msg []byte) error {
+func (vm *testVM) Gossip(ctx context.Context, nodeID ids.NodeID, msg []byte) error {
 	// No-op implementation for test VM
 	return nil
 }

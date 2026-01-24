@@ -40,10 +40,10 @@ service DAGVM {
   rpc Version(google.protobuf.Empty) returns (VersionResponse);
 
   // App messaging
-  rpc AppRequest(AppRequestMsg) returns (google.protobuf.Empty);
-  rpc AppRequestFailed(AppRequestFailedMsg) returns (google.protobuf.Empty);
-  rpc AppResponse(AppResponseMsg) returns (google.protobuf.Empty);
-  rpc AppGossip(AppGossipMsg) returns (google.protobuf.Empty);
+  rpc Request(RequestMsg) returns (google.protobuf.Empty);
+  rpc RequestFailed(RequestFailedMsg) returns (google.protobuf.Empty);
+  rpc Response(ResponseMsg) returns (google.protobuf.Empty);
+  rpc Gossip(GossipMsg) returns (google.protobuf.Empty);
 
   // Metrics
   rpc Gather(google.protobuf.Empty) returns (GatherResponse);
@@ -194,27 +194,27 @@ message VersionResponse {
   string version = 1;
 }
 
-message AppRequestMsg {
+message RequestMsg {
   bytes node_id = 1;
   uint32 request_id = 2;
   google.protobuf.Timestamp deadline = 3;
   bytes request = 4;
 }
 
-message AppRequestFailedMsg {
+message RequestFailedMsg {
   bytes node_id = 1;
   uint32 request_id = 2;
   string error_message = 3;
   int32 error_code = 4;
 }
 
-message AppResponseMsg {
+message ResponseMsg {
   bytes node_id = 1;
   uint32 request_id = 2;
   bytes response = 3;
 }
 
-message AppGossipMsg {
+message GossipMsg {
   bytes node_id = 1;
   bytes msg = 2;
 }

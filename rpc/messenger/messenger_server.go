@@ -1,3 +1,5 @@
+//go:build grpc
+
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
@@ -7,8 +9,8 @@ import (
 	"context"
 	"errors"
 
-	consensuscore "github.com/luxfi/consensus/core"
 	"github.com/luxfi/ids"
+	vmcore "github.com/luxfi/vm"
 
 	messengerpb "github.com/luxfi/node/proto/pb/messenger"
 )
@@ -22,11 +24,11 @@ var (
 // Server is a messenger that is managed over RPC.
 type Server struct {
 	messengerpb.UnsafeMessengerServer
-	messenger chan<- consensuscore.Message
+	messenger chan<- vmcore.Message
 }
 
 // NewServer returns a messenger connected to a remote channel
-func NewServer(messenger chan<- consensuscore.Message) *Server {
+func NewServer(messenger chan<- vmcore.Message) *Server {
 	return &Server{messenger: messenger}
 }
 
@@ -35,8 +37,8 @@ func (s *Server) Notify(_ context.Context, req *messengerpb.NotifyRequest) (*mes
 	var nodeID ids.NodeID
 	copy(nodeID[:], req.Message.NodeId)
 
-	msg := consensuscore.Message{
-		Type:    consensuscore.MessageType(req.Message.Type),
+	msg := vmcore.Message{
+		Type:    vmcore.MessageType(req.Message.Type),
 		NodeID:  nodeID,
 		Content: req.Message.Content,
 	}

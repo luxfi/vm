@@ -13,18 +13,18 @@ import (
 	"github.com/luxfi/log"
 	"github.com/luxfi/codec/jsonrpc"
 	"github.com/luxfi/vm/api"
-	"github.com/luxfi/vm/chains"
+	"github.com/luxfi/vm/manager"
 	"github.com/luxfi/warp"
 )
 
 type Service struct {
 	log          log.Logger
-	chainManager chains.Manager
+	chainManager manager.ChainManager
 	lock         sync.RWMutex
 	ipcs         *warp.ChainIPCs
 }
 
-func NewService(log log.Logger, chainManager chains.Manager, ipcs *warp.ChainIPCs) (http.Handler, error) {
+func NewService(log log.Logger, chainManager manager.ChainManager, ipcs *warp.ChainIPCs) (http.Handler, error) {
 	server := rpc.NewServer()
 	codec := json.NewCodec()
 	server.RegisterCodec(codec, "application/json")

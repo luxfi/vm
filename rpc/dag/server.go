@@ -1,3 +1,5 @@
+//go:build grpc
+
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
@@ -18,7 +20,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/luxfi/consensus/runtime"
+	"github.com/luxfi/runtime"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/corruptabledb"
@@ -32,7 +34,7 @@ import (
 	"github.com/luxfi/vm/chains/atomic/gsharedmemory"
 	"github.com/luxfi/vm/internal/database/rpcdb"
 	"github.com/luxfi/vm/internal/ids/galiasreader"
-	"github.com/luxfi/vm/rpc/appsender"
+	"github.com/luxfi/vm/rpc/sender"
 	"github.com/luxfi/vm/rpc/ghttp"
 	"github.com/luxfi/vm/rpc/grpcutils"
 	"github.com/luxfi/vm/rpc/gvalidators"
@@ -40,7 +42,7 @@ import (
 
 	grpc_metric "github.com/grpc-ecosystem/go-grpc-prometheus"
 	aliasreaderpb "github.com/luxfi/node/proto/pb/aliasreader"
-	appsenderpb "github.com/luxfi/node/proto/pb/appsender"
+	senderpb "github.com/luxfi/vm/proto/pb/sender"
 	dagpb "github.com/luxfi/vm/proto/pb/dag"
 	httppb "github.com/luxfi/node/proto/pb/http"
 	rpcdbpb "github.com/luxfi/node/proto/pb/rpcdb"
@@ -56,17 +58,11 @@ var (
 	errNilNetworkUpgradesPB = errors.New("network upgrades protobuf is nil")
 )
 
-// Error mappings between protobuf and Go errors
-var (
-	errEnumToError = map[dagpb.Error]error{
-		dagpb.Error_ERROR_CLOSED:    database.ErrClosed,
-		dagpb.Error_ERROR_NOT_FOUND: database.ErrNotFound,
-	}
-	errorToErrEnum = map[error]dagpb.Error{
-		database.ErrClosed:   dagpb.Error_ERROR_CLOSED,
-		database.ErrNotFound: dagpb.Error_ERROR_NOT_FOUND,
-	}
-)
+// Error mappings between Go errors and protobuf (server-only)
+var errorToErrEnum = map[error]dagpb.Error{
+	database.ErrClosed:   dagpb.Error_ERROR_CLOSED,
+	database.ErrNotFound: dagpb.Error_ERROR_NOT_FOUND,
+}
 
 func errorToRPCError(err error) error {
 	if _, ok := errorToErrEnum[err]; ok {
@@ -230,7 +226,7 @@ func (vm *Server) Initialize(ctx context.Context, req *dagpb.InitializeRequest) 
 
 	sharedMemoryClient := gsharedmemory.NewClient(sharedmemorypb.NewSharedMemoryClient(clientConn))
 	bcLookupClient := galiasreader.NewClient(aliasreaderpb.NewAliasReaderClient(clientConn))
-	appSenderClient := appsender.NewClient(appsenderpb.NewAppSenderClient(clientConn))
+	senderClient := sender.NewClient(senderpb.NewSenderClient(clientConn))
 	validatorStateClient := gvalidators.NewClient(validatorstatepb.NewValidatorStateClient(clientConn))
 	warpSignerClient := &warpSignerAdapter{client: warppb.NewSignerClient(clientConn)}
 
@@ -263,7 +259,7 @@ func (vm *Server) Initialize(ctx context.Context, req *dagpb.InitializeRequest) 
 	vm.nodeID = nodeID
 
 	vm.log.Info("initializing DAG VM via gRPC", log.Stringer("chainID", chainID))
-	if err := vm.vm.Initialize(ctx, vm.ctx, vm.db, req.GenesisBytes, req.UpgradeBytes, req.ConfigBytes, nil, nil, appSenderClient); err != nil {
+	if err := vm.vm.Initialize(ctx, vm.ctx, vm.db, req.GenesisBytes, req.UpgradeBytes, req.ConfigBytes, nil, nil, senderClient); err != nil {
 		if f, ferr := os.OpenFile("/tmp/dag-vm-server-init-error.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); ferr == nil {
 			fmt.Fprintf(f, "[%s] DAG VM Initialize failed for chain %s: %v\n", time.Now().Format(time.RFC3339), chainID, err)
 			f.Close()
@@ -610,7 +606,7 @@ func (vm *Server) Version(ctx context.Context, _ *emptypb.Empty) (*dagpb.Version
 	}, err
 }
 
-func (vm *Server) AppRequest(ctx context.Context, req *dagpb.AppRequestMsg) (*emptypb.Empty, error) {
+func (vm *Server) Request(ctx context.Context, req *dagpb.RequestMsg) (*emptypb.Empty, error) {
 	nodeID, err := ids.ToNodeID(req.NodeId)
 	if err != nil {
 		return nil, err
@@ -620,7 +616,7 @@ func (vm *Server) AppRequest(ctx context.Context, req *dagpb.AppRequestMsg) (*em
 		return nil, err
 	}
 	if vm.appHandler == nil {
-		return nil, errors.New("AppRequest not implemented")
+		return nil, errors.New("Request not implemented")
 	}
 	_, appErr := vm.appHandler.Request(ctx, nodeID, req.RequestId, deadline, req.Request)
 	if appErr != nil {
@@ -629,7 +625,7 @@ func (vm *Server) AppRequest(ctx context.Context, req *dagpb.AppRequestMsg) (*em
 	return &emptypb.Empty{}, nil
 }
 
-func (vm *Server) AppRequestFailed(ctx context.Context, req *dagpb.AppRequestFailedMsg) (*emptypb.Empty, error) {
+func (vm *Server) RequestFailed(ctx context.Context, req *dagpb.RequestFailedMsg) (*emptypb.Empty, error) {
 	nodeID, err := ids.ToNodeID(req.NodeId)
 	if err != nil {
 		return nil, err
@@ -640,35 +636,35 @@ func (vm *Server) AppRequestFailed(ctx context.Context, req *dagpb.AppRequestFai
 		Message: req.ErrorMessage,
 	}
 
-	type vmWithAppRequestFailed interface {
-		AppRequestFailed(context.Context, ids.NodeID, uint32, *warp.Error) error
+	type vmWithRequestFailed interface {
+		RequestFailed(context.Context, ids.NodeID, uint32, *warp.Error) error
 	}
 
-	if failedVM, ok := vm.vm.(vmWithAppRequestFailed); ok {
-		return &emptypb.Empty{}, failedVM.AppRequestFailed(ctx, nodeID, req.RequestId, appErr)
+	if failedVM, ok := vm.vm.(vmWithRequestFailed); ok {
+		return &emptypb.Empty{}, failedVM.RequestFailed(ctx, nodeID, req.RequestId, appErr)
 	}
 
 	return &emptypb.Empty{}, nil
 }
 
-func (vm *Server) AppResponse(ctx context.Context, req *dagpb.AppResponseMsg) (*emptypb.Empty, error) {
+func (vm *Server) Response(ctx context.Context, req *dagpb.ResponseMsg) (*emptypb.Empty, error) {
 	nodeID, err := ids.ToNodeID(req.NodeId)
 	if err != nil {
 		return nil, err
 	}
 	if vm.appHandler == nil {
-		return nil, errors.New("AppResponse not implemented")
+		return nil, errors.New("Response not implemented")
 	}
 	return &emptypb.Empty{}, vm.appHandler.Response(ctx, nodeID, req.RequestId, req.Response)
 }
 
-func (vm *Server) AppGossip(ctx context.Context, req *dagpb.AppGossipMsg) (*emptypb.Empty, error) {
+func (vm *Server) Gossip(ctx context.Context, req *dagpb.GossipMsg) (*emptypb.Empty, error) {
 	nodeID, err := ids.ToNodeID(req.NodeId)
 	if err != nil {
 		return nil, err
 	}
 	if vm.appHandler == nil {
-		return nil, errors.New("AppGossip not implemented")
+		return nil, errors.New("Gossip not implemented")
 	}
 	return &emptypb.Empty{}, vm.appHandler.Gossip(ctx, nodeID, req.Msg)
 }

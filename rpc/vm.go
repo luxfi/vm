@@ -1,3 +1,5 @@
+//go:build grpc
+
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
@@ -15,7 +17,7 @@ import (
 	"google.golang.org/grpc/health"
 
 	"github.com/luxfi/atomic"
-	"github.com/luxfi/consensus/engine/chain/block"
+	"github.com/luxfi/vm/chain"
 	"github.com/luxfi/log"
 	"github.com/luxfi/version"
 	"github.com/luxfi/vm/rpc/grpcutils"
@@ -33,7 +35,7 @@ const defaultRuntimeDialTimeout = 5 * time.Second
 // This address is used by the Runtime client to send Initialize RPC to server.
 //
 // Serve starts the RPC Chain VM server and performs a handshake with the VM runtime service.
-func Serve(ctx context.Context, log log.Logger, vm block.ChainVM, opts ...grpcutils.ServerOption) error {
+func Serve(ctx context.Context, log log.Logger, vm chain.ChainVM, opts ...grpcutils.ServerOption) error {
 	signals := make(chan os.Signal, 2)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(signals)
@@ -71,28 +73,49 @@ func Serve(ctx context.Context, log log.Logger, vm block.ChainVM, opts ...grpcut
 		}
 	}(ctx)
 
+	// File-based debug logging
+	debugFile := func(msg string) {
+		if f, err := os.OpenFile("/tmp/evm_serve.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err == nil {
+			fmt.Fprintf(f, "[%d] %s\n", os.Getpid(), msg)
+			f.Close()
+		}
+	}
+	debugFile("Serve() starting")
+
 	// address of Runtime server from ENV
 	log.Info("rpcchainvm.Serve: getting runtime address from env", "key", runtime.EngineAddressKey)
+	debugFile("Getting env var: " + runtime.EngineAddressKey)
 	runtimeAddr := os.Getenv(runtime.EngineAddressKey)
+	debugFile("Got runtimeAddr: " + runtimeAddr)
 	if runtimeAddr == "" {
+		debugFile("ERROR: env var missing")
 		return fmt.Errorf("required env var missing: %q", runtime.EngineAddressKey)
 	}
 	log.Info("rpcchainvm.Serve: runtime address obtained", "addr", runtimeAddr)
+	debugFile("Runtime address obtained: " + runtimeAddr)
 
 	log.Info("rpcchainvm.Serve: dialing runtime server", "addr", runtimeAddr)
+	debugFile("Dialing runtime server: " + runtimeAddr)
 	clientConn, err := grpcutils.Dial(runtimeAddr)
 	if err != nil {
+		debugFile("ERROR dial failed: " + err.Error())
 		return fmt.Errorf("failed to create client conn: %w", err)
 	}
 	log.Info("rpcchainvm.Serve: dial succeeded, creating runtime client")
+	debugFile("Dial succeeded")
 
+	debugFile("Creating gruntime client")
 	client := gruntime.NewClient(runtimepb.NewRuntimeClient(clientConn))
+	debugFile("gruntime client created")
 	log.Info("rpcchainvm.Serve: creating gRPC listener")
 
+	debugFile("Creating gRPC listener")
 	listener, err := grpcutils.NewListener()
 	if err != nil {
+		debugFile("ERROR creating listener: " + err.Error())
 		return fmt.Errorf("failed to create new listener: %w", err)
 	}
+	debugFile("Listener created: " + listener.Addr().String())
 	log.Info("rpcchainvm.Serve: listener created", "addr", listener.Addr().String())
 
 	log.Info("rpcchainvm.Serve: calling client.Initialize",
@@ -105,13 +128,16 @@ func Serve(ctx context.Context, log log.Logger, vm block.ChainVM, opts ...grpcut
 		"addr", listener.Addr().String(),
 	)
 
+	debugFile(fmt.Sprintf("Calling client.Initialize(protocol=%d, addr=%s)", version.RPCChainVMProtocol, listener.Addr().String()))
 	ctx, cancel := context.WithTimeout(ctx, defaultRuntimeDialTimeout)
 	defer cancel()
 	err = client.Initialize(ctx, version.RPCChainVMProtocol, listener.Addr().String())
 	if err != nil {
+		debugFile("ERROR Initialize failed: " + err.Error())
 		_ = listener.Close()
 		return fmt.Errorf("failed to initialize vm runtime: %w", err)
 	}
+	debugFile("Initialize succeeded")
 
 	log.Info("vm runtime initialized successfully", "addr", listener.Addr().String())
 
@@ -122,7 +148,7 @@ func Serve(ctx context.Context, log log.Logger, vm block.ChainVM, opts ...grpcut
 }
 
 // Returns an RPC Chain VM server serving health and VM services.
-func newVMServer(vm block.ChainVM, allowShutdown *atomic.Atomic[bool], opts ...grpcutils.ServerOption) *grpc.Server {
+func newVMServer(vm chain.ChainVM, allowShutdown *atomic.Atomic[bool], opts ...grpcutils.ServerOption) *grpc.Server {
 	server := grpcutils.NewServer(opts...)
 	vmpb.RegisterVMServer(server, NewServer(vm, allowShutdown))
 

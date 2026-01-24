@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/luxfi/consensus/runtime"
+	"github.com/luxfi/runtime"
 	"github.com/luxfi/ids"
 )
 
@@ -26,12 +26,12 @@ type ChainContext struct {
 
 // ValidatorState provides validator state lookups
 type ValidatorState interface {
-	GetNetID(ctx context.Context, chainID ids.ID) (ids.ID, error)
+	GetChainID(ctx context.Context, chainID ids.ID) (ids.ID, error)
 }
 
 // ConsensusValidatorState wraps the consensus context ValidatorState interface
 type ConsensusValidatorState interface {
-	GetNetID(chainID ids.ID) (ids.ID, error)
+	GetChainID(chainID ids.ID) (ids.ID, error)
 }
 
 // SameNet verifies that the provided [ctx] was provided to a chain in the
@@ -42,7 +42,7 @@ func SameNet(ctx context.Context, chainCtx *ChainContext, peerChainID ids.ID) er
 		return ErrSameChainID
 	}
 
-	peerNetID, err := chainCtx.ValidatorState.GetNetID(ctx, peerChainID)
+	peerNetID, err := chainCtx.ValidatorState.GetChainID(ctx, peerChainID)
 	if err != nil {
 		return fmt.Errorf("failed to get net of %q: %w", peerChainID, err)
 	}

@@ -34,10 +34,10 @@ const (
 	VM_SetPreference_FullMethodName              = "/vm.VM/SetPreference"
 	VM_Health_FullMethodName                     = "/vm.VM/Health"
 	VM_Version_FullMethodName                    = "/vm.VM/Version"
-	VM_AppRequest_FullMethodName                 = "/vm.VM/AppRequest"
-	VM_AppRequestFailed_FullMethodName           = "/vm.VM/AppRequestFailed"
-	VM_AppResponse_FullMethodName                = "/vm.VM/AppResponse"
-	VM_AppGossip_FullMethodName                  = "/vm.VM/AppGossip"
+	VM_Request_FullMethodName                    = "/vm.VM/Request"
+	VM_RequestFailed_FullMethodName              = "/vm.VM/RequestFailed"
+	VM_Response_FullMethodName                   = "/vm.VM/Response"
+	VM_Gossip_FullMethodName                     = "/vm.VM/Gossip"
 	VM_Gather_FullMethodName                     = "/vm.VM/Gather"
 	VM_GetAncestors_FullMethodName               = "/vm.VM/GetAncestors"
 	VM_BatchedParseBlock_FullMethodName          = "/vm.VM/BatchedParseBlock"
@@ -86,15 +86,15 @@ type VMClient interface {
 	// Version returns the version of the VM.
 	Version(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*VersionResponse, error)
 	// Notify this engine of a request for data from [nodeID].
-	AppRequest(ctx context.Context, in *AppRequestMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// Notify this engine that an AppRequest message it sent to [nodeID] with
+	Request(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Notify this engine that a Request message it sent to [nodeID] with
 	// request ID [requestID] failed.
-	AppRequestFailed(ctx context.Context, in *AppRequestFailedMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// Notify this engine of a response to the AppRequest message it sent to
+	RequestFailed(ctx context.Context, in *RequestFailedMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Notify this engine of a response to the Request message it sent to
 	// [nodeID] with request ID [requestID].
-	AppResponse(ctx context.Context, in *AppResponseMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Response(ctx context.Context, in *ResponseMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Notify this engine of a gossip message from [nodeID].
-	AppGossip(ctx context.Context, in *AppGossipMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Gossip(ctx context.Context, in *GossipMsg, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Attempts to gather metrics from a VM.
 	Gather(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GatherResponse, error)
 	// BatchedChainVM
@@ -257,36 +257,36 @@ func (c *vMClient) Version(ctx context.Context, in *emptypb.Empty, opts ...grpc.
 	return out, nil
 }
 
-func (c *vMClient) AppRequest(ctx context.Context, in *AppRequestMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *vMClient) Request(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, VM_AppRequest_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, VM_Request_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *vMClient) AppRequestFailed(ctx context.Context, in *AppRequestFailedMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *vMClient) RequestFailed(ctx context.Context, in *RequestFailedMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, VM_AppRequestFailed_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, VM_RequestFailed_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *vMClient) AppResponse(ctx context.Context, in *AppResponseMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *vMClient) Response(ctx context.Context, in *ResponseMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, VM_AppResponse_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, VM_Response_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *vMClient) AppGossip(ctx context.Context, in *AppGossipMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *vMClient) Gossip(ctx context.Context, in *GossipMsg, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, VM_AppGossip_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, VM_Gossip_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -443,15 +443,15 @@ type VMServer interface {
 	// Version returns the version of the VM.
 	Version(context.Context, *emptypb.Empty) (*VersionResponse, error)
 	// Notify this engine of a request for data from [nodeID].
-	AppRequest(context.Context, *AppRequestMsg) (*emptypb.Empty, error)
-	// Notify this engine that an AppRequest message it sent to [nodeID] with
+	Request(context.Context, *RequestMsg) (*emptypb.Empty, error)
+	// Notify this engine that a Request message it sent to [nodeID] with
 	// request ID [requestID] failed.
-	AppRequestFailed(context.Context, *AppRequestFailedMsg) (*emptypb.Empty, error)
-	// Notify this engine of a response to the AppRequest message it sent to
+	RequestFailed(context.Context, *RequestFailedMsg) (*emptypb.Empty, error)
+	// Notify this engine of a response to the Request message it sent to
 	// [nodeID] with request ID [requestID].
-	AppResponse(context.Context, *AppResponseMsg) (*emptypb.Empty, error)
+	Response(context.Context, *ResponseMsg) (*emptypb.Empty, error)
 	// Notify this engine of a gossip message from [nodeID].
-	AppGossip(context.Context, *AppGossipMsg) (*emptypb.Empty, error)
+	Gossip(context.Context, *GossipMsg) (*emptypb.Empty, error)
 	// Attempts to gather metrics from a VM.
 	Gather(context.Context, *emptypb.Empty) (*GatherResponse, error)
 	// BatchedChainVM
@@ -527,17 +527,17 @@ func (UnimplementedVMServer) Health(context.Context, *emptypb.Empty) (*HealthRes
 func (UnimplementedVMServer) Version(context.Context, *emptypb.Empty) (*VersionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Version not implemented")
 }
-func (UnimplementedVMServer) AppRequest(context.Context, *AppRequestMsg) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AppRequest not implemented")
+func (UnimplementedVMServer) Request(context.Context, *RequestMsg) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Request not implemented")
 }
-func (UnimplementedVMServer) AppRequestFailed(context.Context, *AppRequestFailedMsg) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AppRequestFailed not implemented")
+func (UnimplementedVMServer) RequestFailed(context.Context, *RequestFailedMsg) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestFailed not implemented")
 }
-func (UnimplementedVMServer) AppResponse(context.Context, *AppResponseMsg) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AppResponse not implemented")
+func (UnimplementedVMServer) Response(context.Context, *ResponseMsg) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Response not implemented")
 }
-func (UnimplementedVMServer) AppGossip(context.Context, *AppGossipMsg) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AppGossip not implemented")
+func (UnimplementedVMServer) Gossip(context.Context, *GossipMsg) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Gossip not implemented")
 }
 func (UnimplementedVMServer) Gather(context.Context, *emptypb.Empty) (*GatherResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Gather not implemented")
@@ -843,74 +843,74 @@ func _VM_Version_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	return interceptor(ctx, in, info, handler)
 }
 
-func _VM_AppRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AppRequestMsg)
+func _VM_Request_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestMsg)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(VMServer).AppRequest(ctx, in)
+		return srv.(VMServer).Request(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: VM_AppRequest_FullMethodName,
+		FullMethod: VM_Request_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(VMServer).AppRequest(ctx, req.(*AppRequestMsg))
+		return srv.(VMServer).Request(ctx, req.(*RequestMsg))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _VM_AppRequestFailed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AppRequestFailedMsg)
+func _VM_RequestFailed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestFailedMsg)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(VMServer).AppRequestFailed(ctx, in)
+		return srv.(VMServer).RequestFailed(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: VM_AppRequestFailed_FullMethodName,
+		FullMethod: VM_RequestFailed_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(VMServer).AppRequestFailed(ctx, req.(*AppRequestFailedMsg))
+		return srv.(VMServer).RequestFailed(ctx, req.(*RequestFailedMsg))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _VM_AppResponse_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AppResponseMsg)
+func _VM_Response_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResponseMsg)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(VMServer).AppResponse(ctx, in)
+		return srv.(VMServer).Response(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: VM_AppResponse_FullMethodName,
+		FullMethod: VM_Response_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(VMServer).AppResponse(ctx, req.(*AppResponseMsg))
+		return srv.(VMServer).Response(ctx, req.(*ResponseMsg))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _VM_AppGossip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AppGossipMsg)
+func _VM_Gossip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GossipMsg)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(VMServer).AppGossip(ctx, in)
+		return srv.(VMServer).Gossip(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: VM_AppGossip_FullMethodName,
+		FullMethod: VM_Gossip_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(VMServer).AppGossip(ctx, req.(*AppGossipMsg))
+		return srv.(VMServer).Gossip(ctx, req.(*GossipMsg))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1213,20 +1213,20 @@ var VM_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _VM_Version_Handler,
 		},
 		{
-			MethodName: "AppRequest",
-			Handler:    _VM_AppRequest_Handler,
+			MethodName: "Request",
+			Handler:    _VM_Request_Handler,
 		},
 		{
-			MethodName: "AppRequestFailed",
-			Handler:    _VM_AppRequestFailed_Handler,
+			MethodName: "RequestFailed",
+			Handler:    _VM_RequestFailed_Handler,
 		},
 		{
-			MethodName: "AppResponse",
-			Handler:    _VM_AppResponse_Handler,
+			MethodName: "Response",
+			Handler:    _VM_Response_Handler,
 		},
 		{
-			MethodName: "AppGossip",
-			Handler:    _VM_AppGossip_Handler,
+			MethodName: "Gossip",
+			Handler:    _VM_Gossip_Handler,
 		},
 		{
 			MethodName: "Gather",

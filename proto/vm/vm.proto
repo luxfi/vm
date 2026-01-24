@@ -40,15 +40,15 @@ service VM {
   // Version returns the version of the VM.
   rpc Version(google.protobuf.Empty) returns (VersionResponse);
   // Notify this engine of a request for data from [nodeID].
-  rpc AppRequest(AppRequestMsg) returns (google.protobuf.Empty);
-  // Notify this engine that an AppRequest message it sent to [nodeID] with
+  rpc Request(RequestMsg) returns (google.protobuf.Empty);
+  // Notify this engine that a Request message it sent to [nodeID] with
   // request ID [requestID] failed.
-  rpc AppRequestFailed(AppRequestFailedMsg) returns (google.protobuf.Empty);
-  // Notify this engine of a response to the AppRequest message it sent to
+  rpc RequestFailed(RequestFailedMsg) returns (google.protobuf.Empty);
+  // Notify this engine of a response to the Request message it sent to
   // [nodeID] with request ID [requestID].
-  rpc AppResponse(AppResponseMsg) returns (google.protobuf.Empty);
+  rpc Response(ResponseMsg) returns (google.protobuf.Empty);
   // Notify this engine of a gossip message from [nodeID].
-  rpc AppGossip(AppGossipMsg) returns (google.protobuf.Empty);
+  rpc Gossip(GossipMsg) returns (google.protobuf.Empty);
   // Attempts to gather metrics from a VM.
   rpc Gather(google.protobuf.Empty) returns (GatherResponse);
   // BatchedChainVM
@@ -112,7 +112,7 @@ message InitializeRequest {
   bytes config_bytes = 12;
   string db_server_addr = 13;
   // server_addr is the address of the gRPC server which serves the shared
-  // memory, blockchain alias, chain alias, and appSender services
+  // memory, blockchain alias, chain alias, and sender services
   string server_addr = 14;
   // network_upgrades_bytes is the json encoded network upgrades
   NetworkUpgrades network_upgrades = 15;
@@ -231,8 +231,8 @@ message SetPreferenceRequest {
 message BlockVerifyRequest {
   bytes bytes = 1;
 
-  // If set, the VM server casts the block to a [block.WithVerifyContext] and
-  // calls [VerifyWithContext] instead of [Verify].
+  // If set, the VM server casts the block to a [block.WithVerifyRuntime] and
+  // calls [VerifyWithRuntime] instead of [Verify].
   optional uint64 p_chain_height = 2;
 }
 
@@ -256,7 +256,7 @@ message VersionResponse {
   string version = 1;
 }
 
-message AppRequestMsg {
+message RequestMsg {
   // The node that sent us this request
   bytes node_id = 1;
   // The ID of this request
@@ -267,7 +267,7 @@ message AppRequestMsg {
   bytes request = 4;
 }
 
-message AppRequestFailedMsg {
+message RequestFailedMsg {
   // The node that we failed to get a response from
   bytes node_id = 1;
   // The ID of the request we sent and didn't get a response to
@@ -278,7 +278,7 @@ message AppRequestFailedMsg {
   string error_message = 4;
 }
 
-message AppResponseMsg {
+message ResponseMsg {
   // The node that we got a response from
   bytes node_id = 1;
   // Request ID of request that this is in response to
@@ -287,7 +287,7 @@ message AppResponseMsg {
   bytes response = 3;
 }
 
-message AppGossipMsg {
+message GossipMsg {
   // The node that sent us a gossip message
   bytes node_id = 1;
   // The message body

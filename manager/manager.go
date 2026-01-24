@@ -6,140 +6,43 @@ package manager
 import (
 	"context"
 	"errors"
-	"fmt"
-	"maps"
-	"slices"
-	"sync"
 
-	"github.com/luxfi/consensus/engine/interfaces"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 )
 
 var (
 	ErrNotFound = errors.New("not found")
-
-	_ Manager = (*manager)(nil)
 )
 
-// A Factory creates new instances of a VM
+// Factory creates new instances of a VM
 type Factory interface {
-	New(log.Logger) (interface{}, error)
+	New(log log.Logger) (interface{}, error)
 }
 
-// Manager tracks a collection of VM factories, their aliases, and their
-// versions.
-// It has the following functionality:
-//
-//  1. Register a VM factory. To register a VM is to associate its ID with a
-//     VMFactory which, when New() is called upon it, creates a new instance of
-//     that VM.
-//  2. Get a VM factory. Given the ID of a VM that has been registered, return
-//     the factory that the ID is associated with.
-//  3. Manage the aliases of VMs
-//  4. Manage the versions of VMs
+// Manager tracks a collection of VM factories, their aliases, and their versions.
 type Manager interface {
-	ids.Aliaser
-
-	// Return a factory that can create new instances of the vm whose ID is
-	// [vmID]
-	GetFactory(vmID ids.ID) (Factory, error)
-
-	// Map [vmID] to [factory]. [factory] creates new instances of the vm whose
-	// ID is [vmID]
+	// RegisterFactory registers a factory for a new VM type
 	RegisterFactory(ctx context.Context, vmID ids.ID, factory Factory) error
 
-	// ListFactories returns all the IDs that have had factories registered.
-	ListFactories() ([]ids.ID, error)
+	// GetFactory returns a factory for the given VM ID
+	GetFactory(ctx context.Context, vmID ids.ID) (Factory, error)
 
-	// Versions returns the primary alias of the VM mapped to the reported
-	// version of the VM for all the registered VMs that reported versions.
-	Versions() (map[string]string, error)
-}
+	// ListFactories returns all registered VM factories
+	ListFactories(ctx context.Context) ([]ids.ID, error)
 
-type manager struct {
-	// Note: The string representation of a VM's ID is also considered to be an
-	// alias of the VM. That is, [vmID].String() is an alias for [vmID].
-	ids.Aliaser
+	// Aliases returns all aliases for the given VM ID
+	Aliases(ctx context.Context, vmID ids.ID) ([]string, error)
 
-	log log.Logger
+	// Alias registers an alias for a VM ID
+	Alias(ctx context.Context, vmID ids.ID, alias string) error
 
-	lock sync.RWMutex
+	// PrimaryAlias returns the primary alias for a VM ID
+	PrimaryAlias(ctx context.Context, vmID ids.ID) (string, error)
 
-	// Key: A VM's ID
-	// Value: A factory that creates new instances of that VM
-	factories map[ids.ID]Factory
+	// Lookup returns the VM ID for a given alias
+	Lookup(ctx context.Context, alias string) (ids.ID, error)
 
-	// Key: A VM's ID
-	// Value: version the VM returned
-	versions map[ids.ID]string
-}
-
-// NewManager returns an instance of a VM manager
-func NewManager(log log.Logger, aliaser ids.Aliaser) Manager {
-	return &manager{
-		Aliaser:   aliaser,
-		log:       log,
-		factories: make(map[ids.ID]Factory),
-		versions:  make(map[ids.ID]string),
-	}
-}
-
-func (m *manager) GetFactory(vmID ids.ID) (Factory, error) {
-	m.lock.RLock()
-	defer m.lock.RUnlock()
-
-	if factory, ok := m.factories[vmID]; ok {
-		return factory, nil
-	}
-	return nil, fmt.Errorf("%q was %w", vmID, ErrNotFound)
-}
-
-func (m *manager) RegisterFactory(ctx context.Context, vmID ids.ID, factory Factory) error {
-	m.lock.Lock()
-	defer m.lock.Unlock()
-
-	if _, exists := m.factories[vmID]; exists {
-		return fmt.Errorf("%q was already registered as a vm", vmID)
-	}
-	if err := m.Alias(vmID, vmID.String()); err != nil {
-		return err
-	}
-
-	m.factories[vmID] = factory
-
-	vm, err := factory.New(m.log)
-	if err != nil {
-		return err
-	}
-
-	commonVM, ok := vm.(interfaces.VM)
-	if !ok {
-		return nil
-	}
-
-	// Shutdown the VM
-	return commonVM.Shutdown(context.Background())
-}
-
-func (m *manager) ListFactories() ([]ids.ID, error) {
-	m.lock.RLock()
-	defer m.lock.RUnlock()
-
-	return slices.Collect(maps.Keys(m.factories)), nil
-}
-
-func (m *manager) Versions() (map[string]string, error) {
-	m.lock.RLock()
-	defer m.lock.RUnlock()
-
-	versions := make(map[string]string, len(m.versions))
-	for vmID, version := range m.versions {
-		alias, err := m.PrimaryAlias(vmID)
-		if err != nil {
-			return nil, err
-		}
-		versions[alias] = version
-	}
-	return versions, nil
+	// Versions returns version strings keyed by VM alias or ID.
+	Versions(ctx context.Context) (map[string]string, error)
 }

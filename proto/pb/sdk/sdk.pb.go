@@ -163,7 +163,7 @@ func (x *PushGossip) GetGossip() [][]byte {
 	return nil
 }
 
-// SignatureRequest is an AppRequest message type for requesting
+// SignatureRequest is a Request message type for requesting
 // a BLS signature over a Warp message, as defined in LP-118:
 // https://github.com/luxfi/LPs/tree/main/LPs/118-warp-signature-request
 type SignatureRequest struct {
@@ -221,7 +221,7 @@ func (x *SignatureRequest) GetJustification() []byte {
 	return nil
 }
 
-// SignatureResponse is an AppResponse message type for providing
+// SignatureResponse is a Response message type for providing
 // a requested BLS signature over a Warp message, as defined in LP-118:
 // https://github.com/luxfi/LPs/tree/main/LPs/118-warp-signature-request
 type SignatureResponse struct {

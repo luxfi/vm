@@ -26,7 +26,6 @@ import (
 	"github.com/luxfi/metric/profiler"
 	"github.com/luxfi/vm/api"
 	"github.com/luxfi/vm/api/server"
-	"github.com/luxfi/vm/chains"
 	"github.com/luxfi/vm/manager"
 	"github.com/luxfi/vm/registry"
 )
@@ -55,7 +54,7 @@ type Config struct {
 	LogFactory   log.Factory
 	NodeConfig   interface{}
 	DB           database.Database
-	ChainManager chains.Manager
+	ChainManager manager.ChainManager
 	HTTPServer   server.PathAdderWithReadLock
 	VMRegistry   registry.VMRegistry
 	VMManager    manager.Manager
@@ -365,10 +364,15 @@ func (a *Admin) LoadVMs(r *http.Request, _ *struct{}, reply *LoadVMsReply) error
 	}
 
 	reply.FailedVMs = failedVMsParsed
-	reply.NewVMs, err = ids.GetRelevantAliases(a.VMManager, loadedVMs)
-	if err != nil {
-		return err
+	newVMs := make(map[ids.ID][]string, len(loadedVMs))
+	for _, vmID := range loadedVMs {
+		aliases, err := a.VMManager.Aliases(ctx, vmID)
+		if err != nil {
+			return err
+		}
+		newVMs[vmID] = aliases
 	}
+	reply.NewVMs = newVMs
 
 	// Hot-loading: retry chains that were waiting for these VMs
 	totalRetried := 0
@@ -458,7 +462,7 @@ type ListVMsReply struct {
 }
 
 // ListVMs returns all registered VMs with their IDs, aliases, and paths
-func (a *Admin) ListVMs(_ *http.Request, _ *struct{}, reply *ListVMsReply) error {
+func (a *Admin) ListVMs(r *http.Request, _ *struct{}, reply *ListVMsReply) error {
 	a.Log.Debug("API called",
 		log.String("service", "admin"),
 		log.String("method", "listVMs"),
@@ -468,7 +472,7 @@ func (a *Admin) ListVMs(_ *http.Request, _ *struct{}, reply *ListVMsReply) error
 	defer a.lock.RUnlock()
 
 	// Get all registered VM IDs
-	vmIDs, err := a.VMManager.ListFactories()
+	vmIDs, err := a.VMManager.ListFactories(r.Context())
 	if err != nil {
 		return err
 	}
@@ -499,7 +503,7 @@ func (a *Admin) ListVMs(_ *http.Request, _ *struct{}, reply *ListVMsReply) error
 
 	reply.VMs = make(map[string]VMInfo, len(vmIDs))
 	for _, vmID := range vmIDs {
-		aliases, err := a.VMManager.Aliases(vmID)
+		aliases, err := a.VMManager.Aliases(r.Context(), vmID)
 		if err != nil {
 			return err
 		}
