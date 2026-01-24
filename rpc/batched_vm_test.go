@@ -1,3 +1,5 @@
+//go:build grpc
+
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
@@ -16,7 +18,7 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/components/chain/blocktest"
 
-	"github.com/luxfi/consensus/engine/chain/block"
+	"github.com/luxfi/vm/chain"
 )
 
 var (

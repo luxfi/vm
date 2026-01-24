@@ -7,20 +7,21 @@ import (
 	"context"
 	"errors"
 
-	"github.com/luxfi/consensus/engine/chain/block"
+	"github.com/luxfi/runtime"
+	vmchain "github.com/luxfi/vm/chain"
 )
 
 var (
-	_ block.Block             = (*BlockWrapper)(nil)
-	_ block.WithVerifyContext = (*BlockWrapper)(nil)
+	_ vmchain.Block             = (*BlockWrapper)(nil)
+	_ vmchain.WithVerifyRuntime = (*BlockWrapper)(nil)
 
-	errExpectedBlockWithVerifyContext = errors.New("expected block.WithVerifyContext")
+	errExpectedBlockWithVerifyRuntime = errors.New("expected vmchain.WithVerifyRuntime")
 )
 
 // BlockWrapper wraps a linear Block while adding a smart caching layer to improve
 // VM performance.
 type BlockWrapper struct {
-	block.Block
+	vmchain.Block
 
 	state *State
 }
@@ -44,44 +45,44 @@ func (bw *BlockWrapper) Verify(ctx context.Context) error {
 	return nil
 }
 
-// VerifyWithContext verifies the underlying block with context
-func (bw *BlockWrapper) VerifyWithContext(ctx context.Context, blockCtx *block.Context) error {
+// VerifyWithRuntime verifies the underlying block with runtime
+func (bw *BlockWrapper) VerifyWithRuntime(ctx context.Context, rt *runtime.Runtime) error {
 	// If the embedded block supports context verification, use it
-	if withCtx, ok := bw.Block.(block.WithVerifyContext); ok {
-		shouldVerify, err := withCtx.ShouldVerifyWithContext(ctx)
+	if withCtx, ok := bw.Block.(vmchain.WithVerifyRuntime); ok {
+		shouldVerify, err := withCtx.ShouldVerifyWithRuntime(ctx)
 		if err != nil {
 			return err
 		}
 		if shouldVerify {
-			return withCtx.VerifyWithContext(ctx, blockCtx)
+			return withCtx.VerifyWithRuntime(ctx, rt)
 		}
 	}
 	// Otherwise fall back to regular Verify
 	return bw.Verify(ctx)
 }
 
-// ShouldVerifyWithContext checks if the underlying block should be verified
+// ShouldVerifyWithRuntime checks if the underlying block should be verified
 // with a block context. If the underlying block does not implement the
-// block.WithVerifyContext interface, returns false without an error. Does not
+// vmchain.WithVerifyRuntime interface, returns false without an error. Does not
 // touch any block cache.
-func (bw *BlockWrapper) ShouldVerifyWithContext(ctx context.Context) (bool, error) {
-	blkWithCtx, ok := bw.Block.(block.WithVerifyContext)
+func (bw *BlockWrapper) ShouldVerifyWithRuntime(ctx context.Context) (bool, error) {
+	blkWithCtx, ok := bw.Block.(vmchain.WithVerifyRuntime)
 	if !ok {
 		return false, nil
 	}
-	return blkWithCtx.ShouldVerifyWithContext(ctx)
+	return blkWithCtx.ShouldVerifyWithRuntime(ctx)
 }
 
-// VerifyWithContext verifies the underlying block with the given block context,
+// VerifyWithRuntime verifies the underlying block with the given runtime,
 // evicts from the unverified block cache and if the block passes verification,
 // adds it to [cache.verifiedBlocks].
 // Note: it is guaranteed that if a block passes verification it will be added
 // to consensus and eventually be decided ie. either Accept/Reject will be
 // called on [bw] removing it from [verifiedBlocks].
 //
-// Note: If the underlying block does not implement the block.WithVerifyContext
-// interface, an error is always returned because ShouldVerifyWithContext will
-// always return false in this case and VerifyWithContext should never be
+// Note: If the underlying block does not implement the consensuschain.WithVerifyRuntime
+// interface, an error is always returned because ShouldVerifyWithRuntime will
+// always return false in this case and VerifyWithRuntime should never be
 // called.
 
 // Accept accepts the underlying block, removes it from verifiedBlocks, caches it as a decided
@@ -107,8 +108,8 @@ func (bw *BlockWrapper) Reject(ctx context.Context) error {
 // OracleBlock is a block that can have multiple valid children, and one needs
 // to be chosen by an oracle.
 type OracleBlock interface {
-	block.Block
+	vmchain.Block
 
 	// Options returns the block options that may be chosen by the oracle.
-	Options(context.Context) ([2]block.Block, error)
+	Options(context.Context) ([2]vmchain.Block, error)
 }

@@ -16,9 +16,9 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/vm/chains"
 	"github.com/luxfi/vm/manager/vmsmock"
 	"github.com/luxfi/vm/registry/registrymock"
+	vmmanager "github.com/luxfi/vm/manager"
 )
 
 type loadVMsTest struct {
@@ -38,7 +38,7 @@ func initLoadVMsTest(t *testing.T) *loadVMsTest {
 			Log:          log.NewNoOpLogger(),
 			VMRegistry:   mockVMRegistry,
 			VMManager:    mockVMManager,
-			ChainManager: chains.TestManager,
+			ChainManager: vmmanager.TestChainManager,
 		}},
 		mockVMManager:  mockVMManager,
 		mockVMRegistry: mockVMRegistry,

@@ -1,3 +1,5 @@
+//go:build grpc
+
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
@@ -12,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/luxfi/consensus/engine/chain/block"
 	"github.com/luxfi/log"
 	"github.com/luxfi/metric"
 	"google.golang.org/grpc"
@@ -20,26 +23,25 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	apiruntime "github.com/luxfi/consensus/runtime"
-	"github.com/luxfi/consensus/engine"
-	chainblock "github.com/luxfi/consensus/engine/chain/block"
-	validators "github.com/luxfi/consensus/validator"
+	"github.com/luxfi/codec/wrappers"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
-	platformwarp "github.com/luxfi/protocol/p/warp"
 	"github.com/luxfi/protocol/p/warp/gwarp"
-	"github.com/luxfi/upgrade"
 	"github.com/luxfi/resource"
-	"github.com/luxfi/codec/wrappers"
+	apiruntime "github.com/luxfi/runtime"
+	"github.com/luxfi/upgrade"
+	validators "github.com/luxfi/validators"
+	"github.com/luxfi/version"
 	"github.com/luxfi/vm/api/metrics"
+	vmchain "github.com/luxfi/vm/chain"
 	"github.com/luxfi/vm/chains/atomic"
 	"github.com/luxfi/vm/chains/atomic/gsharedmemory"
-	"github.com/luxfi/vm/components/chain"
+	componentschain "github.com/luxfi/vm/components/chain"
 	"github.com/luxfi/vm/internal/database/rpcdb"
 	"github.com/luxfi/vm/internal/ids/galiasreader"
-	"github.com/luxfi/vm/rpc/appsender"
+	senderrpc "github.com/luxfi/vm/rpc/sender"
 	"github.com/luxfi/vm/rpc/ghttp"
 	"github.com/luxfi/vm/rpc/grpcutils"
 	"github.com/luxfi/vm/rpc/gvalidators"
@@ -48,7 +50,7 @@ import (
 
 	grpc_metric "github.com/grpc-ecosystem/go-grpc-prometheus"
 	aliasreaderpb "github.com/luxfi/node/proto/pb/aliasreader"
-	appsenderpb "github.com/luxfi/node/proto/pb/appsender"
+	senderpb "github.com/luxfi/vm/proto/pb/sender"
 	httppb "github.com/luxfi/node/proto/pb/http"
 	rpcdbpb "github.com/luxfi/node/proto/pb/rpcdb"
 	sharedmemorypb "github.com/luxfi/node/proto/pb/sharedmemory"
@@ -62,16 +64,16 @@ var (
 	errUnsupportedFXs                       = errors.New("unsupported feature extensions")
 	errBatchedParseBlockWrongNumberOfBlocks = errors.New("BatchedParseBlock returned different number of blocks than expected")
 
-	_ chainblock.ChainVM                      = (*VMClient)(nil)
-	_ chainblock.BuildBlockWithContextChainVM = (*VMClient)(nil)
-	_ chainblock.BatchedChainVM               = (*VMClient)(nil)
-	_ chainblock.StateSyncableVM              = (*VMClient)(nil)
-	_ metric.Gatherer                         = (*VMClient)(nil)
+	_ vmchain.ChainVM                      = (*VMClient)(nil)
+	_ vmchain.BuildBlockWithRuntimeChainVM = (*VMClient)(nil)
+	_ vmchain.BatchedChainVM               = (*VMClient)(nil)
+	_ vmchain.StateSyncableVM              = (*VMClient)(nil)
+	_ metric.Gatherer                      = (*VMClient)(nil)
 
-	_ chainblock.Block             = (*blockClient)(nil)
-	_ chainblock.WithVerifyContext = (*blockClient)(nil)
+	_ vmchain.Block             = (*blockClient)(nil)
+	_ vmchain.WithVerifyRuntime = (*blockClient)(nil)
 
-	_ chainblock.StateSummary = (*summaryClient)(nil)
+	_ vmchain.StateSummary = (*summaryClient)(nil)
 )
 
 // isNotImplementedError checks if a gRPC error indicates "not implemented"
@@ -96,7 +98,7 @@ func isNotImplementedError(err error) bool {
 
 // VMClient is an implementation of a VM that talks over RPC.
 type VMClient struct {
-	*chain.State
+	*componentschain.State
 	logger          log.Logger
 	client          vmpb.VMClient
 	runtime         runtime.Stopper
@@ -106,7 +108,7 @@ type VMClient struct {
 
 	sharedMemory         *gsharedmemory.Server
 	bcLookup             *galiasreader.Server
-	appSender            *appsender.Server
+	senderServer         senderrpc.SenderServer
 	validatorStateServer *gvalidators.Server
 	warpSignerServer     *gwarp.Server
 
@@ -138,149 +140,51 @@ func NewClient(
 
 func (vm *VMClient) Initialize(
 	ctx context.Context,
-	chainCtxIface interface{},
-	dbIface interface{},
-	genesisBytes []byte,
-	upgradeBytes []byte,
-	configBytes []byte,
-	msgChan interface{},
-	fxs []interface{},
-	appSender interface{},
+	init block.Init,
 ) error {
-	// Type assert to get concrete types
-	var consensusCtx *apiruntime.Runtime
-	if cc, ok := chainCtxIface.(*chainblock.ChainContext); ok && cc != nil {
-		consensusCtx = cc.Runtime
-		if consensusCtx != nil {
-			ctx = apiruntime.WithIDs(ctx, apiruntime.IDs{
-				NetworkID: consensusCtx.NetworkID,
-				ChainID:   consensusCtx.ChainID,
-				NodeID:    consensusCtx.NodeID,
-				PublicKey: consensusCtx.PublicKey,
-			})
-		}
-	}
-
-	// Get the current database from the manager
-	var db database.Database
-	if currentDB, ok := dbIface.(interface{ Current() database.Database }); ok {
-		db = currentDB.Current()
-	} else if directDB, ok := dbIface.(database.Database); ok {
-		// Handle direct database types (e.g., *prefixdb.Database)
-		db = directDB
-	}
-	if db == nil {
-		return fmt.Errorf("unable to get database from manager: dbIface type is %T", dbIface)
-	}
-	if len(fxs) != 0 {
+	// Check that fxs is empty (not supported)
+	if len(init.Fx) != 0 {
 		return errUnsupportedFXs
 	}
 
-	// Convert interface{} parameters to concrete types using VMContext interface
-	// Any type implementing apiruntime.VMContext will work
-	var chainCtx *Context
+	rt := init.Runtime
+	if rt == nil {
+		return errors.New("runtime must not be nil")
+	}
 
-	// Check if it's already our native Context type
-	if ctx, ok := chainCtxIface.(*Context); ok {
-		chainCtx = ctx
-	} else if vmCtx, ok := chainCtxIface.(apiruntime.VMContext); ok {
-		// Use VMContext interface to build local context
-		chainCtx = &Context{
-			NetworkID:    vmCtx.GetNetworkID(),
-			NetID:        vmCtx.GetChainID(),
-			ChainID:      vmCtx.GetChainID(),
-			NodeID:       vmCtx.GetNodeID(),
-			XChainID:     vmCtx.GetXChainID(),
-			CChainID:     vmCtx.GetCChainID(),
-			LUXAssetID:   vmCtx.GetAssetID(),
-			ChainDataDir: vmCtx.GetChainDataDir(),
-		}
-		// Handle type conversions for interface fields using VMContext getters
-		if logIface := vmCtx.GetLog(); logIface != nil {
-			if l, ok := logIface.(log.Logger); ok {
-				chainCtx.Log = l
-			}
-		}
-		if smIface := vmCtx.GetSharedMemory(); smIface != nil {
-			if sm, ok := smIface.(atomic.SharedMemory); ok {
-				chainCtx.SharedMemory = sm
-			}
-		}
-		if mIface := vmCtx.GetMetrics(); mIface != nil {
-			if m, ok := mIface.(metrics.MultiGatherer); ok {
-				chainCtx.Metrics = m
-			}
-		}
-		if vsIface := vmCtx.GetValidatorState(); vsIface != nil {
-			if vs, ok := vsIface.(validators.State); ok {
-				chainCtx.ValidatorState = vs
-			}
-		}
-		// BCLookup conversion - critical for plugin VM alias resolution
-		if bclIface := vmCtx.GetBCLookup(); bclIface != nil {
-			if bcl, ok := bclIface.(ids.AliaserReader); ok {
-				chainCtx.BCLookup = bcl
-			} else if bcl, ok := bclIface.(apiruntime.BCLookup); ok {
-				chainCtx.BCLookup = &bcLookupWrapper{bc: bcl}
-			} else if !vm.logger.IsZero() {
-				vm.logger.Warn("BCLookup has unrecognized type, alias resolution may fail",
-					log.String("type", fmt.Sprintf("%T", bclIface)))
-			}
-		}
-		// WarpSigner conversion - for BLS signing of warp messages
-		if wsIface := vmCtx.GetWarpSigner(); wsIface != nil {
-			if ws, ok := wsIface.(platformwarp.Signer); ok {
-				chainCtx.WarpSigner = ws
-			}
-		}
-		// PublicKey conversion from []byte
-		if pk := vmCtx.GetPublicKey(); len(pk) > 0 {
-			if pubKey, err := bls.PublicKeyFromCompressedBytes(pk); err == nil {
-				chainCtx.PublicKey = pubKey
-			}
-		}
-		// NetworkUpgrades conversion - critical for plugin VMs
-		if nuIface := vmCtx.GetNetworkUpgrades(); nuIface != nil {
-			if upgrades, ok := nuIface.(upgrade.Config); ok {
-				chainCtx.NetworkUpgrades = upgrades
-			} else if upgradesPtr, ok := nuIface.(*upgrade.Config); ok && upgradesPtr != nil {
-				chainCtx.NetworkUpgrades = *upgradesPtr
-			} else {
-				// Fall back to network-specific defaults
-				chainCtx.NetworkUpgrades = upgrade.GetConfig(vmCtx.GetNetworkID())
-				if !vm.logger.IsZero() {
-					vm.logger.Warn("NetworkUpgrades has unrecognized type, using network defaults",
-						log.String("type", fmt.Sprintf("%T", nuIface)),
-						log.Uint32("networkID", vmCtx.GetNetworkID()))
-				}
-			}
+	dbTyped := init.DB
+	genesisBytes := init.Genesis
+	upgradeBytes := init.Upgrade
+	configBytes := init.Config
+	sender := init.Sender
+
+	// NetworkUpgrades conversion
+	var upgrades upgrade.Config
+	if rt.NetworkUpgrades != nil {
+		if u, ok := rt.NetworkUpgrades.(*upgrade.Config); ok {
+			upgrades = *u
 		} else {
-			// No NetworkUpgrades provided, use network-specific defaults
-			chainCtx.NetworkUpgrades = upgrade.GetConfig(vmCtx.GetNetworkID())
+			// Fallback
+			upgrades = upgrade.GetConfig(rt.NetworkID)
+			if !vm.logger.IsZero() {
+				vm.logger.Warn("NetworkUpgrades has unrecognized type, using network defaults",
+					log.String("type", fmt.Sprintf("%T", rt.NetworkUpgrades)),
+					log.Uint32("networkID", rt.NetworkID))
+			}
 		}
 	} else {
-		return fmt.Errorf("chain context must implement VMContext interface, got %T", chainCtxIface)
-	}
-
-	// Convert appSender to concrete type
-	var appSenderConcrete warp.Sender
-	if appSender != nil {
-		appSenderConcrete = appSender.(warp.Sender)
-	}
-
-	var primaryAlias string
-	if chainCtx.BCLookup != nil {
-		var err error
-		primaryAlias, err = chainCtx.BCLookup.PrimaryAlias(chainCtx.ChainID)
-		if err != nil {
-			// If fetching the alias fails, we default to the chain's ID
-			primaryAlias = chainCtx.ChainID.String()
-		}
-	} else {
-		primaryAlias = chainCtx.ChainID.String()
+		upgrades = upgrade.GetConfig(rt.NetworkID)
 	}
 
 	// Register metrics
+	// Use ChainID as alias if lookup fails or is nil
+	primaryAlias := rt.ChainID.String()
+	if rt.BCLookup != nil {
+		if alias, err := rt.BCLookup.PrimaryAlias(rt.ChainID); err == nil {
+			primaryAlias = alias
+		}
+	}
+
 	serverReg, err := metric.MakeAndRegister(
 		vm.metricsGatherer,
 		primaryAlias,
@@ -293,36 +197,40 @@ func (vm *VMClient) Initialize(
 		return err
 	}
 
-	// Initialize the database
+	// Initialize the database server
 	dbServerListener, err := grpcutils.NewListener()
 	if err != nil {
 		return err
 	}
 	dbServerAddr := dbServerListener.Addr().String()
 
-	go grpcutils.Serve(dbServerListener, vm.newDBServer(db))
-	if !chainCtx.Log.IsZero() {
-		chainCtx.Log.Info("grpc: serving database",
+	go grpcutils.Serve(dbServerListener, vm.newDBServer(dbTyped))
+	if rt.Log != nil {
+		rt.Log.Info("grpc: serving database",
 			log.String("address", dbServerAddr),
 		)
 	}
 
-	if chainCtx.SharedMemory != nil {
-		vm.sharedMemory = gsharedmemory.NewServer(chainCtx.SharedMemory, db)
+	// Initialize other servers
+	if rt.SharedMemory != nil {
+		vm.sharedMemory = gsharedmemory.NewServer(rt.SharedMemory, dbTyped)
 	}
-	if chainCtx.BCLookup != nil {
-		vm.bcLookup = galiasreader.NewServer(chainCtx.BCLookup)
-	} else if !chainCtx.Log.IsZero() {
-		chainCtx.Log.Warn("BCLookup is nil - chain alias resolution will not work for plugin VM")
+	if rt.BCLookup != nil {
+		vm.bcLookup = galiasreader.NewServer(rt.BCLookup)
+	} else if rt.Log != nil {
+		rt.Log.Warn("BCLookup is nil - chain alias resolution will not work for plugin VM")
 	}
-	if appSenderConcrete != nil {
-		vm.appSender = appsender.NewServer(appSenderConcrete)
+
+	// Set up sender if provided
+	if sender != nil {
+		vm.senderServer = senderrpc.NewSenderServer(sender)
 	}
-	if chainCtx.ValidatorState != nil {
-		vm.validatorStateServer = gvalidators.NewServer(chainCtx.ValidatorState)
+
+	if rt.ValidatorState != nil {
+		vm.validatorStateServer = gvalidators.NewServer(rt.ValidatorState)
 	}
-	if chainCtx.WarpSigner != nil {
-		vm.warpSignerServer = gwarp.NewServer(chainCtx.WarpSigner)
+	if rt.WarpSigner != nil {
+		vm.warpSignerServer = gwarp.NewServer(rt.WarpSigner)
 	}
 
 	serverListener, err := grpcutils.NewListener()
@@ -332,46 +240,46 @@ func (vm *VMClient) Initialize(
 	serverAddr := serverListener.Addr().String()
 
 	go grpcutils.Serve(serverListener, vm.newInitServer())
-	if !chainCtx.Log.IsZero() {
-		chainCtx.Log.Info("grpc: serving vm services",
+	if rt.Log != nil {
+		rt.Log.Info("grpc: serving vm services",
 			log.String("address", serverAddr),
 		)
 	}
 
-	networkUpgrades := &vmpb.NetworkUpgrades{
-		ApricotPhase_1Time:            grpcutils.TimestampFromTime(chainCtx.NetworkUpgrades.ApricotPhase1Time),
-		ApricotPhase_2Time:            grpcutils.TimestampFromTime(chainCtx.NetworkUpgrades.ApricotPhase2Time),
-		ApricotPhase_3Time:            grpcutils.TimestampFromTime(chainCtx.NetworkUpgrades.ApricotPhase3Time),
-		ApricotPhase_4Time:            grpcutils.TimestampFromTime(chainCtx.NetworkUpgrades.ApricotPhase4Time),
-		ApricotPhase_4MinPChainHeight: chainCtx.NetworkUpgrades.ApricotPhase4MinPChainHeight,
-		ApricotPhase_5Time:            grpcutils.TimestampFromTime(chainCtx.NetworkUpgrades.ApricotPhase5Time),
-		ApricotPhasePre_6Time:         grpcutils.TimestampFromTime(chainCtx.NetworkUpgrades.ApricotPhasePre6Time),
-		ApricotPhase_6Time:            grpcutils.TimestampFromTime(chainCtx.NetworkUpgrades.ApricotPhase6Time),
-		ApricotPhasePost_6Time:        grpcutils.TimestampFromTime(chainCtx.NetworkUpgrades.ApricotPhasePost6Time),
-		BanffTime:                     grpcutils.TimestampFromTime(chainCtx.NetworkUpgrades.BanffTime),
-		CortinaTime:                   grpcutils.TimestampFromTime(chainCtx.NetworkUpgrades.CortinaTime),
-		CortinaXChainStopVertexId:     chainCtx.NetworkUpgrades.CortinaXChainStopVertexID[:],
-		DurangoTime:                   grpcutils.TimestampFromTime(chainCtx.NetworkUpgrades.DurangoTime),
-		EtnaTime:                      grpcutils.TimestampFromTime(chainCtx.NetworkUpgrades.EtnaTime),
-		FortunaTime:                   grpcutils.TimestampFromTime(chainCtx.NetworkUpgrades.FortunaTime),
-		GraniteTime:                   grpcutils.TimestampFromTime(chainCtx.NetworkUpgrades.GraniteTime),
+	networkUpgradesPB := &vmpb.NetworkUpgrades{
+		ApricotPhase_1Time:            grpcutils.TimestampFromTime(upgrades.ApricotPhase1Time),
+		ApricotPhase_2Time:            grpcutils.TimestampFromTime(upgrades.ApricotPhase2Time),
+		ApricotPhase_3Time:            grpcutils.TimestampFromTime(upgrades.ApricotPhase3Time),
+		ApricotPhase_4Time:            grpcutils.TimestampFromTime(upgrades.ApricotPhase4Time),
+		ApricotPhase_4MinPChainHeight: upgrades.ApricotPhase4MinPChainHeight,
+		ApricotPhase_5Time:            grpcutils.TimestampFromTime(upgrades.ApricotPhase5Time),
+		ApricotPhasePre_6Time:         grpcutils.TimestampFromTime(upgrades.ApricotPhasePre6Time),
+		ApricotPhase_6Time:            grpcutils.TimestampFromTime(upgrades.ApricotPhase6Time),
+		ApricotPhasePost_6Time:        grpcutils.TimestampFromTime(upgrades.ApricotPhasePost6Time),
+		BanffTime:                     grpcutils.TimestampFromTime(upgrades.BanffTime),
+		CortinaTime:                   grpcutils.TimestampFromTime(upgrades.CortinaTime),
+		CortinaXChainStopVertexId:     upgrades.CortinaXChainStopVertexID[:],
+		DurangoTime:                   grpcutils.TimestampFromTime(upgrades.DurangoTime),
+		EtnaTime:                      grpcutils.TimestampFromTime(upgrades.EtnaTime),
+		FortunaTime:                   grpcutils.TimestampFromTime(upgrades.FortunaTime),
+		GraniteTime:                   grpcutils.TimestampFromTime(upgrades.GraniteTime),
 	}
 
 	var publicKeyBytes []byte
-	if chainCtx.PublicKey != nil {
-		publicKeyBytes = bls.PublicKeyToCompressedBytes(chainCtx.PublicKey)
+	if len(rt.PublicKey) > 0 {
+		publicKeyBytes = rt.PublicKey
 	}
 
 	resp, err := vm.client.Initialize(ctx, &vmpb.InitializeRequest{
-		NetworkId:       chainCtx.NetworkID,
-		ChainId:         chainCtx.ChainID[:],
-		NodeId:          chainCtx.NodeID.Bytes(),
+		NetworkId:       rt.NetworkID,
+		ChainId:         rt.ChainID[:],
+		NodeId:          rt.NodeID.Bytes(),
 		PublicKey:       publicKeyBytes,
-		NetworkUpgrades: networkUpgrades,
-		XChainId:        chainCtx.XChainID[:],
-		CChainId:        chainCtx.CChainID[:],
-		LuxAssetId:      chainCtx.LUXAssetID[:],
-		ChainDataDir:    chainCtx.ChainDataDir,
+		NetworkUpgrades: networkUpgradesPB,
+		XChainId:        rt.XChainID[:],
+		CChainId:        rt.CChainID[:],
+		LuxAssetId:      rt.XAssetID[:], // Use XAssetID from Runtime
+		ChainDataDir:    rt.ChainDataDir,
 		GenesisBytes:    genesisBytes,
 		UpgradeBytes:    upgradeBytes,
 		ConfigBytes:     configBytes,
@@ -382,9 +290,9 @@ func (vm *VMClient) Initialize(
 		return err
 	}
 
-	if chainCtx.Metrics != nil {
+	if rt.Metrics != nil {
 		// Use "vm" prefix to avoid conflicts with the chain ID prefix already registered
-		if err := chainCtx.Metrics.Register("vm", vm); err != nil {
+		if err := rt.Metrics.Register("vm", vm); err != nil {
 			return err
 		}
 	}
@@ -403,7 +311,7 @@ func (vm *VMClient) Initialize(
 		return err
 	}
 
-	// We don't need to check whether this is a block.WithVerifyContext because
+	// We don't need to check whether this is a block.WithVerifyRuntime because
 	// we'll never Verify this block.
 	lastAcceptedBlk := &blockClient{
 		vm:       vm,
@@ -417,7 +325,7 @@ func (vm *VMClient) Initialize(
 	// Initialize the State if not already done
 	if vm.State == nil {
 		wrappedBlk := &protocolBlockWrapper{blockClient: lastAcceptedBlk}
-		vm.State = chain.NewState(&chain.Config{
+		vm.State = componentschain.NewState(&componentschain.Config{
 			DecidedCacheSize:      1024,
 			MissingCacheSize:      1024,
 			UnverifiedCacheSize:   64,
@@ -472,7 +380,11 @@ func (vm *VMClient) newInitServer() *grpc.Server {
 	// Register services
 	sharedmemorypb.RegisterSharedMemoryServer(server, vm.sharedMemory)
 	aliasreaderpb.RegisterAliasReaderServer(server, vm.bcLookup)
-	appsenderpb.RegisterAppSenderServer(server, vm.appSender)
+	if vm.senderServer != nil {
+		if grpcReg := vm.senderServer.GRPCRegistrar(); grpcReg != nil {
+			senderpb.RegisterSenderServer(server, grpcReg.(senderpb.SenderServer))
+		}
+	}
 	healthpb.RegisterHealthServer(server, grpcHealth)
 	validatorstatepb.RegisterValidatorStateServer(server, vm.validatorStateServer)
 	warppb.RegisterSignerServer(server, vm.warpSignerServer)
@@ -506,7 +418,7 @@ func (vm *VMClient) SetState(ctx context.Context, state uint32) error {
 		return err
 	}
 
-	// We don't need to check whether this is a block.WithVerifyContext because
+	// We don't need to check whether this is a block.WithVerifyRuntime because
 	// we'll never Verify this block.
 	return vm.SetLastAcceptedBlock(&protocolBlockWrapper{blockClient: &blockClient{
 		vm:       vm,
@@ -553,8 +465,8 @@ func (vm *VMClient) CreateHandlers(ctx context.Context) (map[string]http.Handler
 	return handlers, nil
 }
 
-func (vm *VMClient) Connected(ctx context.Context, nodeID ids.NodeID, nodeVersion interface{}) error {
-	// Connected is not part of block.ChainVM interface - no-op
+func (vm *VMClient) Connected(ctx context.Context, nodeID ids.NodeID, nodeVersion *version.Application) error {
+	// Connected is a no-op for RPC client
 	_ = nodeID
 	_ = nodeVersion
 	return nil
@@ -568,7 +480,7 @@ func (vm *VMClient) Disconnected(ctx context.Context, nodeID ids.NodeID) error {
 
 // If the underlying VM doesn't actually implement this method, its [BuildBlock]
 // method will be called instead.
-func (vm *VMClient) buildBlockWithContext(ctx context.Context, blockCtx *chainblock.Context) (chainblock.Block, error) {
+func (vm *VMClient) buildBlockWithRuntime(ctx context.Context, blockCtx *apiruntime.Runtime) (vmchain.Block, error) {
 	resp, err := vm.client.BuildBlock(ctx, &vmpb.BuildBlockRequest{
 		PChainHeight: &blockCtx.PChainHeight,
 	})
@@ -582,7 +494,7 @@ func (vm *VMClient) buildBlockWithContext(ctx context.Context, blockCtx *chainbl
 	return &componentsBlockWrapper{blockClient: blk}, nil
 }
 
-func (vm *VMClient) buildBlock(ctx context.Context) (chainblock.Block, error) {
+func (vm *VMClient) buildBlock(ctx context.Context) (vmchain.Block, error) {
 	resp, err := vm.client.BuildBlock(ctx, &vmpb.BuildBlockRequest{})
 	if err != nil {
 		return nil, err
@@ -594,7 +506,7 @@ func (vm *VMClient) buildBlock(ctx context.Context) (chainblock.Block, error) {
 	return &componentsBlockWrapper{blockClient: blk}, nil
 }
 
-func (vm *VMClient) parseBlock(ctx context.Context, bytes []byte) (chainblock.Block, error) {
+func (vm *VMClient) parseBlock(ctx context.Context, bytes []byte) (vmchain.Block, error) {
 	resp, err := vm.client.ParseBlock(ctx, &vmpb.ParseBlockRequest{
 		Bytes: bytes,
 	})
@@ -623,11 +535,11 @@ func (vm *VMClient) parseBlock(ctx context.Context, bytes []byte) (chainblock.Bl
 		bytes:               bytes,
 		height:              resp.Height,
 		time:                time,
-		shouldVerifyWithCtx: resp.VerifyWithContext,
+		shouldVerifyWithCtx: resp.VerifyWithRuntime,
 	}}, nil
 }
 
-func (vm *VMClient) getBlock(ctx context.Context, blkID ids.ID) (chainblock.Block, error) {
+func (vm *VMClient) getBlock(ctx context.Context, blkID ids.ID) (vmchain.Block, error) {
 	resp, err := vm.client.GetBlock(ctx, &vmpb.GetBlockRequest{
 		Id: blkID[:],
 	})
@@ -654,7 +566,7 @@ func (vm *VMClient) getBlock(ctx context.Context, blkID ids.ID) (chainblock.Bloc
 		bytes:               resp.Bytes,
 		height:              resp.Height,
 		time:                time,
-		shouldVerifyWithCtx: resp.VerifyWithContext,
+		shouldVerifyWithCtx: resp.VerifyWithRuntime,
 	}}, nil
 }
 
@@ -665,15 +577,24 @@ func (vm *VMClient) SetPreference(ctx context.Context, blkID ids.ID) error {
 	return err
 }
 
-func (vm *VMClient) HealthCheck(ctx context.Context) (interface{}, error) {
+func (vm *VMClient) HealthCheck(ctx context.Context) (block.HealthCheckResult, error) {
 	// HealthCheck is a special case, where we want to fail fast instead of block.
 	failFast := grpc.WaitForReady(false)
 	health, err := vm.client.Health(ctx, &emptypb.Empty{}, failFast)
 	if err != nil {
-		return nil, fmt.Errorf("health check failed: %w", err)
+		return block.HealthCheckResult{}, fmt.Errorf("health check failed: %w", err)
 	}
 
-	return json.RawMessage(health.Details), nil
+	// Parse details from JSON if available
+	var details map[string]string
+	if len(health.Details) > 0 {
+		_ = json.Unmarshal(health.Details, &details)
+	}
+
+	return block.HealthCheckResult{
+		Healthy: true, // If we got here without error, it's healthy
+		Details: details,
+	}, nil
 }
 
 func (vm *VMClient) Version(ctx context.Context) (string, error) {
@@ -684,10 +605,10 @@ func (vm *VMClient) Version(ctx context.Context) (string, error) {
 	return resp.Version, nil
 }
 
-func (vm *VMClient) AppRequest(ctx context.Context, nodeID ids.NodeID, requestID uint32, deadline time.Time, request []byte) error {
-	_, err := vm.client.AppRequest(
+func (vm *VMClient) Request(ctx context.Context, nodeID ids.NodeID, requestID uint32, deadline time.Time, request []byte) error {
+	_, err := vm.client.Request(
 		ctx,
-		&vmpb.AppRequestMsg{
+		&vmpb.RequestMsg{
 			NodeId:    nodeID.Bytes(),
 			RequestId: requestID,
 			Request:   request,
@@ -697,10 +618,10 @@ func (vm *VMClient) AppRequest(ctx context.Context, nodeID ids.NodeID, requestID
 	return err
 }
 
-func (vm *VMClient) AppResponse(ctx context.Context, nodeID ids.NodeID, requestID uint32, response []byte) error {
-	_, err := vm.client.AppResponse(
+func (vm *VMClient) Response(ctx context.Context, nodeID ids.NodeID, requestID uint32, response []byte) error {
+	_, err := vm.client.Response(
 		ctx,
-		&vmpb.AppResponseMsg{
+		&vmpb.ResponseMsg{
 			NodeId:    nodeID.Bytes(),
 			RequestId: requestID,
 			Response:  response,
@@ -709,22 +630,22 @@ func (vm *VMClient) AppResponse(ctx context.Context, nodeID ids.NodeID, requestI
 	return err
 }
 
-func (vm *VMClient) AppRequestFailed(ctx context.Context, nodeID ids.NodeID, requestID uint32, appErr *warp.Error) error {
-	msg := &vmpb.AppRequestFailedMsg{
+func (vm *VMClient) RequestFailed(ctx context.Context, nodeID ids.NodeID, requestID uint32, appErr *warp.Error) error {
+	msg := &vmpb.RequestFailedMsg{
 		NodeId:       nodeID.Bytes(),
 		RequestId:    requestID,
 		ErrorCode:    appErr.Code,
 		ErrorMessage: appErr.Message,
 	}
 
-	_, err := vm.client.AppRequestFailed(ctx, msg)
+	_, err := vm.client.RequestFailed(ctx, msg)
 	return err
 }
 
-func (vm *VMClient) AppGossip(ctx context.Context, nodeID ids.NodeID, msg []byte) error {
-	_, err := vm.client.AppGossip(
+func (vm *VMClient) Gossip(ctx context.Context, nodeID ids.NodeID, msg []byte) error {
+	_, err := vm.client.Gossip(
 		ctx,
-		&vmpb.AppGossipMsg{
+		&vmpb.GossipMsg{
 			NodeId: nodeID.Bytes(),
 			Msg:    msg,
 		},
@@ -759,7 +680,7 @@ func (vm *VMClient) GetAncestors(
 	return resp.BlksBytes, nil
 }
 
-func (vm *VMClient) batchedParseBlock(ctx context.Context, blksBytes [][]byte) ([]chainblock.Block, error) {
+func (vm *VMClient) batchedParseBlock(ctx context.Context, blksBytes [][]byte) ([]vmchain.Block, error) {
 	resp, err := vm.client.BatchedParseBlock(ctx, &vmpb.BatchedParseBlockRequest{
 		Request: blksBytes,
 	})
@@ -770,7 +691,7 @@ func (vm *VMClient) batchedParseBlock(ctx context.Context, blksBytes [][]byte) (
 		return nil, errBatchedParseBlockWrongNumberOfBlocks
 	}
 
-	res := make([]chainblock.Block, 0, len(blksBytes))
+	res := make([]vmchain.Block, 0, len(blksBytes))
 	for idx, blkResp := range resp.Response {
 		id, err := ids.ToID(blkResp.Id)
 		if err != nil {
@@ -794,7 +715,7 @@ func (vm *VMClient) batchedParseBlock(ctx context.Context, blksBytes [][]byte) (
 			bytes:               blksBytes[idx],
 			height:              blkResp.Height,
 			time:                time,
-			shouldVerifyWithCtx: blkResp.VerifyWithContext,
+			shouldVerifyWithCtx: blkResp.VerifyWithRuntime,
 		}})
 	}
 
@@ -832,18 +753,18 @@ func (vm *VMClient) StateSyncEnabled(ctx context.Context) (bool, error) {
 		return false, err
 	}
 	err = errEnumToError[resp.Err]
-	if err == chainblock.ErrStateSyncableVMNotImplemented {
+	if err == vmchain.ErrStateSyncableVMNotImplemented {
 		return false, nil
 	}
 	return resp.Enabled, err
 }
 
-func (vm *VMClient) GetOngoingSyncStateSummary(ctx context.Context) (chainblock.StateSummary, error) {
+func (vm *VMClient) GetOngoingSyncStateSummary(ctx context.Context) (vmchain.StateSummary, error) {
 	resp, err := vm.client.GetOngoingSyncStateSummary(ctx, &emptypb.Empty{})
 	if err != nil {
 		// Check if this is the "not implemented" gRPC error
 		if isNotImplementedError(err) {
-			return nil, chainblock.ErrStateSyncableVMNotImplemented
+			return nil, vmchain.ErrStateSyncableVMNotImplemented
 		}
 		return nil, err
 	}
@@ -860,12 +781,12 @@ func (vm *VMClient) GetOngoingSyncStateSummary(ctx context.Context) (chainblock.
 	}, err
 }
 
-func (vm *VMClient) GetLastStateSummary(ctx context.Context) (chainblock.StateSummary, error) {
+func (vm *VMClient) GetLastStateSummary(ctx context.Context) (vmchain.StateSummary, error) {
 	resp, err := vm.client.GetLastStateSummary(ctx, &emptypb.Empty{})
 	if err != nil {
 		// Check if this is the "not implemented" gRPC error
 		if isNotImplementedError(err) {
-			return nil, chainblock.ErrStateSyncableVMNotImplemented
+			return nil, vmchain.ErrStateSyncableVMNotImplemented
 		}
 		return nil, err
 	}
@@ -882,7 +803,7 @@ func (vm *VMClient) GetLastStateSummary(ctx context.Context) (chainblock.StateSu
 	}, err
 }
 
-func (vm *VMClient) ParseStateSummary(ctx context.Context, summaryBytes []byte) (chainblock.StateSummary, error) {
+func (vm *VMClient) ParseStateSummary(ctx context.Context, summaryBytes []byte) (vmchain.StateSummary, error) {
 	resp, err := vm.client.ParseStateSummary(
 		ctx,
 		&vmpb.ParseStateSummaryRequest{
@@ -892,7 +813,7 @@ func (vm *VMClient) ParseStateSummary(ctx context.Context, summaryBytes []byte) 
 	if err != nil {
 		// Check if this is the "not implemented" gRPC error
 		if isNotImplementedError(err) {
-			return nil, chainblock.ErrStateSyncableVMNotImplemented
+			return nil, vmchain.ErrStateSyncableVMNotImplemented
 		}
 		return nil, err
 	}
@@ -909,7 +830,7 @@ func (vm *VMClient) ParseStateSummary(ctx context.Context, summaryBytes []byte) 
 	}, err
 }
 
-func (vm *VMClient) GetStateSummary(ctx context.Context, summaryHeight uint64) (chainblock.StateSummary, error) {
+func (vm *VMClient) GetStateSummary(ctx context.Context, summaryHeight uint64) (vmchain.StateSummary, error) {
 	resp, err := vm.client.GetStateSummary(
 		ctx,
 		&vmpb.GetStateSummaryRequest{
@@ -919,7 +840,7 @@ func (vm *VMClient) GetStateSummary(ctx context.Context, summaryHeight uint64) (
 	if err != nil {
 		// Check if this is the "not implemented" gRPC error
 		if isNotImplementedError(err) {
-			return nil, chainblock.ErrStateSyncableVMNotImplemented
+			return nil, vmchain.ErrStateSyncableVMNotImplemented
 		}
 		return nil, err
 	}
@@ -955,7 +876,7 @@ func (vm *VMClient) newBlockFromBuildBlock(resp *vmpb.BuildBlockResponse) (*bloc
 		bytes:               resp.Bytes,
 		height:              resp.Height,
 		time:                time,
-		shouldVerifyWithCtx: resp.VerifyWithContext,
+		shouldVerifyWithCtx: resp.VerifyWithRuntime,
 	}, err
 }
 
@@ -1037,11 +958,11 @@ func (b *blockClient) Status() uint8 {
 	return 0 // Status tracking is handled by the VM
 }
 
-func (b *blockClient) ShouldVerifyWithContext(context.Context) (bool, error) {
+func (b *blockClient) ShouldVerifyWithRuntime(context.Context) (bool, error) {
 	return b.shouldVerifyWithCtx, nil
 }
 
-func (b *blockClient) VerifyWithContext(ctx context.Context, blockCtx *chainblock.Context) error {
+func (b *blockClient) VerifyWithRuntime(ctx context.Context, blockCtx *apiruntime.Runtime) error {
 	resp, err := b.vm.client.BlockVerify(ctx, &vmpb.BlockVerifyRequest{
 		Bytes:        b.bytes,
 		PChainHeight: &blockCtx.PChainHeight,
@@ -1074,7 +995,7 @@ func (s *summaryClient) Bytes() []byte {
 	return s.bytes
 }
 
-func (s *summaryClient) Accept(ctx context.Context) (chainblock.StateSyncMode, error) {
+func (s *summaryClient) Accept(ctx context.Context) (vmchain.StateSyncMode, error) {
 	resp, err := s.vm.client.StateSummaryAccept(
 		ctx,
 		&vmpb.StateSummaryAcceptRequest{
@@ -1082,62 +1003,77 @@ func (s *summaryClient) Accept(ctx context.Context) (chainblock.StateSyncMode, e
 		},
 	)
 	if err != nil {
-		return chainblock.StateSyncSkipped, err
+		return vmchain.StateSyncSkipped, err
 	}
-	return chainblock.StateSyncMode(resp.Mode), errEnumToError[resp.Err]
+	return vmchain.StateSyncMode(resp.Mode), errEnumToError[resp.Err]
 }
 
-// WaitForEvent implements the VM interface
-func (vm *VMClient) WaitForEvent(ctx context.Context) (interface{}, error) {
-	// The RPC VM client doesn't directly handle events,
-	// it relies on the server-side VM for event handling
-	<-ctx.Done()
-	return engine.PendingTxs, ctx.Err()
+// WaitForEvent implements the VM interface by calling the gRPC endpoint on the plugin VM.
+// This is critical for block building - when the VM has pending transactions, it signals
+// through WaitForEvent which triggers consensus to call BuildBlock.
+func (vm *VMClient) WaitForEvent(ctx context.Context) (block.Message, error) {
+	resp, err := vm.client.WaitForEvent(ctx, &emptypb.Empty{})
+	if err != nil {
+		return block.Message{}, err
+	}
+
+	// Convert protobuf Message enum to block.Message
+	// Proto: MESSAGE_BUILD_BLOCK (1) -> PendingTxs
+	// Proto: MESSAGE_STATE_SYNC_FINISHED (2) -> StateSyncDone
+	switch resp.Message {
+	case vmpb.Message_MESSAGE_BUILD_BLOCK:
+		return block.Message{Type: block.PendingTxs}, nil
+	case vmpb.Message_MESSAGE_STATE_SYNC_FINISHED:
+		return block.Message{Type: block.StateSyncDone}, nil
+	default:
+		// Default to PendingTxs for unspecified or unknown messages
+		return block.Message{Type: block.PendingTxs}, nil
+	}
 }
 
 // NewHTTPHandler implements the VM interface
-func (vm *VMClient) NewHTTPHandler(ctx context.Context) (interface{}, error) {
+func (vm *VMClient) NewHTTPHandler(ctx context.Context) (http.Handler, error) {
 	// RPC VM uses CreateHandlers instead of a single handler
 	return nil, nil
 }
 
 // BuildBlock implements the block.ChainVM interface
-func (vm *VMClient) BuildBlock(ctx context.Context) (chainblock.Block, error) {
+func (vm *VMClient) BuildBlock(ctx context.Context) (vmchain.Block, error) {
 	innerBlk, err := vm.buildBlock(ctx)
 	if err != nil {
 		return nil, err
 	}
-	// Convert chainblock.Block to block.Block through wrapper
+	// Convert vmchain.Block to block.Block through wrapper
 	return &chainBlockWrapper{innerBlk}, nil
 }
 
-// BuildBlockWithContext implements the block.BuildBlockWithContextChainVM interface
-func (vm *VMClient) BuildBlockWithContext(ctx context.Context, blockCtx *chainblock.Context) (chainblock.Block, error) {
-	innerBlk, err := vm.buildBlockWithContext(ctx, blockCtx)
+// BuildBlockWithRuntime implements the block.BuildBlockWithRuntimeChainVM interface
+func (vm *VMClient) BuildBlockWithRuntime(ctx context.Context, blockCtx *apiruntime.Runtime) (vmchain.Block, error) {
+	innerBlk, err := vm.buildBlockWithRuntime(ctx, blockCtx)
 	if err != nil {
 		return nil, err
 	}
-	// Convert chainblock.Block to block.Block through wrapper
+	// Convert vmchain.Block to block.Block through wrapper
 	return &chainBlockWrapper{innerBlk}, nil
 }
 
 // ParseBlock implements the block.ChainVM interface
-func (vm *VMClient) ParseBlock(ctx context.Context, bytes []byte) (chainblock.Block, error) {
+func (vm *VMClient) ParseBlock(ctx context.Context, bytes []byte) (vmchain.Block, error) {
 	innerBlk, err := vm.parseBlock(ctx, bytes)
 	if err != nil {
 		return nil, err
 	}
-	// Convert chainblock.Block to block.Block through wrapper
+	// Convert vmchain.Block to block.Block through wrapper
 	return &chainBlockWrapper{innerBlk}, nil
 }
 
 // GetBlock implements the block.ChainVM interface
-func (vm *VMClient) GetBlock(ctx context.Context, id ids.ID) (chainblock.Block, error) {
+func (vm *VMClient) GetBlock(ctx context.Context, id ids.ID) (vmchain.Block, error) {
 	innerBlk, err := vm.getBlock(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	// Convert chainblock.Block to block.Block through wrapper
+	// Convert vmchain.Block to block.Block through wrapper
 	return &chainBlockWrapper{innerBlk}, nil
 }
 
@@ -1148,83 +1084,83 @@ func (vm *VMClient) LastAccepted(ctx context.Context) (ids.ID, error) {
 }
 
 // BatchedParseBlock implements the block.BatchedChainVM interface
-func (vm *VMClient) BatchedParseBlock(ctx context.Context, blks [][]byte) ([]chainblock.Block, error) {
+func (vm *VMClient) BatchedParseBlock(ctx context.Context, blks [][]byte) ([]vmchain.Block, error) {
 	innerBlks, err := vm.batchedParseBlock(ctx, blks)
 	if err != nil {
 		return nil, err
 	}
-	// Convert []chainblock.Block to []chainblock.Block
-	result := make([]chainblock.Block, len(innerBlks))
+	// Convert []vmchain.Block to []vmchain.Block
+	result := make([]vmchain.Block, len(innerBlks))
 	for i, blk := range innerBlks {
 		result[i] = &chainBlockWrapper{blk}
 	}
 	return result, nil
 }
 
-// chainBlockWrapper wraps a chainblock.Block to implement block.Block
+// chainBlockWrapper wraps a vmchain.Block to implement block.Block
 type chainBlockWrapper struct {
-	chainblock.Block
+	vmchain.Block
 }
 
 // Status implements block.Block - returns uint8
 func (b *chainBlockWrapper) Status() uint8 {
-	// chainblock.Block already has Status() that returns uint8
+	// vmchain.Block already has Status() that returns uint8
 	return b.Block.Status()
 }
 
 // Accept implements block.Block
 func (b *chainBlockWrapper) Accept(ctx context.Context) error {
-	// Forward to embedded chainblock.Block
+	// Forward to embedded vmchain.Block
 	return b.Block.Accept(ctx)
 }
 
 // Reject implements block.Block
 func (b *chainBlockWrapper) Reject(ctx context.Context) error {
-	// Forward to embedded chainblock.Block
+	// Forward to embedded vmchain.Block
 	return b.Block.Reject(ctx)
 }
 
 // Verify implements block.Block
 func (b *chainBlockWrapper) Verify(ctx context.Context) error {
-	// Forward to embedded chainblock.Block
+	// Forward to embedded vmchain.Block
 	return b.Block.Verify(ctx)
 }
 
-// ShouldVerifyWithContext implements block.WithVerifyContext
-func (b *chainBlockWrapper) ShouldVerifyWithContext(ctx context.Context) (bool, error) {
-	// Check if the embedded block implements WithVerifyContext
-	if withCtx, ok := b.Block.(chainblock.WithVerifyContext); ok {
-		return withCtx.ShouldVerifyWithContext(ctx)
+// ShouldVerifyWithRuntime implements block.WithVerifyRuntime
+func (b *chainBlockWrapper) ShouldVerifyWithRuntime(ctx context.Context) (bool, error) {
+	// Check if the embedded block implements WithVerifyRuntime
+	if withCtx, ok := b.Block.(vmchain.WithVerifyRuntime); ok {
+		return withCtx.ShouldVerifyWithRuntime(ctx)
 	}
 	return false, nil
 }
 
-// VerifyWithContext implements block.WithVerifyContext
-func (b *chainBlockWrapper) VerifyWithContext(ctx context.Context, blockCtx *chainblock.Context) error {
-	// Check if the embedded block implements WithVerifyContext
-	if withCtx, ok := b.Block.(chainblock.WithVerifyContext); ok {
-		return withCtx.VerifyWithContext(ctx, blockCtx)
+// VerifyWithRuntime implements block.WithVerifyRuntime
+func (b *chainBlockWrapper) VerifyWithRuntime(ctx context.Context, blockCtx *apiruntime.Runtime) error {
+	// Check if the embedded block implements WithVerifyRuntime
+	if withCtx, ok := b.Block.(vmchain.WithVerifyRuntime); ok {
+		return withCtx.VerifyWithRuntime(ctx, blockCtx)
 	}
-	// Fall back to regular Verify if WithVerifyContext is not implemented
+	// Fall back to regular Verify if WithVerifyRuntime is not implemented
 	return b.Block.Verify(ctx)
 }
 
-// protocolBlockWrapper wraps blockClient to implement protocol/chainblock.Block
+// protocolBlockWrapper wraps blockClient to implement protocol/vmchain.Block
 type protocolBlockWrapper struct {
 	*blockClient
 }
 
-// Status converts choices.Status to uint8 for protocol/chainblock.Block
+// Status converts choices.Status to uint8 for protocol/vmchain.Block
 func (b *protocolBlockWrapper) Status() uint8 {
 	return uint8(b.blockClient.Status())
 }
 
-// componentsBlockWrapper wraps blockClient to implement components/chainblock.Block
+// componentsBlockWrapper wraps blockClient to implement components/vmchain.Block
 type componentsBlockWrapper struct {
 	*blockClient
 }
 
-// Status converts choices.Status to uint8 for components/chainblock.Block
+// Status converts choices.Status to uint8 for components/vmchain.Block
 func (b *componentsBlockWrapper) Status() uint8 {
 	return uint8(b.blockClient.Status())
 }
@@ -1241,7 +1177,7 @@ type BCLookup interface {
 
 type ValidatorState interface {
 	GetCurrentHeight() (uint64, error)
-	GetNetID(context.Context, ids.ID) (ids.ID, error)
+	GetChainID(context.Context, ids.ID) (ids.ID, error)
 	GetValidatorSet(uint64, ids.ID) (map[ids.NodeID]uint64, error)
 }
 
@@ -1351,8 +1287,8 @@ func (v *validatorStateWrapper) GetCurrentHeight(ctx context.Context) (uint64, e
 	return v.vs.GetCurrentHeight()
 }
 
-func (v *validatorStateWrapper) GetNetID(ctx context.Context, chainID ids.ID) (ids.ID, error) {
-	return v.vs.GetNetID(ctx, chainID)
+func (v *validatorStateWrapper) GetChainID(ctx context.Context, chainID ids.ID) (ids.ID, error) {
+	return v.vs.GetChainID(ctx, chainID)
 }
 
 func (v *validatorStateWrapper) GetValidatorSet(ctx context.Context, height uint64, netID ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
@@ -1424,27 +1360,27 @@ func (v *validatorStateWrapper) GetCurrentValidators(ctx context.Context, height
 	return v.GetValidatorSet(ctx, height, netID)
 }
 
-// appSenderWrapper wraps warp.Sender to implement warp.Sender
+// senderWrapper wraps warp.Sender to implement warp.Sender
 // Note: This is legacy code for compatibility. New VMs should use warp.Sender directly.
-type appSenderWrapper struct {
-	appSender warp.Sender
+type senderWrapper struct {
+	sender warp.Sender
 }
 
-func (a *appSenderWrapper) SendRequest(ctx context.Context, nodeIDs set.Set[ids.NodeID], requestID uint32, request []byte) error {
+func (a *senderWrapper) SendRequest(ctx context.Context, nodeIDs set.Set[ids.NodeID], requestID uint32, request []byte) error {
 	// Forward to the underlying sender
-	return a.appSender.SendRequest(ctx, nodeIDs, requestID, request)
+	return a.sender.SendRequest(ctx, nodeIDs, requestID, request)
 }
 
-func (a *appSenderWrapper) SendResponse(ctx context.Context, nodeID ids.NodeID, requestID uint32, response []byte) error {
-	return a.appSender.SendResponse(ctx, nodeID, requestID, response)
+func (a *senderWrapper) SendResponse(ctx context.Context, nodeID ids.NodeID, requestID uint32, response []byte) error {
+	return a.sender.SendResponse(ctx, nodeID, requestID, response)
 }
 
-func (a *appSenderWrapper) SendError(ctx context.Context, nodeID ids.NodeID, requestID uint32, errorCode int32, errorMessage string) error {
-	return a.appSender.SendError(ctx, nodeID, requestID, errorCode, errorMessage)
+func (a *senderWrapper) SendError(ctx context.Context, nodeID ids.NodeID, requestID uint32, errorCode int32, errorMessage string) error {
+	return a.sender.SendError(ctx, nodeID, requestID, errorCode, errorMessage)
 }
 
-func (a *appSenderWrapper) SendGossip(ctx context.Context, config warp.SendConfig, gossipBytes []byte) error {
-	return a.appSender.SendGossip(ctx, config, gossipBytes)
+func (a *senderWrapper) SendGossip(ctx context.Context, config warp.SendConfig, gossipBytes []byte) error {
+	return a.sender.SendGossip(ctx, config, gossipBytes)
 }
 
 // bcLookupAdapter adapts interface{} to BCLookup
@@ -1489,18 +1425,18 @@ func (v *validatorStateAdapter) GetCurrentHeight() (uint64, error) {
 	return 0, fmt.Errorf("GetCurrentHeight not supported")
 }
 
-func (v *validatorStateAdapter) GetNetID(ctx context.Context, chainID ids.ID) (ids.ID, error) {
+func (v *validatorStateAdapter) GetChainID(ctx context.Context, chainID ids.ID) (ids.ID, error) {
 	// Try with context first
 	if vs, ok := v.vs.(interface {
-		GetNetID(context.Context, ids.ID) (ids.ID, error)
+		GetChainID(context.Context, ids.ID) (ids.ID, error)
 	}); ok {
-		return vs.GetNetID(ctx, chainID)
+		return vs.GetChainID(ctx, chainID)
 	}
 	// Try without context
-	if vs, ok := v.vs.(interface{ GetNetID(ids.ID) (ids.ID, error) }); ok {
-		return vs.GetNetID(chainID)
+	if vs, ok := v.vs.(interface{ GetChainID(ids.ID) (ids.ID, error) }); ok {
+		return vs.GetChainID(chainID)
 	}
-	return ids.Empty, fmt.Errorf("GetNetID not supported")
+	return ids.Empty, fmt.Errorf("GetChainID not supported")
 }
 
 func (v *validatorStateAdapter) GetValidatorSet(height uint64, netID ids.ID) (map[ids.NodeID]uint64, error) {

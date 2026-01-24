@@ -3,33 +3,13 @@
 
 package vm
 
-import "github.com/luxfi/ids"
+import "github.com/luxfi/consensus/engine/chain/block"
 
-// Message signals from VM to consensus engine
-type Message struct {
-	Type    MessageType
-	NodeID  ids.NodeID
-	Content []byte
-}
+// MessageType is an alias for block.MessageType for compatibility.
+type MessageType = block.MessageType
 
-// MessageType identifies the message kind
-type MessageType uint32
-
+// Re-export message type constants from block package.
 const (
-	// PendingTxs indicates there are pending transactions to process
-	PendingTxs MessageType = iota
-	// StateSyncDone indicates state sync has completed
-	StateSyncDone
+	PendingTxs    = block.PendingTxs
+	StateSyncDone = block.StateSyncDone
 )
-
-// String returns the string representation of the message type
-func (m MessageType) String() string {
-	switch m {
-	case PendingTxs:
-		return "PendingTxs"
-	case StateSyncDone:
-		return "StateSyncDone"
-	default:
-		return "Unknown"
-	}
-}

@@ -16,6 +16,7 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/vm/api/server"
 	"github.com/luxfi/vm/manager"
+	vmcore "github.com/luxfi/vm"
 )
 
 var (
@@ -79,7 +80,7 @@ func (r *vmRegisterer) register(ctx context.Context, pathAdder server.PathAdder,
 	if err := r.createStaticEndpoints(pathAdder, handlers, defaultEndpoint); err != nil {
 		return err
 	}
-	urlAliases, err := r.getURLAliases(vmID, defaultEndpoint)
+	urlAliases, err := r.getURLAliases(ctx, vmID, defaultEndpoint)
 	if err != nil {
 		return err
 	}
@@ -98,7 +99,7 @@ func (r *vmRegisterer) createStaticHandlers(
 		return nil, err
 	}
 
-	handlerProvider, ok := vm.(manager.HandlerProvider)
+	handlerProvider, ok := vm.(vmcore.HandlerProvider)
 	if !ok {
 		return nil, fmt.Errorf("%s is %w", vmID, errNotVM)
 	}
@@ -143,8 +144,8 @@ func (r *vmRegisterer) createStaticEndpoints(pathAdder server.PathAdder, handler
 	return nil
 }
 
-func (r vmRegisterer) getURLAliases(vmID ids.ID, defaultEndpoint string) ([]string, error) {
-	aliases, err := r.config.VMManager.Aliases(vmID)
+func (r vmRegisterer) getURLAliases(ctx context.Context, vmID ids.ID, defaultEndpoint string) ([]string, error) {
+	aliases, err := r.config.VMManager.Aliases(ctx, vmID)
 	if err != nil {
 		return nil, err
 	}

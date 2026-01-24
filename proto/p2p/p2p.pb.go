@@ -106,10 +106,10 @@ type Message struct {
 	//	*Message_PushQuery
 	//	*Message_PullQuery
 	//	*Message_Chits
-	//	*Message_AppRequest
-	//	*Message_AppResponse
-	//	*Message_AppGossip
-	//	*Message_AppError
+	//	*Message_Request
+	//	*Message_Response
+	//	*Message_Gossip
+	//	*Message_Error
 	Message isMessage_Message `protobuf_oneof:"message"`
 }
 
@@ -299,30 +299,30 @@ func (x *Message) GetChits() *Chits {
 	return nil
 }
 
-func (x *Message) GetAppRequest() *AppRequest {
-	if x, ok := x.GetMessage().(*Message_AppRequest); ok {
-		return x.AppRequest
+func (x *Message) GetRequest() *Request {
+	if x, ok := x.GetMessage().(*Message_Request); ok {
+		return x.Request
 	}
 	return nil
 }
 
-func (x *Message) GetAppResponse() *AppResponse {
-	if x, ok := x.GetMessage().(*Message_AppResponse); ok {
-		return x.AppResponse
+func (x *Message) GetResponse() *Response {
+	if x, ok := x.GetMessage().(*Message_Response); ok {
+		return x.Response
 	}
 	return nil
 }
 
-func (x *Message) GetAppGossip() *AppGossip {
-	if x, ok := x.GetMessage().(*Message_AppGossip); ok {
-		return x.AppGossip
+func (x *Message) GetGossip() *Gossip {
+	if x, ok := x.GetMessage().(*Message_Gossip); ok {
+		return x.Gossip
 	}
 	return nil
 }
 
-func (x *Message) GetAppError() *AppError {
-	if x, ok := x.GetMessage().(*Message_AppError); ok {
-		return x.AppError
+func (x *Message) GetError() *Error {
+	if x, ok := x.GetMessage().(*Message_Error); ok {
+		return x.Error
 	}
 	return nil
 }
@@ -422,21 +422,21 @@ type Message_Chits struct {
 	Chits *Chits `protobuf:"bytes,29,opt,name=chits,proto3,oneof"`
 }
 
-type Message_AppRequest struct {
+type Message_Request struct {
 	// App messages:
-	AppRequest *AppRequest `protobuf:"bytes,30,opt,name=app_request,json=appRequest,proto3,oneof"`
+	Request *Request `protobuf:"bytes,30,opt,name=app_request,json=appRequest,proto3,oneof"`
 }
 
-type Message_AppResponse struct {
-	AppResponse *AppResponse `protobuf:"bytes,31,opt,name=app_response,json=appResponse,proto3,oneof"`
+type Message_Response struct {
+	Response *Response `protobuf:"bytes,31,opt,name=app_response,json=appResponse,proto3,oneof"`
 }
 
-type Message_AppGossip struct {
-	AppGossip *AppGossip `protobuf:"bytes,32,opt,name=app_gossip,json=appGossip,proto3,oneof"`
+type Message_Gossip struct {
+	Gossip *Gossip `protobuf:"bytes,32,opt,name=app_gossip,json=appGossip,proto3,oneof"`
 }
 
-type Message_AppError struct {
-	AppError *AppError `protobuf:"bytes,34,opt,name=app_error,json=appError,proto3,oneof"`
+type Message_Error struct {
+	Error *Error `protobuf:"bytes,34,opt,name=app_error,json=appError,proto3,oneof"`
 }
 
 func (*Message_CompressedZstd) isMessage_Message() {}
@@ -481,13 +481,13 @@ func (*Message_PullQuery) isMessage_Message() {}
 
 func (*Message_Chits) isMessage_Message() {}
 
-func (*Message_AppRequest) isMessage_Message() {}
+func (*Message_Request) isMessage_Message() {}
 
-func (*Message_AppResponse) isMessage_Message() {}
+func (*Message_Response) isMessage_Message() {}
 
-func (*Message_AppGossip) isMessage_Message() {}
+func (*Message_Gossip) isMessage_Message() {}
 
-func (*Message_AppError) isMessage_Message() {}
+func (*Message_Error) isMessage_Message() {}
 
 // Ping reports a peer's perceived uptime percentage.
 //
@@ -2259,11 +2259,11 @@ func (x *Chits) GetPreferredIdAtHeight() []byte {
 	return nil
 }
 
-// AppRequest is a VM-defined request.
+// Request is a VM-defined request.
 //
-// Remote peers must respond to AppRequest with a corresponding AppResponse or
-// AppError
-type AppRequest struct {
+// Remote peers must respond to Request with a corresponding Response or
+// Error
+type Request struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -2278,8 +2278,8 @@ type AppRequest struct {
 	AppBytes []byte `protobuf:"bytes,4,opt,name=app_bytes,json=appBytes,proto3" json:"app_bytes,omitempty"`
 }
 
-func (x *AppRequest) Reset() {
-	*x = AppRequest{}
+func (x *Request) Reset() {
+	*x = Request{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_proto_p2p_p2p_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2287,13 +2287,13 @@ func (x *AppRequest) Reset() {
 	}
 }
 
-func (x *AppRequest) String() string {
+func (x *Request) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AppRequest) ProtoMessage() {}
+func (*Request) ProtoMessage() {}
 
-func (x *AppRequest) ProtoReflect() protoreflect.Message {
+func (x *Request) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_p2p_p2p_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2305,55 +2305,55 @@ func (x *AppRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AppRequest.ProtoReflect.Descriptor instead.
-func (*AppRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use Request.ProtoReflect.Descriptor instead.
+func (*Request) Descriptor() ([]byte, []int) {
 	return file_proto_p2p_p2p_proto_rawDescGZIP(), []int{25}
 }
 
-func (x *AppRequest) GetChainId() []byte {
+func (x *Request) GetChainId() []byte {
 	if x != nil {
 		return x.ChainId
 	}
 	return nil
 }
 
-func (x *AppRequest) GetRequestId() uint32 {
+func (x *Request) GetRequestId() uint32 {
 	if x != nil {
 		return x.RequestId
 	}
 	return 0
 }
 
-func (x *AppRequest) GetDeadline() uint64 {
+func (x *Request) GetDeadline() uint64 {
 	if x != nil {
 		return x.Deadline
 	}
 	return 0
 }
 
-func (x *AppRequest) GetAppBytes() []byte {
+func (x *Request) GetAppBytes() []byte {
 	if x != nil {
 		return x.AppBytes
 	}
 	return nil
 }
 
-// AppResponse is a VM-defined response sent in response to AppRequest
-type AppResponse struct {
+// Response is a VM-defined response sent in response to Request
+type Response struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
 	// Chain being responded from
 	ChainId []byte `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
-	// Request id of the original AppRequest
+	// Request id of the original Request
 	RequestId uint32 `protobuf:"varint,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	// Response body
 	AppBytes []byte `protobuf:"bytes,3,opt,name=app_bytes,json=appBytes,proto3" json:"app_bytes,omitempty"`
 }
 
-func (x *AppResponse) Reset() {
-	*x = AppResponse{}
+func (x *Response) Reset() {
+	*x = Response{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_proto_p2p_p2p_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2361,13 +2361,13 @@ func (x *AppResponse) Reset() {
 	}
 }
 
-func (x *AppResponse) String() string {
+func (x *Response) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AppResponse) ProtoMessage() {}
+func (*Response) ProtoMessage() {}
 
-func (x *AppResponse) ProtoReflect() protoreflect.Message {
+func (x *Response) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_p2p_p2p_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2379,41 +2379,41 @@ func (x *AppResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AppResponse.ProtoReflect.Descriptor instead.
-func (*AppResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use Response.ProtoReflect.Descriptor instead.
+func (*Response) Descriptor() ([]byte, []int) {
 	return file_proto_p2p_p2p_proto_rawDescGZIP(), []int{26}
 }
 
-func (x *AppResponse) GetChainId() []byte {
+func (x *Response) GetChainId() []byte {
 	if x != nil {
 		return x.ChainId
 	}
 	return nil
 }
 
-func (x *AppResponse) GetRequestId() uint32 {
+func (x *Response) GetRequestId() uint32 {
 	if x != nil {
 		return x.RequestId
 	}
 	return 0
 }
 
-func (x *AppResponse) GetAppBytes() []byte {
+func (x *Response) GetAppBytes() []byte {
 	if x != nil {
 		return x.AppBytes
 	}
 	return nil
 }
 
-// AppError is a VM-defined error sent in response to AppRequest
-type AppError struct {
+// Error is a VM-defined error sent in response to Request
+type Error struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
 	// Chain the message is for
 	ChainId []byte `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
-	// Request id of the original AppRequest
+	// Request id of the original Request
 	RequestId uint32 `protobuf:"varint,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	// VM defined error code. VMs may define error codes > 0.
 	ErrorCode int32 `protobuf:"zigzag32,3,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
@@ -2421,8 +2421,8 @@ type AppError struct {
 	ErrorMessage string `protobuf:"bytes,4,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
 }
 
-func (x *AppError) Reset() {
-	*x = AppError{}
+func (x *Error) Reset() {
+	*x = Error{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_proto_p2p_p2p_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2430,13 +2430,13 @@ func (x *AppError) Reset() {
 	}
 }
 
-func (x *AppError) String() string {
+func (x *Error) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AppError) ProtoMessage() {}
+func (*Error) ProtoMessage() {}
 
-func (x *AppError) ProtoReflect() protoreflect.Message {
+func (x *Error) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_p2p_p2p_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2448,41 +2448,41 @@ func (x *AppError) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AppError.ProtoReflect.Descriptor instead.
-func (*AppError) Descriptor() ([]byte, []int) {
+// Deprecated: Use Error.ProtoReflect.Descriptor instead.
+func (*Error) Descriptor() ([]byte, []int) {
 	return file_proto_p2p_p2p_proto_rawDescGZIP(), []int{27}
 }
 
-func (x *AppError) GetChainId() []byte {
+func (x *Error) GetChainId() []byte {
 	if x != nil {
 		return x.ChainId
 	}
 	return nil
 }
 
-func (x *AppError) GetRequestId() uint32 {
+func (x *Error) GetRequestId() uint32 {
 	if x != nil {
 		return x.RequestId
 	}
 	return 0
 }
 
-func (x *AppError) GetErrorCode() int32 {
+func (x *Error) GetErrorCode() int32 {
 	if x != nil {
 		return x.ErrorCode
 	}
 	return 0
 }
 
-func (x *AppError) GetErrorMessage() string {
+func (x *Error) GetErrorMessage() string {
 	if x != nil {
 		return x.ErrorMessage
 	}
 	return ""
 }
 
-// AppGossip is a VM-defined message
-type AppGossip struct {
+// Gossip is a VM-defined message
+type Gossip struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -2493,8 +2493,8 @@ type AppGossip struct {
 	AppBytes []byte `protobuf:"bytes,2,opt,name=app_bytes,json=appBytes,proto3" json:"app_bytes,omitempty"`
 }
 
-func (x *AppGossip) Reset() {
-	*x = AppGossip{}
+func (x *Gossip) Reset() {
+	*x = Gossip{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_proto_p2p_p2p_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2502,13 +2502,13 @@ func (x *AppGossip) Reset() {
 	}
 }
 
-func (x *AppGossip) String() string {
+func (x *Gossip) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AppGossip) ProtoMessage() {}
+func (*Gossip) ProtoMessage() {}
 
-func (x *AppGossip) ProtoReflect() protoreflect.Message {
+func (x *Gossip) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_p2p_p2p_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2520,19 +2520,19 @@ func (x *AppGossip) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AppGossip.ProtoReflect.Descriptor instead.
-func (*AppGossip) Descriptor() ([]byte, []int) {
+// Deprecated: Use Gossip.ProtoReflect.Descriptor instead.
+func (*Gossip) Descriptor() ([]byte, []int) {
 	return file_proto_p2p_p2p_proto_rawDescGZIP(), []int{28}
 }
 
-func (x *AppGossip) GetChainId() []byte {
+func (x *Gossip) GetChainId() []byte {
 	if x != nil {
 		return x.ChainId
 	}
 	return nil
 }
 
-func (x *AppGossip) GetAppBytes() []byte {
+func (x *Gossip) GetAppBytes() []byte {
 	if x != nil {
 		return x.AppBytes
 	}
@@ -3830,10 +3830,10 @@ var file_proto_p2p_p2p_proto_goTypes = []interface{}{
 	(*PushQuery)(nil),               // 23: p2p.PushQuery
 	(*PullQuery)(nil),               // 24: p2p.PullQuery
 	(*Chits)(nil),                   // 25: p2p.Chits
-	(*AppRequest)(nil),              // 26: p2p.AppRequest
-	(*AppResponse)(nil),             // 27: p2p.AppResponse
-	(*AppError)(nil),                // 28: p2p.AppError
-	(*AppGossip)(nil),               // 29: p2p.AppGossip
+	(*Request)(nil),              // 26: p2p.Request
+	(*Response)(nil),             // 27: p2p.Response
+	(*Error)(nil),                // 28: p2p.Error
+	(*Gossip)(nil),               // 29: p2p.Gossip
 	(*BFT)(nil),                     // 30: p2p.BFT
 	(*BlockProposal)(nil),           // 31: p2p.BlockProposal
 	(*Vote)(nil),                    // 32: p2p.Vote
@@ -3868,10 +3868,10 @@ var file_proto_p2p_p2p_proto_depIdxs = []int32{
 	23, // 17: p2p.Message.push_query:type_name -> p2p.PushQuery
 	24, // 18: p2p.Message.pull_query:type_name -> p2p.PullQuery
 	25, // 19: p2p.Message.chits:type_name -> p2p.Chits
-	26, // 20: p2p.Message.app_request:type_name -> p2p.AppRequest
-	27, // 21: p2p.Message.app_response:type_name -> p2p.AppResponse
-	29, // 22: p2p.Message.app_gossip:type_name -> p2p.AppGossip
-	28, // 23: p2p.Message.app_error:type_name -> p2p.AppError
+	26, // 20: p2p.Message.app_request:type_name -> p2p.Request
+	27, // 21: p2p.Message.app_response:type_name -> p2p.Response
+	29, // 22: p2p.Message.app_gossip:type_name -> p2p.Gossip
+	28, // 23: p2p.Message.app_error:type_name -> p2p.Error
 	3,  // 24: p2p.Ping.chain_uptimes:type_name -> p2p.NetUptime
 	6,  // 25: p2p.Handshake.client:type_name -> p2p.Client
 	7,  // 26: p2p.Handshake.known_peers:type_name -> p2p.BloomFilter
@@ -4208,7 +4208,7 @@ func file_proto_p2p_p2p_proto_init() {
 			}
 		}
 		file_proto_p2p_p2p_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AppRequest); i {
+			switch v := v.(*Request); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4220,7 +4220,7 @@ func file_proto_p2p_p2p_proto_init() {
 			}
 		}
 		file_proto_p2p_p2p_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AppResponse); i {
+			switch v := v.(*Response); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4232,7 +4232,7 @@ func file_proto_p2p_p2p_proto_init() {
 			}
 		}
 		file_proto_p2p_p2p_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AppError); i {
+			switch v := v.(*Error); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4244,7 +4244,7 @@ func file_proto_p2p_p2p_proto_init() {
 			}
 		}
 		file_proto_p2p_p2p_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AppGossip); i {
+			switch v := v.(*Gossip); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4422,10 +4422,10 @@ func file_proto_p2p_p2p_proto_init() {
 		(*Message_PushQuery)(nil),
 		(*Message_PullQuery)(nil),
 		(*Message_Chits)(nil),
-		(*Message_AppRequest)(nil),
-		(*Message_AppResponse)(nil),
-		(*Message_AppGossip)(nil),
-		(*Message_AppError)(nil),
+		(*Message_Request)(nil),
+		(*Message_Response)(nil),
+		(*Message_Gossip)(nil),
+		(*Message_Error)(nil),
 	}
 	file_proto_p2p_p2p_proto_msgTypes[29].OneofWrappers = []interface{}{
 		(*BFT_BlockProposal)(nil),

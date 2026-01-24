@@ -1,3 +1,5 @@
+//go:build grpc
+
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
@@ -17,7 +19,7 @@ import (
 	"google.golang.org/grpc/health"
 
 	"github.com/luxfi/atomic"
-	"github.com/luxfi/consensus/engine/chain/block"
+	"github.com/luxfi/vm/chain"
 	"github.com/luxfi/log"
 	"github.com/luxfi/version"
 	"github.com/luxfi/vm/rpc/grpcutils"
@@ -34,7 +36,7 @@ const defaultRuntimeDialTimeout = 5 * time.Second
 // Serve starts the RPC Chain VM server and performs a handshake with the VM runtime service.
 // The address of the Runtime server is expected to be passed via ENV `runtime.EngineAddressKey`.
 // This address is used by the Runtime client to send Initialize RPC to server.
-func Serve(ctx context.Context, log log.Logger, vm block.ChainVM, opts ...grpcutils.ServerOption) error {
+func Serve(ctx context.Context, log log.Logger, vm chain.ChainVM, opts ...grpcutils.ServerOption) error {
 	signals := make(chan os.Signal, 2)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(signals)
@@ -123,7 +125,7 @@ func Serve(ctx context.Context, log log.Logger, vm block.ChainVM, opts ...grpcut
 }
 
 // newVMServer returns an RPC Chain VM server serving health and VM services.
-func newVMServer(vm block.ChainVM, allowShutdown *atomic.Atomic[bool], opts ...grpcutils.ServerOption) *grpc.Server {
+func newVMServer(vm chain.ChainVM, allowShutdown *atomic.Atomic[bool], opts ...grpcutils.ServerOption) *grpc.Server {
 	server := grpcutils.NewServer(opts...)
 	vmpb.RegisterVMServer(server, NewServer(vm, allowShutdown))
 

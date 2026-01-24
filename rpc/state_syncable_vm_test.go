@@ -1,3 +1,5 @@
+//go:build grpc
+
 // Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
@@ -13,9 +15,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/luxfi/consensus/engine/chain/block"
-	"github.com/luxfi/consensus/engine/chain/block/blockmock"
-	"github.com/luxfi/consensus/engine/chain/block/blocktest"
+	"github.com/luxfi/vm/chain"
+	"github.com/luxfi/vm/chain/blockmock"
+	"github.com/luxfi/vm/chain/blocktest"
 	consensustest "github.com/luxfi/consensus/test/helpers"
 	"github.com/luxfi/database/memdb"
 	"github.com/luxfi/database/prefixdb"
@@ -95,8 +97,8 @@ type StateSyncEnabledMock struct {
 }
 
 // Forward ChainVM methods
-func (m *StateSyncEnabledMock) Initialize(ctx context.Context, chainCtx interface{}, db interface{}, genesisBytes, upgradeBytes, configBytes []byte, msgChan interface{}, fxs []interface{}, appSender interface{}) error {
-	return m.chainVM.Initialize(ctx, chainCtx, db, genesisBytes, upgradeBytes, configBytes, msgChan, fxs, appSender)
+func (m *StateSyncEnabledMock) Initialize(ctx context.Context, chainCtx interface{}, db interface{}, genesisBytes, upgradeBytes, configBytes []byte, msgChan interface{}, fxs []interface{}, sender interface{}) error {
+	return m.chainVM.Initialize(ctx, chainCtx, db, genesisBytes, upgradeBytes, configBytes, msgChan, fxs, sender)
 }
 func (m *StateSyncEnabledMock) SetState(ctx context.Context, state uint32) error {
 	return m.chainVM.SetState(ctx, state)

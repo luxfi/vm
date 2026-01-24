@@ -11,11 +11,11 @@ import (
 	"github.com/luxfi/cache"
 	"github.com/luxfi/cache/lru"
 	"github.com/luxfi/cache/metercacher"
-	"github.com/luxfi/consensus/engine/chain/block"
 	"github.com/luxfi/constants"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/metric"
+	"github.com/luxfi/runtime"
 )
 
 func cachedBlockSize(_ ids.ID, bw *BlockWrapper) int {
@@ -31,18 +31,18 @@ func cachedBlockBytesSize(blockBytes string, _ ids.ID) int {
 type State struct {
 	// getBlock retrieves a block from the VM's storage. If getBlock returns
 	// a nil error, then the returned block must not have the status Unknown
-	getBlock func(context.Context, ids.ID) (block.Block, error)
+	getBlock func(context.Context, ids.ID) (Block, error)
 	// unmarshals [b] into a block
-	unmarshalBlock        func(context.Context, []byte) (block.Block, error)
-	batchedUnmarshalBlock func(context.Context, [][]byte) ([]block.Block, error)
+	unmarshalBlock        func(context.Context, []byte) (Block, error)
+	batchedUnmarshalBlock func(context.Context, [][]byte) ([]Block, error)
 	// buildBlock attempts to build a block on top of the currently preferred block
 	// buildBlock should always return a block with status Processing since it should never
 	// create an unknown block, and building on top of the preferred block should never yield
 	// a block that has already been decided.
-	buildBlock func(context.Context) (block.Block, error)
+	buildBlock func(context.Context) (Block, error)
 
-	// If nil, [BuildBlockWithContext] returns [BuildBlock].
-	buildBlockWithContext func(context.Context, *block.Context) (block.Block, error)
+	// If nil, [BuildBlockWithRuntime] returns [BuildBlock].
+	buildBlockWithRuntime func(context.Context, *runtime.Runtime) (Block, error)
 
 	// verifiedBlocks is a map of blocks that have been verified and are
 	// therefore currently in consensus.
@@ -64,19 +64,20 @@ type Config struct {
 	// Cache configuration:
 	DecidedCacheSize, MissingCacheSize, UnverifiedCacheSize, BytesToIDCacheSize int
 
-	LastAcceptedBlock     block.Block
-	GetBlock              func(context.Context, ids.ID) (block.Block, error)
-	UnmarshalBlock        func(context.Context, []byte) (block.Block, error)
-	BatchedUnmarshalBlock func(context.Context, [][]byte) ([]block.Block, error)
-	BuildBlock            func(context.Context) (block.Block, error)
-	BuildBlockWithContext func(context.Context, *block.Context) (block.Block, error)
+	LastAcceptedBlock     Block
+	GetBlock              func(context.Context, ids.ID) (Block, error)
+	UnmarshalBlock        func(context.Context, []byte) (Block, error)
+	BatchedUnmarshalBlock func(context.Context, [][]byte) ([]Block, error)
+	BuildBlock            func(context.Context) (Block, error)
+	BuildBlockWithRuntime func(context.Context, *runtime.Runtime) (Block, error)
+	BuildBlockWithContext func(context.Context, *Context) (Block, error) // Alias for BuildBlockWithRuntime
 }
 
 func (s *State) initialize(config *Config) {
 	s.verifiedBlocks = make(map[ids.ID]*BlockWrapper)
 	s.getBlock = config.GetBlock
 	s.buildBlock = config.BuildBlock
-	s.buildBlockWithContext = config.BuildBlockWithContext
+	s.buildBlockWithRuntime = config.BuildBlockWithRuntime
 	s.unmarshalBlock = config.UnmarshalBlock
 	s.batchedUnmarshalBlock = config.BatchedUnmarshalBlock
 	s.lastAcceptedBlock = &BlockWrapper{
@@ -154,7 +155,7 @@ var errSetAcceptedWithProcessing = errors.New("cannot set last accepted block wi
 //
 // This also flushes [lastAcceptedBlock] from missingBlocks and unverifiedBlocks
 // to ensure that their contents stay valid.
-func (s *State) SetLastAcceptedBlock(lastAcceptedBlock block.Block) error {
+func (s *State) SetLastAcceptedBlock(lastAcceptedBlock Block) error {
 	if len(s.verifiedBlocks) != 0 {
 		return fmt.Errorf("%w: %d", errSetAcceptedWithProcessing, len(s.verifiedBlocks))
 	}
@@ -184,8 +185,8 @@ func (s *State) Flush() {
 	s.bytesToIDCache.Flush()
 }
 
-// GetBlock returns the BlockWrapper as block.Block corresponding to [blkID]
-func (s *State) GetBlock(ctx context.Context, blkID ids.ID) (block.Block, error) {
+// GetBlock returns the BlockWrapper corresponding to [blkID]
+func (s *State) GetBlock(ctx context.Context, blkID ids.ID) (Block, error) {
 	if blk, ok := s.getCachedBlock(blkID); ok {
 		return blk, nil
 	}
@@ -211,7 +212,7 @@ func (s *State) GetBlock(ctx context.Context, blkID ids.ID) (block.Block, error)
 
 // getCachedBlock checks the caches for [blkID] by priority. Returning
 // true if [blkID] is found in one of the caches.
-func (s *State) getCachedBlock(blkID ids.ID) (block.Block, bool) {
+func (s *State) getCachedBlock(blkID ids.ID) (Block, bool) {
 	if blk, ok := s.verifiedBlocks[blkID]; ok {
 		return blk, true
 	}
@@ -228,7 +229,7 @@ func (s *State) getCachedBlock(blkID ids.ID) (block.Block, bool) {
 }
 
 // GetBlockInternal returns the internal representation of [blkID]
-func (s *State) GetBlockInternal(ctx context.Context, blkID ids.ID) (block.Block, error) {
+func (s *State) GetBlockInternal(ctx context.Context, blkID ids.ID) (Block, error) {
 	wrappedBlk, err := s.GetBlock(ctx, blkID)
 	if err != nil {
 		return nil, err
@@ -239,7 +240,7 @@ func (s *State) GetBlockInternal(ctx context.Context, blkID ids.ID) (block.Block
 
 // ParseBlock attempts to parse [b] into an internal Block and adds it to the
 // appropriate caching layer if successful.
-func (s *State) ParseBlock(ctx context.Context, b []byte) (block.Block, error) {
+func (s *State) ParseBlock(ctx context.Context, b []byte) (Block, error) {
 	// See if we've cached this block's ID by its byte repr.
 	cachedBlkID, blkIDCached := s.bytesToIDCache.Get(string(b))
 	if blkIDCached {
@@ -275,12 +276,12 @@ func (s *State) ParseBlock(ctx context.Context, b []byte) (block.Block, error) {
 	return s.addBlockOutsideConsensus(blk), nil
 }
 
-// BatchedParseBlock implements part of the block.BatchedChainVM interface. In
+// BatchedParseBlock implements part of the BatchedChainVM interface. In
 // addition to performing all the caching as the ParseBlock function, it
 // performs at most one call to the underlying VM if [batchedUnmarshalBlock] was
 // provided.
-func (s *State) BatchedParseBlock(ctx context.Context, blksBytes [][]byte) ([]block.Block, error) {
-	blks := make([]block.Block, len(blksBytes))
+func (s *State) BatchedParseBlock(ctx context.Context, blksBytes [][]byte) ([]Block, error) {
+	blks := make([]Block, len(blksBytes))
 	idWasCached := make([]bool, len(blksBytes))
 	unparsedBlksBytes := make([][]byte, 0, len(blksBytes))
 	for i, blkBytes := range blksBytes {
@@ -305,7 +306,7 @@ func (s *State) BatchedParseBlock(ctx context.Context, blksBytes [][]byte) ([]bl
 	}
 
 	var (
-		parsedBlks []block.Block
+		parsedBlks []Block
 		err        error
 	)
 	if s.batchedUnmarshalBlock != nil {
@@ -314,7 +315,7 @@ func (s *State) BatchedParseBlock(ctx context.Context, blksBytes [][]byte) ([]bl
 			return nil, err
 		}
 	} else {
-		parsedBlks = make([]block.Block, len(unparsedBlksBytes))
+		parsedBlks = make([]Block, len(unparsedBlksBytes))
 		for i, blkBytes := range unparsedBlksBytes {
 			parsedBlks[i], err = s.unmarshalBlock(ctx, blkBytes)
 			if err != nil {
@@ -352,15 +353,15 @@ func (s *State) BatchedParseBlock(ctx context.Context, blksBytes [][]byte) ([]bl
 	return blks, nil
 }
 
-// BuildBlockWithContext attempts to build a new internal Block, wraps it, and
+// BuildBlockWithRuntime attempts to build a new internal Block, wraps it, and
 // adds it to the appropriate caching layer if successful.
-// If [s.buildBlockWithContext] is nil, returns [BuildBlock].
-func (s *State) BuildBlockWithContext(ctx context.Context, blockCtx *block.Context) (block.Block, error) {
-	if s.buildBlockWithContext == nil {
+// If [s.buildBlockWithRuntime] is nil, returns [BuildBlock].
+func (s *State) BuildBlockWithRuntime(ctx context.Context, rt *runtime.Runtime) (Block, error) {
+	if s.buildBlockWithRuntime == nil {
 		return s.BuildBlock(ctx)
 	}
 
-	blk, err := s.buildBlockWithContext(ctx, blockCtx)
+	blk, err := s.buildBlockWithRuntime(ctx, rt)
 	if err != nil {
 		return nil, err
 	}
@@ -370,7 +371,7 @@ func (s *State) BuildBlockWithContext(ctx context.Context, blockCtx *block.Conte
 
 // BuildBlock attempts to build a new internal Block, wraps it, and adds it
 // to the appropriate caching layer if successful.
-func (s *State) BuildBlock(ctx context.Context) (block.Block, error) {
+func (s *State) BuildBlock(ctx context.Context) (Block, error) {
 	blk, err := s.buildBlock(ctx)
 	if err != nil {
 		return nil, err
@@ -379,7 +380,7 @@ func (s *State) BuildBlock(ctx context.Context) (block.Block, error) {
 	return s.deduplicate(blk), nil
 }
 
-func (s *State) deduplicate(blk block.Block) block.Block {
+func (s *State) deduplicate(blk Block) Block {
 	blkID := blk.ID()
 	// Defensive: buildBlock should not return a block that has already been verified.
 	// If it does, make sure to return the existing reference to the block.
@@ -399,7 +400,7 @@ func (s *State) deduplicate(blk block.Block) block.Block {
 // assumes [blk] is a known, non-wrapped block that is not currently
 // in consensus. [blk] could be either decided or a block that has not yet
 // been verified and added to consensus.
-func (s *State) addBlockOutsideConsensus(blk block.Block) block.Block {
+func (s *State) addBlockOutsideConsensus(blk Block) Block {
 	wrappedBlk := &BlockWrapper{
 		Block: blk,
 		state: s,
@@ -424,8 +425,8 @@ func (s *State) LastAcceptedBlock() *BlockWrapper {
 	return s.lastAcceptedBlock
 }
 
-// LastAcceptedBlockInternal returns the internal block.Block that was last accepted
-func (s *State) LastAcceptedBlockInternal() block.Block {
+// LastAcceptedBlockInternal returns the internal Block that was last accepted
+func (s *State) LastAcceptedBlockInternal() Block {
 	return s.LastAcceptedBlock().Block
 }
 
