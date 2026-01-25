@@ -490,10 +490,10 @@ func (mr *MockChainVMMockRecorder) GetBlockIDAtHeight(arg0, arg1 any) *gomock.Ca
 }
 
 // HealthCheck mocks base method.
-func (m *MockChainVM) HealthCheck(arg0 context.Context) (*chain.HealthResult, error) {
+func (m *MockChainVM) HealthCheck(arg0 context.Context) (chain.HealthResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HealthCheck", arg0)
-	ret0, _ := ret[0].(*chain.HealthResult)
+	ret0, _ := ret[0].(chain.HealthResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -778,10 +778,10 @@ func (mr *MockStateSyncableVMMockRecorder) GetStateSummary(arg0, arg1 any) *gomo
 }
 
 // HealthCheck mocks base method.
-func (m *MockStateSyncableVM) HealthCheck(arg0 context.Context) (*chain.HealthResult, error) {
+func (m *MockStateSyncableVM) HealthCheck(arg0 context.Context) (chain.HealthResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HealthCheck", arg0)
-	ret0, _ := ret[0].(*chain.HealthResult)
+	ret0, _ := ret[0].(chain.HealthResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1147,10 +1147,10 @@ func (mr *MockBuildBlockWithRuntimeChainVMMockRecorder) GetBlockIDAtHeight(arg0,
 }
 
 // HealthCheck mocks base method.
-func (m *MockBuildBlockWithRuntimeChainVM) HealthCheck(arg0 context.Context) (*chain.HealthResult, error) {
+func (m *MockBuildBlockWithRuntimeChainVM) HealthCheck(arg0 context.Context) (chain.HealthResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HealthCheck", arg0)
-	ret0, _ := ret[0].(*chain.HealthResult)
+	ret0, _ := ret[0].(chain.HealthResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1405,10 +1405,10 @@ func (mr *MockBuildBlockWithContextChainVMMockRecorder) GetBlockIDAtHeight(arg0,
 }
 
 // HealthCheck mocks base method.
-func (m *MockBuildBlockWithContextChainVM) HealthCheck(arg0 context.Context) (*chain.HealthResult, error) {
+func (m *MockBuildBlockWithContextChainVM) HealthCheck(arg0 context.Context) (chain.HealthResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HealthCheck", arg0)
-	ret0, _ := ret[0].(*chain.HealthResult)
+	ret0, _ := ret[0].(chain.HealthResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1678,10 +1678,10 @@ func (mr *MockBatchedChainVMMockRecorder) GetBlockIDAtHeight(arg0, arg1 any) *go
 }
 
 // HealthCheck mocks base method.
-func (m *MockBatchedChainVM) HealthCheck(arg0 context.Context) (*chain.HealthResult, error) {
+func (m *MockBatchedChainVM) HealthCheck(arg0 context.Context) (chain.HealthResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HealthCheck", arg0)
-	ret0, _ := ret[0].(*chain.HealthResult)
+	ret0, _ := ret[0].(chain.HealthResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1974,10 +1974,10 @@ func (mr *MockChainVMWithNetworkMockRecorder) GetBlockIDAtHeight(arg0, arg1 any)
 }
 
 // HealthCheck mocks base method.
-func (m *MockChainVMWithNetwork) HealthCheck(arg0 context.Context) (*chain.HealthResult, error) {
+func (m *MockChainVMWithNetwork) HealthCheck(arg0 context.Context) (chain.HealthResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HealthCheck", arg0)
-	ret0, _ := ret[0].(*chain.HealthResult)
+	ret0, _ := ret[0].(chain.HealthResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2217,10 +2217,10 @@ func (mr *MockChainVMWithHealthMockRecorder) GetBlockIDAtHeight(arg0, arg1 any) 
 }
 
 // HealthCheck mocks base method.
-func (m *MockChainVMWithHealth) HealthCheck(arg0 context.Context) (*chain.HealthResult, error) {
+func (m *MockChainVMWithHealth) HealthCheck(arg0 context.Context) (chain.HealthResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HealthCheck", arg0)
-	ret0, _ := ret[0].(*chain.HealthResult)
+	ret0, _ := ret[0].(chain.HealthResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
