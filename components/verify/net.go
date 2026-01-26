@@ -51,21 +51,11 @@ func SameNet(ctx context.Context, chainCtx *ChainContext, peerChainID ids.ID) er
 	return nil
 }
 
-// SameChainContext is a minimal interface for SameChain verification.
-// This avoids importing runtime which would create a circular dependency.
-// Only GetChainID is required since SameChain only verifies chains are different.
-type SameChainContext interface {
-	GetChainID() ids.ID
-}
-
-// SameChain verifies that the provided [peerChainID] is on the same network
-// as the chain represented by [chainCtx], but is not the same chain.
-// If verification fails, a non-nil error will be returned.
-func SameChain(ctx context.Context, chainCtx SameChainContext, peerChainID ids.ID) error {
-	if peerChainID == chainCtx.GetChainID() {
+// SameChain verifies that chainID and peerChainID are different chains.
+// Returns ErrSameChainID if they are the same.
+func SameChain(chainID, peerChainID ids.ID) error {
+	if peerChainID == chainID {
 		return ErrSameChainID
 	}
-	// For SameChain, we only verify the chain isn't the same chain.
-	// Network verification requires ValidatorState which is only in SameNet.
 	return nil
 }
