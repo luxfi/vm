@@ -15,10 +15,10 @@ require (
 	github.com/luxfi/cache v1.2.1
 	github.com/luxfi/codec v1.1.3
 	github.com/luxfi/config v1.1.1
-	github.com/luxfi/consensus v1.22.56
+	github.com/luxfi/consensus v1.22.62
 	github.com/luxfi/constants v1.4.3
 	github.com/luxfi/crypto v1.17.40
-	github.com/luxfi/database v1.17.39
+	github.com/luxfi/database v1.17.40
 	github.com/luxfi/filesystem v0.0.1
 	github.com/luxfi/ids v1.2.9
 	github.com/luxfi/lattice/v7 v7.0.0
@@ -27,7 +27,7 @@ require (
 	github.com/luxfi/metric v1.4.11
 	github.com/luxfi/mock v0.1.1
 	github.com/luxfi/node v1.22.81
-	github.com/luxfi/p2p v1.18.8
+	github.com/luxfi/p2p v1.18.9
 	github.com/luxfi/password v0.0.1
 	github.com/luxfi/protocol v0.0.2
 	github.com/luxfi/resource v0.0.1
@@ -37,7 +37,7 @@ require (
 	github.com/luxfi/tls v1.0.3
 	github.com/luxfi/trace v0.1.4
 	github.com/luxfi/upgrade v1.0.0
-	github.com/luxfi/utils v1.1.3
+	github.com/luxfi/utils v1.1.4
 	github.com/luxfi/utxo v0.2.3
 	github.com/luxfi/validators v1.0.0
 	github.com/luxfi/version v1.0.1
@@ -78,12 +78,11 @@ require (
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/luxfi/address v1.0.1 // indirect
-	github.com/luxfi/compress v0.0.4 // indirect
+	github.com/luxfi/compress v0.0.5 // indirect
 	github.com/luxfi/concurrent v0.0.3 // indirect
 	github.com/luxfi/container v0.0.4 // indirect
 	github.com/luxfi/geth v1.16.73 // indirect
 	github.com/luxfi/keychain v1.0.2 // indirect
-	github.com/luxfi/net v0.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
