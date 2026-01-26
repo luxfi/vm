@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/luxfi/runtime"
 	"github.com/luxfi/ids"
 )
 
@@ -49,30 +48,5 @@ func SameNet(ctx context.Context, chainCtx *ChainContext, peerChainID ids.ID) er
 	if chainCtx.NetID != peerNetID {
 		return fmt.Errorf("%w; expected %q got %q", ErrMismatchedNetIDs, chainCtx.NetID, peerNetID)
 	}
-	return nil
-}
-
-// SameChain verifies that the peerChainID is in the same network as the chain
-// represented by rt, but not the same chain. This is a convenience
-// wrapper for coreth compatibility that accepts *runtime.Runtime directly.
-// With the simplified NetworkID model (1=mainnet, 2=testnet), chains on the
-// same network are always in the same "chain".
-func SameChain(ctx context.Context, rt *runtime.Runtime, peerChainID ids.ID) error {
-	if peerChainID == rt.ChainID {
-		return ErrSameChainID
-	}
-
-	// Get the validator state from runtime
-	vs, ok := rt.ValidatorState.(runtime.ValidatorState)
-	if !ok {
-		return fmt.Errorf("validator state does not implement required interface")
-	}
-
-	// Verify the peer chain exists in the same network
-	_, err := vs.GetChainID(peerChainID)
-	if err != nil {
-		return fmt.Errorf("failed to get chain of %q: %w", peerChainID, err)
-	}
-	// All chains on the same network (NetworkID 1 or 2) are in the same "chain"
 	return nil
 }
