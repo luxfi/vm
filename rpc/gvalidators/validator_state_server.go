@@ -37,21 +37,21 @@ func (s *Server) GetCurrentHeight(ctx context.Context, _ *emptypb.Empty) (*pb.Ge
 	return &pb.GetCurrentHeightResponse{Height: height}, err
 }
 
-func (s *Server) GetNetID(ctx context.Context, req *pb.GetNetIDRequest) (*pb.GetNetIDResponse, error) {
-	// validators.State doesn't have GetNetID - return empty ID
-	return &pb.GetNetIDResponse{
-		NetId: ids.Empty[:],
+func (s *Server) GetChainID(ctx context.Context, req *pb.GetChainIDRequest) (*pb.GetChainIDResponse, error) {
+	// validators.State doesn't have GetChainID - return empty ID
+	return &pb.GetChainIDResponse{
+		ChainId: ids.Empty[:],
 	}, nil
 }
 
 func (s *Server) GetValidatorSet(ctx context.Context, req *pb.GetValidatorSetRequest) (*pb.GetValidatorSetResponse, error) {
-	netID, err := ids.ToID(req.NetId)
+	chainID, err := ids.ToID(req.ChainId)
 	if err != nil {
 		return nil, err
 	}
 
 	// GetValidatorSet returns map[ids.NodeID]*GetValidatorOutput
-	validators, err := s.state.GetValidatorSet(ctx, req.Height, netID)
+	validators, err := s.state.GetValidatorSet(ctx, req.Height, chainID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (s *Server) GetValidatorSet(ctx context.Context, req *pb.GetValidatorSetReq
 }
 
 func (s *Server) GetCurrentValidatorSet(ctx context.Context, req *pb.GetCurrentValidatorSetRequest) (*pb.GetCurrentValidatorSetResponse, error) {
-	netID, err := ids.ToID(req.NetId)
+	chainID, err := ids.ToID(req.ChainId)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (s *Server) GetCurrentValidatorSet(ctx context.Context, req *pb.GetCurrentV
 		return nil, err
 	}
 
-	validators, err := s.state.GetValidatorSet(ctx, currentHeight, netID)
+	validators, err := s.state.GetValidatorSet(ctx, currentHeight, chainID)
 	if err != nil {
 		return nil, err
 	}
