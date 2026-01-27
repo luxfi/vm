@@ -98,18 +98,18 @@ func Serve(ctx context.Context, log log.Logger, vm DAGVM, opts ...grpcutils.Serv
 	log.Info("dag.Serve: listener created", "addr", listener.Addr().String())
 
 	log.Info("dag.Serve: calling client.Initialize",
-		"protocol", version.RPCDAGVMProtocol,
+		"protocol", version.RPCChainVMProtocol,
 		"listenerAddr", listener.Addr().String(),
 	)
 
 	log.Debug("initializing dag vm runtime",
-		"protocol", version.RPCDAGVMProtocol,
+		"protocol", version.RPCChainVMProtocol,
 		"addr", listener.Addr().String(),
 	)
 
 	ctx, cancel := context.WithTimeout(ctx, defaultRuntimeDialTimeout)
 	defer cancel()
-	err = client.Initialize(ctx, version.RPCDAGVMProtocol, listener.Addr().String())
+	err = client.Initialize(ctx, version.RPCChainVMProtocol, listener.Addr().String())
 	if err != nil {
 		_ = listener.Close()
 		return fmt.Errorf("failed to initialize dag vm runtime: %w", err)
