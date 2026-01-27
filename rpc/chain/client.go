@@ -530,7 +530,7 @@ func (vm *Client) parseBlock(ctx context.Context, bytes []byte) (vmchain.Block, 
 		Bytes_:              bytes,
 		Height_:             resp.Height,
 		Time_:               time,
-		ShouldVerifyWithCtx: resp.VerifyWithContext,
+		ShouldVerifyWithCtx: resp.VerifyWithRuntime,
 	}}, nil
 }
 
@@ -561,7 +561,7 @@ func (vm *Client) getBlock(ctx context.Context, blkID ids.ID) (vmchain.Block, er
 		Bytes_:              resp.Bytes,
 		Height_:             resp.Height,
 		Time_:               time,
-		ShouldVerifyWithCtx: resp.VerifyWithContext,
+		ShouldVerifyWithCtx: resp.VerifyWithRuntime,
 	}}, nil
 }
 
@@ -601,9 +601,9 @@ func (vm *Client) Version(ctx context.Context) (string, error) {
 }
 
 func (vm *Client) AppRequest(ctx context.Context, nodeID ids.NodeID, requestID uint32, deadline time.Time, request []byte) error {
-	_, err := vm.client.AppRequest(
+	_, err := vm.client.Request(
 		ctx,
-		&vmpb.AppRequestMsg{
+		&vmpb.RequestMsg{
 			NodeId:    nodeID.Bytes(),
 			RequestId: requestID,
 			Request:   request,
@@ -614,9 +614,9 @@ func (vm *Client) AppRequest(ctx context.Context, nodeID ids.NodeID, requestID u
 }
 
 func (vm *Client) AppResponse(ctx context.Context, nodeID ids.NodeID, requestID uint32, response []byte) error {
-	_, err := vm.client.AppResponse(
+	_, err := vm.client.Response(
 		ctx,
-		&vmpb.AppResponseMsg{
+		&vmpb.ResponseMsg{
 			NodeId:    nodeID.Bytes(),
 			RequestId: requestID,
 			Response:  response,
@@ -626,21 +626,21 @@ func (vm *Client) AppResponse(ctx context.Context, nodeID ids.NodeID, requestID 
 }
 
 func (vm *Client) AppRequestFailed(ctx context.Context, nodeID ids.NodeID, requestID uint32, appErr *warp.Error) error {
-	msg := &vmpb.AppRequestFailedMsg{
+	msg := &vmpb.RequestFailedMsg{
 		NodeId:       nodeID.Bytes(),
 		RequestId:    requestID,
 		ErrorCode:    appErr.Code,
 		ErrorMessage: appErr.Message,
 	}
 
-	_, err := vm.client.AppRequestFailed(ctx, msg)
+	_, err := vm.client.RequestFailed(ctx, msg)
 	return err
 }
 
 func (vm *Client) AppGossip(ctx context.Context, nodeID ids.NodeID, msg []byte) error {
-	_, err := vm.client.AppGossip(
+	_, err := vm.client.Gossip(
 		ctx,
-		&vmpb.AppGossipMsg{
+		&vmpb.GossipMsg{
 			NodeId: nodeID.Bytes(),
 			Msg:    msg,
 		},
@@ -710,7 +710,7 @@ func (vm *Client) batchedParseBlock(ctx context.Context, blksBytes [][]byte) ([]
 			Bytes_:              blksBytes[idx],
 			Height_:             blkResp.Height,
 			Time_:               time,
-			ShouldVerifyWithCtx: blkResp.VerifyWithContext,
+			ShouldVerifyWithCtx: blkResp.VerifyWithRuntime,
 		}})
 	}
 
@@ -871,7 +871,7 @@ func (vm *Client) newBlockFromBuildBlock(resp *vmpb.BuildBlockResponse) (*BlockC
 		Bytes_:              resp.Bytes,
 		Height_:             resp.Height,
 		Time_:               time,
-		ShouldVerifyWithCtx: resp.VerifyWithContext,
+		ShouldVerifyWithCtx: resp.VerifyWithRuntime,
 	}, err
 }
 
