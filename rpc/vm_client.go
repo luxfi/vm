@@ -230,7 +230,7 @@ func (vm *VMClient) Initialize(
 		vm.validatorStateServer = gvalidators.NewServer(rt.ValidatorState)
 	}
 	if rt.WarpSigner != nil {
-		vm.warpSignerServer = gwarp.NewServer(rt.WarpSigner)
+		vm.warpSignerServer = gwarp.NewServer(newProtocolWarpSignerAdapter(rt.WarpSigner))
 	}
 
 	serverListener, err := grpcutils.NewListener()
@@ -535,7 +535,7 @@ func (vm *VMClient) parseBlock(ctx context.Context, bytes []byte) (vmchain.Block
 		bytes:               bytes,
 		height:              resp.Height,
 		time:                time,
-		shouldVerifyWithCtx: resp.VerifyWithRuntime,
+		shouldVerifyWithCtx: resp.VerifyWithContext,
 	}}, nil
 }
 
@@ -566,7 +566,7 @@ func (vm *VMClient) getBlock(ctx context.Context, blkID ids.ID) (vmchain.Block, 
 		bytes:               resp.Bytes,
 		height:              resp.Height,
 		time:                time,
-		shouldVerifyWithCtx: resp.VerifyWithRuntime,
+		shouldVerifyWithCtx: resp.VerifyWithContext,
 	}}, nil
 }
 
@@ -605,10 +605,10 @@ func (vm *VMClient) Version(ctx context.Context) (string, error) {
 	return resp.Version, nil
 }
 
-func (vm *VMClient) Request(ctx context.Context, nodeID ids.NodeID, requestID uint32, deadline time.Time, request []byte) error {
-	_, err := vm.client.Request(
+func (vm *VMClient) AppRequest(ctx context.Context, nodeID ids.NodeID, requestID uint32, deadline time.Time, request []byte) error {
+	_, err := vm.client.AppRequest(
 		ctx,
-		&vmpb.RequestMsg{
+		&vmpb.AppRequestMsg{
 			NodeId:    nodeID.Bytes(),
 			RequestId: requestID,
 			Request:   request,
@@ -618,10 +618,10 @@ func (vm *VMClient) Request(ctx context.Context, nodeID ids.NodeID, requestID ui
 	return err
 }
 
-func (vm *VMClient) Response(ctx context.Context, nodeID ids.NodeID, requestID uint32, response []byte) error {
-	_, err := vm.client.Response(
+func (vm *VMClient) AppResponse(ctx context.Context, nodeID ids.NodeID, requestID uint32, response []byte) error {
+	_, err := vm.client.AppResponse(
 		ctx,
-		&vmpb.ResponseMsg{
+		&vmpb.AppResponseMsg{
 			NodeId:    nodeID.Bytes(),
 			RequestId: requestID,
 			Response:  response,
@@ -630,22 +630,22 @@ func (vm *VMClient) Response(ctx context.Context, nodeID ids.NodeID, requestID u
 	return err
 }
 
-func (vm *VMClient) RequestFailed(ctx context.Context, nodeID ids.NodeID, requestID uint32, appErr *warp.Error) error {
-	msg := &vmpb.RequestFailedMsg{
+func (vm *VMClient) AppRequestFailed(ctx context.Context, nodeID ids.NodeID, requestID uint32, appErr *warp.Error) error {
+	msg := &vmpb.AppRequestFailedMsg{
 		NodeId:       nodeID.Bytes(),
 		RequestId:    requestID,
 		ErrorCode:    appErr.Code,
 		ErrorMessage: appErr.Message,
 	}
 
-	_, err := vm.client.RequestFailed(ctx, msg)
+	_, err := vm.client.AppRequestFailed(ctx, msg)
 	return err
 }
 
-func (vm *VMClient) Gossip(ctx context.Context, nodeID ids.NodeID, msg []byte) error {
-	_, err := vm.client.Gossip(
+func (vm *VMClient) AppGossip(ctx context.Context, nodeID ids.NodeID, msg []byte) error {
+	_, err := vm.client.AppGossip(
 		ctx,
-		&vmpb.GossipMsg{
+		&vmpb.AppGossipMsg{
 			NodeId: nodeID.Bytes(),
 			Msg:    msg,
 		},
@@ -658,7 +658,7 @@ func (vm *VMClient) Gather() ([]*metric.MetricFamily, error) {
 	if err != nil {
 		return nil, err
 	}
-	return metric.DTOToNative(resp.MetricFamilies), nil
+	return prometheusToNativeMetrics(resp.MetricFamilies), nil
 }
 
 func (vm *VMClient) GetAncestors(
@@ -715,7 +715,7 @@ func (vm *VMClient) batchedParseBlock(ctx context.Context, blksBytes [][]byte) (
 			bytes:               blksBytes[idx],
 			height:              blkResp.Height,
 			time:                time,
-			shouldVerifyWithCtx: blkResp.VerifyWithRuntime,
+			shouldVerifyWithCtx: blkResp.VerifyWithContext,
 		}})
 	}
 
@@ -876,7 +876,7 @@ func (vm *VMClient) newBlockFromBuildBlock(resp *vmpb.BuildBlockResponse) (*bloc
 		bytes:               resp.Bytes,
 		height:              resp.Height,
 		time:                time,
-		shouldVerifyWithCtx: resp.VerifyWithRuntime,
+		shouldVerifyWithCtx: resp.VerifyWithContext,
 	}, err
 }
 
