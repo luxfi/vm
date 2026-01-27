@@ -202,7 +202,7 @@ func (vm *Client) Initialize(
 		}
 	}
 	if consensusCtx.WarpSigner != nil {
-		vm.warpSignerServer = gwarp.NewServer(consensusCtx.WarpSigner)
+		vm.warpSignerServer = gwarp.NewServer(newProtocolWarpSignerAdapter(consensusCtx.WarpSigner))
 	}
 
 	serverListener, err := grpcutils.NewListener()

@@ -10,8 +10,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	validators "github.com/luxfi/validators"
 	"github.com/luxfi/ids"
+	validators "github.com/luxfi/validators"
 	validatorstatepb "github.com/luxfi/node/proto/pb/validatorstate"
 )
 
@@ -35,8 +35,8 @@ func (c *Client) GetCurrentHeight(ctx context.Context) (uint64, error) {
 
 func (c *Client) GetValidatorSet(ctx context.Context, height uint64, netID ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
 	resp, err := c.client.GetValidatorSet(ctx, &validatorstatepb.GetValidatorSetRequest{
-		Height:  height,
-		ChainId: netID[:],
+		Height: height,
+		NetId:  netID[:],
 	})
 	if err != nil {
 		return nil, err

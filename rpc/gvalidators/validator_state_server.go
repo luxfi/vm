@@ -10,8 +10,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	validators "github.com/luxfi/validators"
 	"github.com/luxfi/ids"
+	validators "github.com/luxfi/validators"
 
 	pb "github.com/luxfi/node/proto/pb/validatorstate"
 )
@@ -37,15 +37,15 @@ func (s *Server) GetCurrentHeight(ctx context.Context, _ *emptypb.Empty) (*pb.Ge
 	return &pb.GetCurrentHeightResponse{Height: height}, err
 }
 
-func (s *Server) GetChainID(ctx context.Context, req *pb.GetChainIDRequest) (*pb.GetChainIDResponse, error) {
-	// validators.State doesn't have GetChainID - return empty ID
-	return &pb.GetChainIDResponse{
-		ChainId: ids.Empty[:],
+func (s *Server) GetNetID(ctx context.Context, req *pb.GetNetIDRequest) (*pb.GetNetIDResponse, error) {
+	// validators.State doesn't have GetNetID - return empty ID
+	return &pb.GetNetIDResponse{
+		NetId: ids.Empty[:],
 	}, nil
 }
 
 func (s *Server) GetValidatorSet(ctx context.Context, req *pb.GetValidatorSetRequest) (*pb.GetValidatorSetResponse, error) {
-	netID, err := ids.ToID(req.ChainId)
+	netID, err := ids.ToID(req.NetId)
 	if err != nil {
 		return nil, err
 	}
@@ -71,12 +71,12 @@ func (s *Server) GetValidatorSet(ctx context.Context, req *pb.GetValidatorSetReq
 }
 
 func (s *Server) GetCurrentValidatorSet(ctx context.Context, req *pb.GetCurrentValidatorSetRequest) (*pb.GetCurrentValidatorSetResponse, error) {
-	netID, err := ids.ToID(req.ChainId)
+	netID, err := ids.ToID(req.NetId)
 	if err != nil {
 		return nil, err
 	}
 
-	// validators.State doesn't have GetCurrentValidatorSet, use GetValidatorSet with height 0
+	// validators.State doesn't have GetCurrentValidatorSet, use GetValidatorSet with current height
 	currentHeight, err := s.state.GetCurrentHeight(ctx)
 	if err != nil {
 		return nil, err
