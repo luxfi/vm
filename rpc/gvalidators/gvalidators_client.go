@@ -33,10 +33,10 @@ func (c *Client) GetCurrentHeight(ctx context.Context) (uint64, error) {
 	return resp.Height, nil
 }
 
-func (c *Client) GetValidatorSet(ctx context.Context, height uint64, netID ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
+func (c *Client) GetValidatorSet(ctx context.Context, height uint64, chainID ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
 	resp, err := c.client.GetValidatorSet(ctx, &validatorstatepb.GetValidatorSetRequest{
-		Height: height,
-		NetId:  netID[:],
+		Height:  height,
+		ChainId: chainID[:],
 	})
 	if err != nil {
 		return nil, err
@@ -57,14 +57,14 @@ func (c *Client) GetValidatorSet(ctx context.Context, height uint64, netID ids.I
 	return validatorSet, nil
 }
 
-func (c *Client) GetCurrentValidators(ctx context.Context, height uint64, netID ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
+func (c *Client) GetCurrentValidators(ctx context.Context, height uint64, chainID ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
 	// Call GetValidatorSet with the same parameters
-	return c.GetValidatorSet(ctx, height, netID)
+	return c.GetValidatorSet(ctx, height, chainID)
 }
 
-func (c *Client) GetWarpValidatorSet(ctx context.Context, height uint64, netID ids.ID) (*validators.WarpSet, error) {
+func (c *Client) GetWarpValidatorSet(ctx context.Context, height uint64, chainID ids.ID) (*validators.WarpSet, error) {
 	// Get the validator set at the requested height
-	vdrSet, err := c.GetValidatorSet(ctx, height, netID)
+	vdrSet, err := c.GetValidatorSet(ctx, height, chainID)
 	if err != nil {
 		return nil, err
 	}
@@ -88,20 +88,20 @@ func (c *Client) GetWarpValidatorSet(ctx context.Context, height uint64, netID i
 	}, nil
 }
 
-func (c *Client) GetWarpValidatorSets(ctx context.Context, heights []uint64, netIDs []ids.ID) (map[ids.ID]map[uint64]*validators.WarpSet, error) {
+func (c *Client) GetWarpValidatorSets(ctx context.Context, heights []uint64, chainIDs []ids.ID) (map[ids.ID]map[uint64]*validators.WarpSet, error) {
 	result := make(map[ids.ID]map[uint64]*validators.WarpSet)
 
-	// For each netID, get validator sets for all requested heights
-	for _, netID := range netIDs {
+	// For each chainID, get validator sets for all requested heights
+	for _, chainID := range chainIDs {
 		heightMap := make(map[uint64]*validators.WarpSet)
 		for _, height := range heights {
-			warpSet, err := c.GetWarpValidatorSet(ctx, height, netID)
+			warpSet, err := c.GetWarpValidatorSet(ctx, height, chainID)
 			if err != nil {
 				return nil, err
 			}
 			heightMap[height] = warpSet
 		}
-		result[netID] = heightMap
+		result[chainID] = heightMap
 	}
 
 	return result, nil
