@@ -541,7 +541,7 @@ func (vm *VMServer) BuildBlock(ctx context.Context, req *vmpb.BuildBlockRequest)
 		Bytes:             blk.Bytes(),
 		Height:            blk.Height(),
 		Timestamp:         timestamp,
-		VerifyWithContext: verifyWithCtx,
+		VerifyWithRuntime: verifyWithCtx,
 	}, nil
 }
 
@@ -575,7 +575,7 @@ func (vm *VMServer) ParseBlock(ctx context.Context, req *vmpb.ParseBlockRequest)
 		ParentId:          parentID[:],
 		Height:            blk.Height(),
 		Timestamp:         timestamp,
-		VerifyWithContext: verifyWithCtx,
+		VerifyWithRuntime: verifyWithCtx,
 	}, nil
 }
 
@@ -612,7 +612,7 @@ func (vm *VMServer) GetBlock(ctx context.Context, req *vmpb.GetBlockRequest) (*v
 		Bytes:             blk.Bytes(),
 		Height:            blk.Height(),
 		Timestamp:         timestamp,
-		VerifyWithContext: verifyWithCtx,
+		VerifyWithRuntime: verifyWithCtx,
 	}, nil
 }
 
@@ -665,7 +665,7 @@ func (vm *VMServer) Version(ctx context.Context, _ *emptypb.Empty) (*vmpb.Versio
 	}, err
 }
 
-func (vm *VMServer) AppRequest(ctx context.Context, req *vmpb.AppRequestMsg) (*emptypb.Empty, error) {
+func (vm *VMServer) Request(ctx context.Context, req *vmpb.RequestMsg) (*emptypb.Empty, error) {
 	nodeID, err := ids.ToNodeID(req.NodeId)
 	if err != nil {
 		return nil, err
@@ -675,7 +675,7 @@ func (vm *VMServer) AppRequest(ctx context.Context, req *vmpb.AppRequestMsg) (*e
 		return nil, err
 	}
 	if vm.appHandler == nil {
-		return nil, errors.New("AppRequest not implemented")
+		return nil, errors.New("Request not implemented")
 	}
 	_, appErr := vm.appHandler.Request(ctx, nodeID, req.RequestId, deadline, req.Request)
 	if appErr != nil {
@@ -684,7 +684,7 @@ func (vm *VMServer) AppRequest(ctx context.Context, req *vmpb.AppRequestMsg) (*e
 	return &emptypb.Empty{}, nil
 }
 
-func (vm *VMServer) AppRequestFailed(ctx context.Context, req *vmpb.AppRequestFailedMsg) (*emptypb.Empty, error) {
+func (vm *VMServer) RequestFailed(ctx context.Context, req *vmpb.RequestFailedMsg) (*emptypb.Empty, error) {
 	nodeID, err := ids.ToNodeID(req.NodeId)
 	if err != nil {
 		return nil, err
@@ -703,28 +703,28 @@ func (vm *VMServer) AppRequestFailed(ctx context.Context, req *vmpb.AppRequestFa
 		return &emptypb.Empty{}, failedVM.RequestFailed(ctx, nodeID, req.RequestId, appErr)
 	}
 
-	// AppRequestFailed is optional
+	// RequestFailed is optional
 	return &emptypb.Empty{}, nil
 }
 
-func (vm *VMServer) AppResponse(ctx context.Context, req *vmpb.AppResponseMsg) (*emptypb.Empty, error) {
+func (vm *VMServer) Response(ctx context.Context, req *vmpb.ResponseMsg) (*emptypb.Empty, error) {
 	nodeID, err := ids.ToNodeID(req.NodeId)
 	if err != nil {
 		return nil, err
 	}
 	if vm.appHandler == nil {
-		return nil, errors.New("AppResponse not implemented")
+		return nil, errors.New("Response not implemented")
 	}
 	return &emptypb.Empty{}, vm.appHandler.Response(ctx, nodeID, req.RequestId, req.Response)
 }
 
-func (vm *VMServer) AppGossip(ctx context.Context, req *vmpb.AppGossipMsg) (*emptypb.Empty, error) {
+func (vm *VMServer) Gossip(ctx context.Context, req *vmpb.GossipMsg) (*emptypb.Empty, error) {
 	nodeID, err := ids.ToNodeID(req.NodeId)
 	if err != nil {
 		return nil, err
 	}
 	if vm.appHandler == nil {
-		return nil, errors.New("AppGossip not implemented")
+		return nil, errors.New("Gossip not implemented")
 	}
 	return &emptypb.Empty{}, vm.appHandler.Gossip(ctx, nodeID, req.Msg)
 }
