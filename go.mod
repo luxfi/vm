@@ -26,7 +26,7 @@ require (
 	github.com/luxfi/math v1.2.3
 	github.com/luxfi/metric v1.4.11
 	github.com/luxfi/mock v0.1.1
-	github.com/luxfi/node v1.22.81
+	github.com/luxfi/node v1.22.87
 	github.com/luxfi/p2p v1.18.9
 	github.com/luxfi/password v0.0.1
 	github.com/luxfi/protocol v0.0.2
@@ -43,6 +43,7 @@ require (
 	github.com/luxfi/version v1.0.1
 	github.com/luxfi/warp v1.18.5
 	github.com/prometheus/client_golang v1.23.2
+	github.com/prometheus/client_model v0.6.2
 	github.com/rs/cors v1.11.1
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.39.0
@@ -88,7 +89,6 @@ require (
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect

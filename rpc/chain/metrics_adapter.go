@@ -7,22 +7,22 @@ package chain
 
 import (
 	"github.com/luxfi/metric"
-	io_prometheus_client "github.com/prometheus/client_model/go"
+	metricclient "github.com/luxfi/metric/client"
 )
 
 // nativeToPrometheusMetrics converts luxfi/metric MetricFamily to prometheus
 // client_model MetricFamily. This is the reverse of prometheusToNativeMetrics
 // and is used when sending metrics over gRPC.
-func nativeToPrometheusMetrics(families []*metric.MetricFamily) []*io_prometheus_client.MetricFamily {
+func nativeToPrometheusMetrics(families []*metric.MetricFamily) []*metricclient.MetricFamily {
 	if families == nil {
 		return nil
 	}
-	result := make([]*io_prometheus_client.MetricFamily, 0, len(families))
+	result := make([]*metricclient.MetricFamily, 0, len(families))
 	for _, mf := range families {
 		if mf == nil {
 			continue
 		}
-		promMF := &io_prometheus_client.MetricFamily{
+		promMF := &metricclient.MetricFamily{
 			Name: ptrStr(mf.Name),
 			Help: ptrStr(mf.Help),
 			Type: nativeTypeToProm(mf.Type).Enum(),
@@ -36,28 +36,28 @@ func nativeToPrometheusMetrics(families []*metric.MetricFamily) []*io_prometheus
 	return result
 }
 
-func nativeTypeToProm(t metric.MetricType) io_prometheus_client.MetricType {
+func nativeTypeToProm(t metric.MetricType) metricclient.MetricType {
 	switch t {
 	case metric.MetricTypeCounter:
-		return io_prometheus_client.MetricType_COUNTER
+		return metricclient.MetricType_COUNTER
 	case metric.MetricTypeGauge:
-		return io_prometheus_client.MetricType_GAUGE
+		return metricclient.MetricType_GAUGE
 	case metric.MetricTypeHistogram:
-		return io_prometheus_client.MetricType_HISTOGRAM
+		return metricclient.MetricType_HISTOGRAM
 	case metric.MetricTypeSummary:
-		return io_prometheus_client.MetricType_SUMMARY
+		return metricclient.MetricType_SUMMARY
 	default:
-		return io_prometheus_client.MetricType_UNTYPED
+		return metricclient.MetricType_UNTYPED
 	}
 }
 
-func nativeLabelsToProm(labels []metric.LabelPair) []*io_prometheus_client.LabelPair {
+func nativeLabelsToProm(labels []metric.LabelPair) []*metricclient.LabelPair {
 	if labels == nil {
 		return nil
 	}
-	result := make([]*io_prometheus_client.LabelPair, 0, len(labels))
+	result := make([]*metricclient.LabelPair, 0, len(labels))
 	for _, lp := range labels {
-		result = append(result, &io_prometheus_client.LabelPair{
+		result = append(result, &metricclient.LabelPair{
 			Name:  ptrStr(lp.Name),
 			Value: ptrStr(lp.Value),
 		})
@@ -65,38 +65,38 @@ func nativeLabelsToProm(labels []metric.LabelPair) []*io_prometheus_client.Label
 	return result
 }
 
-func nativeMetricToProm(m metric.Metric, t metric.MetricType) *io_prometheus_client.Metric {
-	promM := &io_prometheus_client.Metric{
+func nativeMetricToProm(m metric.Metric, t metric.MetricType) *metricclient.Metric {
+	promM := &metricclient.Metric{
 		Label: nativeLabelsToProm(m.Labels),
 	}
 	switch t {
 	case metric.MetricTypeCounter:
-		promM.Counter = &io_prometheus_client.Counter{
+		promM.Counter = &metricclient.Counter{
 			Value: ptrFloat(m.Value.Value),
 		}
 	case metric.MetricTypeGauge:
-		promM.Gauge = &io_prometheus_client.Gauge{
+		promM.Gauge = &metricclient.Gauge{
 			Value: ptrFloat(m.Value.Value),
 		}
 	case metric.MetricTypeHistogram:
-		h := &io_prometheus_client.Histogram{
+		h := &metricclient.Histogram{
 			SampleCount: ptrUint64(m.Value.SampleCount),
 			SampleSum:   ptrFloat(m.Value.SampleSum),
 		}
 		for _, b := range m.Value.Buckets {
-			h.Bucket = append(h.Bucket, &io_prometheus_client.Bucket{
+			h.Bucket = append(h.Bucket, &metricclient.Bucket{
 				UpperBound:      ptrFloat(b.UpperBound),
 				CumulativeCount: ptrUint64(b.CumulativeCount),
 			})
 		}
 		promM.Histogram = h
 	case metric.MetricTypeSummary:
-		s := &io_prometheus_client.Summary{
+		s := &metricclient.Summary{
 			SampleCount: ptrUint64(m.Value.SampleCount),
 			SampleSum:   ptrFloat(m.Value.SampleSum),
 		}
 		for _, q := range m.Value.Quantiles {
-			s.Quantile = append(s.Quantile, &io_prometheus_client.Quantile{
+			s.Quantile = append(s.Quantile, &metricclient.Quantile{
 				Quantile: ptrFloat(q.Quantile),
 				Value:    ptrFloat(q.Value),
 			})
@@ -104,7 +104,7 @@ func nativeMetricToProm(m metric.Metric, t metric.MetricType) *io_prometheus_cli
 		promM.Summary = s
 	default:
 		// For untyped, use gauge
-		promM.Gauge = &io_prometheus_client.Gauge{
+		promM.Gauge = &metricclient.Gauge{
 			Value: ptrFloat(m.Value.Value),
 		}
 	}
@@ -126,7 +126,7 @@ func ptrUint64(u uint64) *uint64 {
 // prometheusToNativeMetrics converts prometheus client_model MetricFamily to
 // luxfi/metric MetricFamily. This is needed because the vmpb protobuf uses
 // prometheus client_model types directly, but our metric package uses its own types.
-func prometheusToNativeMetrics(promFamilies []*io_prometheus_client.MetricFamily) []*metric.MetricFamily {
+func prometheusToNativeMetrics(promFamilies []*metricclient.MetricFamily) []*metric.MetricFamily {
 	if promFamilies == nil {
 		return nil
 	}
@@ -155,22 +155,22 @@ func prometheusToNativeMetrics(promFamilies []*io_prometheus_client.MetricFamily
 	return result
 }
 
-func promTypeToNative(t io_prometheus_client.MetricType) metric.MetricType {
+func promTypeToNative(t metricclient.MetricType) metric.MetricType {
 	switch t {
-	case io_prometheus_client.MetricType_COUNTER:
+	case metricclient.MetricType_COUNTER:
 		return metric.MetricTypeCounter
-	case io_prometheus_client.MetricType_GAUGE:
+	case metricclient.MetricType_GAUGE:
 		return metric.MetricTypeGauge
-	case io_prometheus_client.MetricType_HISTOGRAM:
+	case metricclient.MetricType_HISTOGRAM:
 		return metric.MetricTypeHistogram
-	case io_prometheus_client.MetricType_SUMMARY:
+	case metricclient.MetricType_SUMMARY:
 		return metric.MetricTypeSummary
 	default:
 		return metric.MetricTypeUntyped
 	}
 }
 
-func promLabelsToNative(labels []*io_prometheus_client.LabelPair) []metric.LabelPair {
+func promLabelsToNative(labels []*metricclient.LabelPair) []metric.LabelPair {
 	if labels == nil {
 		return nil
 	}
@@ -187,7 +187,7 @@ func promLabelsToNative(labels []*io_prometheus_client.LabelPair) []metric.Label
 	return result
 }
 
-func promValueToNative(m *io_prometheus_client.Metric, t metric.MetricType) metric.MetricValue {
+func promValueToNative(m *metricclient.Metric, t metric.MetricType) metric.MetricValue {
 	var v metric.MetricValue
 	switch t {
 	case metric.MetricTypeCounter:
