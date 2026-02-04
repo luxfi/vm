@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/luxfi/runtime"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
+	"github.com/luxfi/runtime"
 )
 
 var (

@@ -17,11 +17,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/luxfi/runtime"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/runtime"
 	"github.com/luxfi/trace"
-	"github.com/luxfi/vm/api"
 	"github.com/luxfi/vm"
+	"github.com/luxfi/vm/api"
 	"github.com/rs/cors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"

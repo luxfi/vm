@@ -8,6 +8,9 @@ package rpc
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"time"
 
 	zapwire "github.com/luxfi/api/zap"
@@ -137,15 +140,22 @@ func (c *ZAPClient) Version(ctx context.Context) (string, error) {
 
 // BuildBlock implements chain.ChainVM
 func (c *ZAPClient) BuildBlock(ctx context.Context) (chain.Block, error) {
+	log.Info("[ZAP CLIENT] BuildBlock calling server")
 	_, respData, err := c.conn.Call(ctx, zapwire.MsgBuildBlock, nil)
 	if err != nil {
+		log.Error("[ZAP CLIENT] BuildBlock call error", "error", err)
 		return nil, err
 	}
 
 	resp := &zapwire.BlockResponse{}
 	if err := resp.Decode(zapwire.NewReader(respData)); err != nil {
+		log.Error("[ZAP CLIENT] BuildBlock decode error", "error", err)
 		return nil, err
 	}
+
+	log.Info("[ZAP CLIENT] BuildBlock response",
+		"respIDLen", len(resp.ID), "respParentIDLen", len(resp.ParentID),
+		"height", resp.Height, "bytesLen", len(resp.Bytes), "err", resp.Err)
 
 	if resp.Err != zapwire.ErrorUnspecified {
 		return nil, errorFromZAP(resp.Err)
@@ -154,6 +164,8 @@ func (c *ZAPClient) BuildBlock(ctx context.Context) (chain.Block, error) {
 	var id, parentID ids.ID
 	copy(id[:], resp.ID)
 	copy(parentID[:], resp.ParentID)
+
+	log.Info("[ZAP CLIENT] BuildBlock returning", "id", id, "parentID", parentID, "height", resp.Height)
 
 	return &zapBlock{
 		client:    c,
@@ -257,6 +269,42 @@ func (c *ZAPClient) SetPreference(ctx context.Context, blkID ids.ID) error {
 // LastAccepted implements chain.ChainVM
 func (c *ZAPClient) LastAccepted(ctx context.Context) (ids.ID, error) {
 	return c.lastAcceptedID, nil
+}
+
+// CreateHandlers returns HTTP handlers for the VM's API endpoints
+func (c *ZAPClient) CreateHandlers(ctx context.Context) (map[string]http.Handler, error) {
+	c.logger.Info("ZAPClient.CreateHandlers called")
+
+	_, respData, err := c.conn.Call(ctx, zapwire.MsgCreateHandlers, nil)
+	if err != nil {
+		c.logger.Error("CreateHandlers call failed", "error", err)
+		return nil, err
+	}
+
+	resp := &zapwire.CreateHandlersResponse{}
+	if err := resp.Decode(zapwire.NewReader(respData)); err != nil {
+		c.logger.Error("CreateHandlers decode failed", "error", err)
+		return nil, err
+	}
+
+	c.logger.Info("CreateHandlers response", "count", len(resp.Handlers))
+
+	handlers := make(map[string]http.Handler, len(resp.Handlers))
+	for _, h := range resp.Handlers {
+		// Create a reverse proxy to the VM's HTTP server
+		targetURL, err := url.Parse("http://" + h.ServerAddr)
+		if err != nil {
+			c.logger.Error("Failed to parse handler URL", "prefix", h.Prefix, "addr", h.ServerAddr, "error", err)
+			return nil, err
+		}
+
+		proxy := httputil.NewSingleHostReverseProxy(targetURL)
+		handlers[h.Prefix] = proxy
+
+		c.logger.Info("Created HTTP handler", "prefix", h.Prefix, "target", targetURL.String())
+	}
+
+	return handlers, nil
 }
 
 // zapBlock implements chain.Block
