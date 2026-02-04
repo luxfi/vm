@@ -14,9 +14,9 @@ import (
 
 	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
+	vmcore "github.com/luxfi/vm"
 	"github.com/luxfi/vm/api/server"
 	"github.com/luxfi/vm/manager"
-	vmcore "github.com/luxfi/vm"
 )
 
 var (

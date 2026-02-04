@@ -18,6 +18,6 @@ type (
 
 // Re-export functions
 var (
-	SortTransferableOutputs          = utxo.SortTransferableOutputs
+	SortTransferableOutputs           = utxo.SortTransferableOutputs
 	SortTransferableInputsWithSigners = utxo.SortTransferableInputsWithSigners
 )

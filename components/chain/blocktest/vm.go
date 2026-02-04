@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/luxfi/vm/chain"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/vm/chain"
 )
 
 // VM is a test VM that can be used for testing

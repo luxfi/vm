@@ -12,8 +12,8 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/luxfi/vm/chain"
 	"github.com/luxfi/log"
+	"github.com/luxfi/vm/chain"
 )
 
 const (

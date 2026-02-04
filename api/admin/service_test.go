@@ -16,9 +16,9 @@ import (
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
+	vmmanager "github.com/luxfi/vm/manager"
 	"github.com/luxfi/vm/manager/managermock"
 	"github.com/luxfi/vm/registry/registrymock"
-	vmmanager "github.com/luxfi/vm/manager"
 )
 
 type loadVMsTest struct {

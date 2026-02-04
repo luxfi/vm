@@ -36,21 +36,21 @@ import (
 	"github.com/luxfi/vm/chains/atomic/gsharedmemory"
 	"github.com/luxfi/vm/internal/database/rpcdb"
 	"github.com/luxfi/vm/internal/ids/galiasreader"
-	"github.com/luxfi/vm/rpc/sender"
 	"github.com/luxfi/vm/rpc/ghttp"
 	"github.com/luxfi/vm/rpc/grpcutils"
 	"github.com/luxfi/vm/rpc/gvalidators"
+	"github.com/luxfi/vm/rpc/sender"
 	"github.com/luxfi/warp"
 
 	grpc_metric "github.com/grpc-ecosystem/go-grpc-prometheus"
 	aliasreaderpb "github.com/luxfi/node/proto/pb/aliasreader"
-	senderpb "github.com/luxfi/vm/proto/pb/sender"
 	httppb "github.com/luxfi/node/proto/pb/http"
 	rpcdbpb "github.com/luxfi/node/proto/pb/rpcdb"
 	sharedmemorypb "github.com/luxfi/node/proto/pb/sharedmemory"
 	validatorstatepb "github.com/luxfi/node/proto/pb/validatorstate"
 	vmpb "github.com/luxfi/node/proto/pb/vm"
 	warppb "github.com/luxfi/node/proto/pb/warp"
+	senderpb "github.com/luxfi/vm/proto/pb/sender"
 )
 
 // HealthReport is the typed structure for health check responses.

@@ -11,11 +11,11 @@ import (
 	"github.com/luxfi/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/luxfi/filesystem"
+	"github.com/luxfi/filesystem/filesystemmock"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/metric"
-	"github.com/luxfi/filesystem"
-	"github.com/luxfi/filesystem/filesystemmock"
 	"github.com/luxfi/resource"
 	"github.com/luxfi/vm/manager"
 	"github.com/luxfi/vm/manager/managermock"

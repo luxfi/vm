@@ -14,6 +14,7 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/log"
 	"github.com/luxfi/metric"
 	"github.com/luxfi/runtime"
 )
@@ -377,14 +378,19 @@ func (s *State) BuildBlock(ctx context.Context) (Block, error) {
 		return nil, err
 	}
 
-	return s.deduplicate(blk), nil
+	log.Info("[STATE] BuildBlock: callback returned", "blkID", blk.ID(), "height", blk.Height())
+	result := s.deduplicate(blk)
+	log.Info("[STATE] BuildBlock: deduplicate returned", "resultID", result.ID(), "height", result.Height())
+	return result, nil
 }
 
 func (s *State) deduplicate(blk Block) Block {
 	blkID := blk.ID()
+	log.Info("[STATE] deduplicate: input", "blkID", blkID, "height", blk.Height())
 	// Defensive: buildBlock should not return a block that has already been verified.
 	// If it does, make sure to return the existing reference to the block.
 	if existingBlk, ok := s.getCachedBlock(blkID); ok {
+		log.Info("[STATE] deduplicate: found cached block", "existingBlkID", existingBlk.ID(), "height", existingBlk.Height())
 		return existingBlk
 	}
 	// Evict the produced block from missing blocks in case it was previously
@@ -392,7 +398,9 @@ func (s *State) deduplicate(blk Block) Block {
 	s.missingBlocks.Evict(blkID)
 
 	// wrap the returned block and add it to the correct cache
-	return s.addBlockOutsideConsensus(blk)
+	wrapped := s.addBlockOutsideConsensus(blk)
+	log.Info("[STATE] deduplicate: wrapped block", "wrappedID", wrapped.ID(), "height", wrapped.Height())
+	return wrapped
 }
 
 // addBlockOutsideConsensus adds [blk] to the correct cache and returns

@@ -19,9 +19,9 @@ import (
 	"google.golang.org/grpc/health"
 
 	"github.com/luxfi/atomic"
-	"github.com/luxfi/vm/chain"
 	"github.com/luxfi/log"
 	"github.com/luxfi/version"
+	"github.com/luxfi/vm/chain"
 	"github.com/luxfi/vm/rpc/grpcutils"
 	"github.com/luxfi/vm/rpc/gruntime"
 	"github.com/luxfi/vm/rpc/runtime"

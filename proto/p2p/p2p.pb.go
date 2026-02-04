@@ -3830,10 +3830,10 @@ var file_proto_p2p_p2p_proto_goTypes = []interface{}{
 	(*PushQuery)(nil),               // 23: p2p.PushQuery
 	(*PullQuery)(nil),               // 24: p2p.PullQuery
 	(*Chits)(nil),                   // 25: p2p.Chits
-	(*Request)(nil),              // 26: p2p.Request
-	(*Response)(nil),             // 27: p2p.Response
-	(*Error)(nil),                // 28: p2p.Error
-	(*Gossip)(nil),               // 29: p2p.Gossip
+	(*Request)(nil),                 // 26: p2p.Request
+	(*Response)(nil),                // 27: p2p.Response
+	(*Error)(nil),                   // 28: p2p.Error
+	(*Gossip)(nil),                  // 29: p2p.Gossip
 	(*BFT)(nil),                     // 30: p2p.BFT
 	(*BlockProposal)(nil),           // 31: p2p.BlockProposal
 	(*Vote)(nil),                    // 32: p2p.Vote

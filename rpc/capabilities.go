@@ -29,16 +29,16 @@ const (
 	FeatureSetPreference VMFeature = "set_preference"
 
 	// DAG-specific operations
-	FeatureBuildVertex   VMFeature = "build_vertex"
-	FeatureParseVertex   VMFeature = "parse_vertex"
-	FeatureGetVertex     VMFeature = "get_vertex"
-	FeatureVerifyVertex  VMFeature = "verify_vertex"
-	FeatureAcceptVertex  VMFeature = "accept_vertex"
-	FeatureRejectVertex  VMFeature = "reject_vertex"
-	FeatureFrontierOps   VMFeature = "frontier_ops"
+	FeatureBuildVertex  VMFeature = "build_vertex"
+	FeatureParseVertex  VMFeature = "parse_vertex"
+	FeatureGetVertex    VMFeature = "get_vertex"
+	FeatureVerifyVertex VMFeature = "verify_vertex"
+	FeatureAcceptVertex VMFeature = "accept_vertex"
+	FeatureRejectVertex VMFeature = "reject_vertex"
+	FeatureFrontierOps  VMFeature = "frontier_ops"
 
 	// State and sync
-	FeatureStateSync  VMFeature = "state_sync"
+	FeatureStateSync    VMFeature = "state_sync"
 	FeatureStateSummary VMFeature = "state_summary"
 	FeatureGetAncestors VMFeature = "get_ancestors"
 

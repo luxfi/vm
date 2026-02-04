@@ -4,12 +4,12 @@
 package rpc
 
 import (
-	"github.com/luxfi/runtime"
-	validators "github.com/luxfi/validators"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
+	"github.com/luxfi/runtime"
 	"github.com/luxfi/upgrade"
+	validators "github.com/luxfi/validators"
 	"github.com/luxfi/vm/api/metrics"
 	"github.com/luxfi/vm/chains/atomic"
 	"github.com/luxfi/warp"
