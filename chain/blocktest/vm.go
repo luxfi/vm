@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/luxfi/vm"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/vm"
 	"github.com/luxfi/vm/chain"
 )
 

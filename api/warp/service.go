@@ -9,9 +9,9 @@ import (
 
 	"github.com/gorilla/rpc/v2"
 
+	"github.com/luxfi/codec/jsonrpc"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
-	"github.com/luxfi/codec/jsonrpc"
 	"github.com/luxfi/vm/api"
 	"github.com/luxfi/vm/manager"
 	"github.com/luxfi/warp"

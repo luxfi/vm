@@ -7,8 +7,8 @@ package chain
 
 import (
 	"github.com/luxfi/database"
-	vmchain "github.com/luxfi/vm/chain"
 	vmpb "github.com/luxfi/node/proto/pb/vm"
+	vmchain "github.com/luxfi/vm/chain"
 )
 
 // Error mappings between protobuf and Go errors
