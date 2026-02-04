@@ -11,10 +11,10 @@ type (
 )
 
 var (
-	NewAtomic   = utils.NewAtomic[any]
+	NewAtomic    = utils.NewAtomic[any]
 	NewBytesPool = utils.NewBytesPool
-	RandomBytes = utils.RandomBytes
+	RandomBytes  = utils.RandomBytes
 	AppendSlices = utils.AppendSlices[any]
-	Detach      = utils.Detach
-	Err         = utils.Err
+	Detach       = utils.Detach
+	Err          = utils.Err
 )

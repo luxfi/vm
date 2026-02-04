@@ -25,8 +25,8 @@ import (
 	"github.com/luxfi/vm/rpc/gruntime"
 	"github.com/luxfi/vm/rpc/runtime"
 
-	dagpb "github.com/luxfi/vm/proto/pb/dag"
 	runtimepb "github.com/luxfi/node/proto/pb/vm/runtime"
+	dagpb "github.com/luxfi/vm/proto/pb/dag"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 

@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/luxfi/ids"
 	"github.com/luxfi/filesystem"
+	"github.com/luxfi/ids"
 	"github.com/luxfi/resource"
 	"github.com/luxfi/vm/api/metrics"
 	"github.com/luxfi/vm/manager"

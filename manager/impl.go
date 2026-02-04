@@ -12,7 +12,7 @@ import (
 )
 
 type manager struct {
-	lock sync.RWMutex
+	lock      sync.RWMutex
 	factories map[ids.ID]Factory
 	aliases   map[ids.ID][]string
 	lookup    map[string]ids.ID

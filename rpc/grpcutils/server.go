@@ -6,8 +6,10 @@
 package grpcutils
 
 import (
+	"fmt"
 	"math"
 	"net"
+	"os"
 	"time"
 
 	"google.golang.org/grpc"
@@ -96,12 +98,26 @@ func NewListener() (net.Listener, error) {
 
 // Serve will start a gRPC server and block until it errors or is shutdown.
 func Serve(listener net.Listener, grpcServer *grpc.Server) {
-	//       log this if it is the primary error.
-	//
-	// There is nothing to with the error returned by serve here. Later requests
-	// will propegate their error if they occur.
-	_ = grpcServer.Serve(listener)
+	// Log when Serve starts and returns for debugging
+	debugFile := func(msg string) {
+		if f, err := os.OpenFile("/tmp/grpc_serve.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err == nil {
+			fmt.Fprintf(f, "[%d] %s\n", os.Getpid(), msg)
+			f.Close()
+		}
+	}
+	debugFile("grpcServer.Serve() starting on " + listener.Addr().String())
 
-	// Similarly, there is nothing to with an error when the listener is closed.
-	_ = listener.Close()
+	// Start serving - this blocks until an error or shutdown
+	err := grpcServer.Serve(listener)
+	if err != nil {
+		debugFile("grpcServer.Serve() returned with error: " + err.Error())
+	} else {
+		debugFile("grpcServer.Serve() returned without error (graceful shutdown)")
+	}
+
+	// Close the listener
+	if closeErr := listener.Close(); closeErr != nil {
+		debugFile("listener.Close() error: " + closeErr.Error())
+	}
+	debugFile("Serve() function exiting")
 }

@@ -10,13 +10,19 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	zapwire "github.com/luxfi/api/zap"
+	"github.com/luxfi/consensus/engine/chain/block"
 	"github.com/luxfi/database"
+	"github.com/luxfi/database/memdb"
+	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
+	luxruntime "github.com/luxfi/runtime"
 	"github.com/luxfi/version"
 	"github.com/luxfi/vm/chain"
 	"github.com/luxfi/vm/rpc/runtime"
@@ -149,6 +155,8 @@ func (s *zapVMServer) Handle(ctx context.Context, msgType zapwire.MessageType, p
 		return s.handleSetState(ctx, payload)
 	case zapwire.MsgVersion:
 		return s.handleVersion(ctx)
+	case zapwire.MsgCreateHandlers:
+		return s.handleCreateHandlers(ctx)
 	case zapwire.MsgBuildBlock:
 		return s.handleBuildBlock(ctx)
 	case zapwire.MsgParseBlock:
@@ -173,19 +181,80 @@ func (s *zapVMServer) Handle(ctx context.Context, msgType zapwire.MessageType, p
 func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
 	req := &zapwire.InitializeRequest{}
 	if err := req.Decode(zapwire.NewReader(payload)); err != nil {
-		return zapwire.MsgInitialize, nil, err
+		return zapwire.MsgInitialize, nil, fmt.Errorf("decode initialize request: %w", err)
 	}
 
-	// Note: Full initialization requires chainCtx, db, etc. which aren't passed via ZAP yet
-	// This is a simplified implementation - the VM should already be initialized by the runner
+	s.logger.Info("ZAP handleInitialize",
+		"networkID", req.NetworkID,
+		"chainDataDir", req.ChainDataDir,
+		"genesisLen", len(req.GenesisBytes),
+	)
+
+	// Build runtime.Runtime from the request data
+	var chainID, nodeID ids.ID
+	var xChainID, cChainID, luxAssetID ids.ID
+	copy(chainID[:], req.ChainID)
+	copy(nodeID[:], req.NodeID)
+	copy(xChainID[:], req.XChainID)
+	copy(cChainID[:], req.CChainID)
+	copy(luxAssetID[:], req.LuxAssetID)
+
+	// Create a NodeID from the bytes
+	var nodeIDTyped ids.NodeID
+	copy(nodeIDTyped[:], req.NodeID)
+
+	// Build runtime with all configuration
+	rt := &luxruntime.Runtime{
+		NetworkID:    req.NetworkID,
+		ChainID:      chainID,
+		NodeID:       nodeIDTyped,
+		PublicKey:    req.PublicKey,
+		XChainID:     xChainID,
+		CChainID:     cChainID,
+		XAssetID:     luxAssetID,
+		ChainDataDir: req.ChainDataDir,
+		StartTime:    time.Now(),
+		Log:          &zapLogger{logger: s.logger},
+	}
+
+	// Create an in-memory database for the VM
+	// For production, this should be replaced with a persistent database
+	// opened from ChainDataDir, but memdb works for initialization
+	db := memdb.New()
+
+	// Build the block.Init struct for VM initialization
+	init := block.Init{
+		Runtime: rt,
+		DB:      db,
+		Genesis: req.GenesisBytes,
+		Upgrade: req.UpgradeBytes,
+		Config:  req.ConfigBytes,
+	}
+
+	// Initialize the VM with the proper configuration
+	if err := s.vm.Initialize(ctx, init); err != nil {
+		return zapwire.MsgInitialize, nil, fmt.Errorf("vm initialize: %w", err)
+	}
+
+	// Now get the last accepted block
 	lastAccepted, err := s.vm.LastAccepted(ctx)
 	if err != nil {
-		return zapwire.MsgInitialize, nil, err
+		return zapwire.MsgInitialize, nil, fmt.Errorf("get last accepted: %w", err)
 	}
 
+	// Get the last accepted block details for the response
+	lastBlock, err := s.vm.GetBlock(ctx, lastAccepted)
+	if err != nil {
+		return zapwire.MsgInitialize, nil, fmt.Errorf("get last accepted block: %w", err)
+	}
+
+	parentID := lastBlock.Parent()
 	resp := &zapwire.InitializeResponse{
-		LastAcceptedID: lastAccepted[:],
-		Height:         0, // Will be filled by actual implementation
+		LastAcceptedID:       lastAccepted[:],
+		LastAcceptedParentID: parentID[:],
+		Height:               lastBlock.Height(),
+		Bytes:                lastBlock.Bytes(),
+		Timestamp:            lastBlock.Timestamp().UnixNano(),
 	}
 
 	buf := zapwire.GetBuffer()
@@ -194,8 +263,25 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 	copy(result, buf.Bytes())
 	zapwire.PutBuffer(buf)
 
+	s.logger.Info("ZAP VM initialized successfully",
+		"lastAcceptedID", lastAccepted,
+		"height", lastBlock.Height(),
+	)
+
 	return zapwire.MsgInitialize, result, nil
 }
+
+// zapLogger adapts log.Logger to luxruntime.Logger interface
+type zapLogger struct {
+	logger log.Logger
+}
+
+func (l *zapLogger) Debug(msg string, fields ...interface{}) { l.logger.Debug(msg, fields...) }
+func (l *zapLogger) Info(msg string, fields ...interface{})  { l.logger.Info(msg, fields...) }
+func (l *zapLogger) Warn(msg string, fields ...interface{})  { l.logger.Warn(msg, fields...) }
+func (l *zapLogger) Error(msg string, fields ...interface{}) { l.logger.Error(msg, fields...) }
+func (l *zapLogger) Fatal(msg string, fields ...interface{}) { l.logger.Error(msg, fields...) }
+func (l *zapLogger) IsZero() bool                            { return l.logger == nil }
 
 func (s *zapVMServer) handleShutdown(ctx context.Context) (zapwire.MessageType, []byte, error) {
 	err := s.vm.Shutdown(ctx)
@@ -232,9 +318,78 @@ func (s *zapVMServer) handleVersion(ctx context.Context) (zapwire.MessageType, [
 	return zapwire.MsgVersion, result, nil
 }
 
+func (s *zapVMServer) handleCreateHandlers(ctx context.Context) (zapwire.MessageType, []byte, error) {
+	// Check if VM implements CreateHandlers
+	type vmWithHandlers interface {
+		CreateHandlers(context.Context) (map[string]http.Handler, error)
+	}
+
+	handlerVM, ok := s.vm.(vmWithHandlers)
+	if !ok {
+		s.logger.Info("VM does not implement CreateHandlers")
+		resp := &zapwire.CreateHandlersResponse{
+			Handlers: []zapwire.HTTPHandler{},
+		}
+		buf := zapwire.GetBuffer()
+		resp.Encode(buf)
+		result := make([]byte, len(buf.Bytes()))
+		copy(result, buf.Bytes())
+		zapwire.PutBuffer(buf)
+		return zapwire.MsgCreateHandlers, result, nil
+	}
+
+	handlers, err := handlerVM.CreateHandlers(ctx)
+	if err != nil {
+		s.logger.Error("CreateHandlers failed", "error", err)
+		return zapwire.MsgCreateHandlers, nil, err
+	}
+
+	s.logger.Info("CreateHandlers returned", "count", len(handlers))
+
+	resp := &zapwire.CreateHandlersResponse{
+		Handlers: make([]zapwire.HTTPHandler, 0, len(handlers)),
+	}
+
+	for prefix, handler := range handlers {
+		// Create HTTP listener on a random port
+		listener, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			s.logger.Error("Failed to create listener for handler", "prefix", prefix, "error", err)
+			return zapwire.MsgCreateHandlers, nil, err
+		}
+
+		serverAddr := listener.Addr().String()
+		s.logger.Info("Starting HTTP server for handler", "prefix", prefix, "addr", serverAddr)
+
+		// Start HTTP server in background
+		server := &http.Server{Handler: handler}
+		go func() {
+			if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
+				s.logger.Error("HTTP server error", "prefix", prefix, "error", err)
+			}
+		}()
+
+		resp.Handlers = append(resp.Handlers, zapwire.HTTPHandler{
+			Prefix:     prefix,
+			ServerAddr: serverAddr,
+		})
+	}
+
+	buf := zapwire.GetBuffer()
+	resp.Encode(buf)
+	result := make([]byte, len(buf.Bytes()))
+	copy(result, buf.Bytes())
+	zapwire.PutBuffer(buf)
+
+	s.logger.Info("CreateHandlers completed", "handlers", len(resp.Handlers))
+	return zapwire.MsgCreateHandlers, result, nil
+}
+
 func (s *zapVMServer) handleBuildBlock(ctx context.Context) (zapwire.MessageType, []byte, error) {
+	log.Info("[ZAP SERVER] handleBuildBlock called")
 	block, err := s.vm.BuildBlock(ctx)
 	if err != nil {
+		log.Error("[ZAP SERVER] handleBuildBlock error", "error", err)
 		resp := &zapwire.BlockResponse{
 			Err: errorToZAP(err),
 		}
@@ -248,6 +403,8 @@ func (s *zapVMServer) handleBuildBlock(ctx context.Context) (zapwire.MessageType
 
 	blkID := block.ID()
 	parentID := block.Parent()
+	log.Info("[ZAP SERVER] handleBuildBlock success",
+		"blkID", blkID, "parentID", parentID, "height", block.Height(), "bytesLen", len(block.Bytes()))
 	resp := &zapwire.BlockResponse{
 		ID:        blkID[:],
 		ParentID:  parentID[:],

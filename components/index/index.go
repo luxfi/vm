@@ -12,11 +12,11 @@ import (
 	"github.com/luxfi/log"
 	"github.com/luxfi/metric"
 
+	"github.com/luxfi/codec/wrappers"
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/codec/wrappers"
 	lux "github.com/luxfi/utxo"
 )
 

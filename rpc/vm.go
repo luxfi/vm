@@ -17,9 +17,9 @@ import (
 	"google.golang.org/grpc/health"
 
 	"github.com/luxfi/atomic"
-	"github.com/luxfi/vm/chain"
 	"github.com/luxfi/log"
 	"github.com/luxfi/version"
+	"github.com/luxfi/vm/chain"
 	"github.com/luxfi/vm/rpc/grpcutils"
 	"github.com/luxfi/vm/rpc/gruntime"
 	"github.com/luxfi/vm/rpc/runtime"
@@ -142,7 +142,9 @@ func Serve(ctx context.Context, log log.Logger, vm chain.ChainVM, opts ...grpcut
 	log.Info("vm runtime initialized successfully", "addr", listener.Addr().String())
 
 	// start RPC Chain VM server
+	debugFile("Starting grpcutils.Serve (this should block indefinitely)")
 	grpcutils.Serve(listener, server)
+	debugFile("grpcutils.Serve returned - THIS IS UNEXPECTED unless shutting down")
 
 	return nil
 }
