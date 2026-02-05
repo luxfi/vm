@@ -11,9 +11,9 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/luxfi/ids"
-	validators "github.com/luxfi/validators"
+	"github.com/luxfi/validators"
+
 	validatorstatepb "github.com/luxfi/node/proto/pb/validatorstate"
-	validators "github.com/luxfi/validators"
 )
 
 // NewClient creates a new validator state client
