@@ -17,6 +17,29 @@ type GConfig struct {
 	EnableCaching   bool
 }
 
+// GraphQLRequest represents a GraphQL query request.
+type GraphQLRequest struct {
+	Query         string                 `json:"query"`
+	Variables     map[string]interface{} `json:"variables,omitempty"`
+	OperationName string                 `json:"operationName,omitempty"`
+}
+
+// GraphQLError represents a GraphQL error.
+type GraphQLError struct {
+	Message   string   `json:"message"`
+	Locations []string `json:"locations,omitempty"`
+	Path      []string `json:"path,omitempty"`
+}
+
+// GraphQLResponse represents a GraphQL response.
+type GraphQLResponse struct {
+	Data   interface{}    `json:"data,omitempty"`
+	Errors []GraphQLError `json:"errors,omitempty"`
+}
+
+// ResolverFunc is a resolver function type.
+type ResolverFunc func(ctx context.Context, args interface{}) (interface{}, error)
+
 // QueryExecutor executes GraphQL queries.
 type QueryExecutor struct {
 	db     database.Database
@@ -31,10 +54,22 @@ func NewQueryExecutor(db database.Database, config *GConfig) *QueryExecutor {
 	}
 }
 
-// Execute executes a GraphQL query.
-func (e *QueryExecutor) Execute(ctx context.Context, query string, variables map[string]interface{}) ([]byte, error) {
+// Execute executes a GraphQL request.
+func (e *QueryExecutor) Execute(ctx context.Context, req *GraphQLRequest) *GraphQLResponse {
 	// Stub implementation
-	return []byte("{}"), nil
+	return &GraphQLResponse{
+		Data: map[string]interface{}{},
+	}
+}
+
+// GetDB returns the database.
+func (e *QueryExecutor) GetDB() database.Database {
+	return e.db
+}
+
+// RegisterResolver registers a resolver function.
+func (e *QueryExecutor) RegisterResolver(name string, resolver ResolverFunc) {
+	// Stub implementation
 }
 
 // Close releases resources.
