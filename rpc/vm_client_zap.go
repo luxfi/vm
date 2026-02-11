@@ -112,7 +112,7 @@ func (c *ZAPClient) Shutdown(ctx context.Context) error {
 // SetState implements chain.ChainVM
 func (c *ZAPClient) SetState(ctx context.Context, state uint32) error {
 	req := &zapwire.SetStateRequest{
-		State: zapwire.State(state),
+		State: uint8(state),
 	}
 
 	buf := zapwire.GetBuffer()

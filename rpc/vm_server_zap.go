@@ -12,16 +12,17 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
+	"path/filepath"
+	"sync"
 
 	zapwire "github.com/luxfi/api/zap"
 	"github.com/luxfi/consensus/engine/chain/block"
 	"github.com/luxfi/database"
-	"github.com/luxfi/database/memdb"
+	"github.com/luxfi/database/badgerdb"
+	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
+	"github.com/luxfi/metric"
 	luxruntime "github.com/luxfi/runtime"
 	"github.com/luxfi/version"
 	"github.com/luxfi/vm/chain"
@@ -34,28 +35,22 @@ import (
 // The address of the Runtime server is expected to be passed via ENV `runtime.EngineAddressKey`.
 // This function connects to the runtime, creates a ZAP listener, sends the handshake,
 // and then serves VM requests over ZAP.
-func Serve(ctx context.Context, logger log.Logger, vm chain.ChainVM) error {
-	signals := make(chan os.Signal, 2)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
-	defer signal.Stop(signals)
-
-	// Track if shutdown is allowed
-	allowShutdown := false
-
+func Serve(ctx context.Context, logger log.Logger, vm chain.ChainVM) (retErr error) {
 	// Get runtime address from ENV
 	runtimeAddr := os.Getenv(runtime.EngineAddressKey)
 	if runtimeAddr == "" {
 		return fmt.Errorf("required env var missing: %q", runtime.EngineAddressKey)
 	}
-	logger.Info("vm.Serve: runtime address from env", "addr", runtimeAddr)
 
-	// Create ZAP listener for RPC
-	listener, err := zapwire.Listen("127.0.0.1:0", nil)
+	// Create ZAP listener with no read timeout (WaitForEvent blocks indefinitely)
+	zapCfg := zapwire.DefaultConfig()
+	zapCfg.ReadTimeout = 0
+
+	listener, err := zapwire.Listen("127.0.0.1:0", zapCfg)
 	if err != nil {
 		return fmt.Errorf("failed to create ZAP listener: %w", err)
 	}
 	vmAddr := listener.Addr().String()
-	logger.Info("vm.Serve: ZAP listener created", "addr", vmAddr)
 
 	// Connect to runtime for handshake
 	runtimeConn, err := net.Dial("tcp", runtimeAddr)
@@ -92,36 +87,9 @@ func Serve(ctx context.Context, logger log.Logger, vm chain.ChainVM) error {
 	}
 	runtimeConn.Close()
 
-	logger.Info("vm.Serve: handshake succeeded, starting ZAP server", "addr", vmAddr)
-
 	// Create ZAP server for VM operations
 	server := newZAPVMServer(vm, logger)
 	zapServer := zapwire.NewServer(listener, server)
-
-	// Handle shutdown signals in background
-	go func() {
-		for {
-			select {
-			case s := <-signals:
-				if !allowShutdown {
-					logger.Debug("vm server: ignoring signal (shutdown not allowed)", "signal", s)
-					continue
-				}
-				switch s {
-				case syscall.SIGINT:
-					logger.Debug("vm server: ignoring SIGINT")
-				case syscall.SIGTERM:
-					logger.Info("vm server: received SIGTERM, shutting down")
-					zapServer.Close()
-					return
-				}
-			case <-ctx.Done():
-				logger.Info("vm server: context cancelled")
-				zapServer.Close()
-				return
-			}
-		}
-	}()
 
 	// Serve requests (blocks until closed)
 	return zapServer.Serve(ctx)
@@ -132,6 +100,13 @@ type zapVMServer struct {
 	vm            chain.ChainVM
 	logger        log.Logger
 	allowShutdown *bool
+	db            database.Database // persistent database, closed on shutdown
+
+	// pendingBlock caches the last built block to prevent rebuilding
+	// with a new timestamp while consensus is voting on it.
+	// Cleared on BlockAccept or BlockReject.
+	pendingBlock     chain.Block
+	pendingBlockLock sync.Mutex
 }
 
 func newZAPVMServer(vm chain.ChainVM, logger log.Logger) *zapVMServer {
@@ -144,7 +119,15 @@ func newZAPVMServer(vm chain.ChainVM, logger log.Logger) *zapVMServer {
 }
 
 // Handle implements zapwire.Handler
-func (s *zapVMServer) Handle(ctx context.Context, msgType zapwire.MessageType, payload []byte) (zapwire.MessageType, []byte, error) {
+func (s *zapVMServer) Handle(ctx context.Context, msgType zapwire.MessageType, payload []byte) (retType zapwire.MessageType, retPayload []byte, retErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			s.logger.Error("panic in ZAP handler", "msgType", msgType, "panic", r)
+			retType = msgType
+			retPayload = nil
+			retErr = fmt.Errorf("panic in handler: %v", r)
+		}
+	}()
 	switch msgType {
 	case zapwire.MsgInitialize:
 		return s.handleInitialize(ctx, payload)
@@ -173,8 +156,23 @@ func (s *zapVMServer) Handle(ctx context.Context, msgType zapwire.MessageType, p
 		return s.handleBlockReject(ctx, payload)
 	case zapwire.MsgHealth:
 		return s.handleHealth(ctx)
+	case zapwire.MsgWaitForEvent:
+		return s.handleWaitForEvent(ctx)
+	case zapwire.MsgBatchedParseBlock:
+		return s.handleBatchedParseBlock(ctx, payload)
+	case zapwire.MsgGetAncestors:
+		return s.handleGetAncestors(ctx, payload)
+	case zapwire.MsgConnected:
+		return s.handleConnected(ctx, payload)
+	case zapwire.MsgDisconnected:
+		return s.handleDisconnected(ctx, payload)
+	case zapwire.MsgGetBlockIDAtHeight:
+		return s.handleGetBlockIDAtHeight(ctx, payload)
+	case zapwire.MsgNewHTTPHandler:
+		return s.handleNewHTTPHandler(ctx)
 	default:
-		return msgType, nil, fmt.Errorf("unknown message type: %d", msgType)
+		s.logger.Warn("unknown ZAP message type", "msgType", msgType)
+		return msgType, nil, nil
 	}
 }
 
@@ -208,19 +206,26 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 		NetworkID:    req.NetworkID,
 		ChainID:      chainID,
 		NodeID:       nodeIDTyped,
-		PublicKey:    req.PublicKey,
+		PublicKey:     req.PublicKey,
 		XChainID:     xChainID,
 		CChainID:     cChainID,
 		XAssetID:     luxAssetID,
 		ChainDataDir: req.ChainDataDir,
-		StartTime:    time.Now(),
-		Log:          &zapLogger{logger: s.logger},
+		Log:          s.logger,
+		Metrics:      metric.NewMultiGatherer(),
 	}
 
-	// Create an in-memory database for the VM
-	// For production, this should be replaced with a persistent database
-	// opened from ChainDataDir, but memdb works for initialization
-	db := memdb.New()
+	// Open persistent database at ChainDataDir for the VM.
+	// The database is opened directly by the plugin process since
+	// ZAP transport cannot proxy database access across processes.
+	dbPath := filepath.Join(req.ChainDataDir, "db")
+	baseDB, err := badgerdb.New(dbPath, nil, "vm", metric.NewRegistry())
+	if err != nil {
+		return zapwire.MsgInitialize, nil, fmt.Errorf("open database at %s: %w", dbPath, err)
+	}
+	s.db = baseDB
+	// Use a prefix to avoid collisions with any other data in the same dir
+	db := prefixdb.New([]byte("vm"), baseDB)
 
 	// Build the block.Init struct for VM initialization
 	init := block.Init{
@@ -231,7 +236,6 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 		Config:  req.ConfigBytes,
 	}
 
-	// Initialize the VM with the proper configuration
 	if err := s.vm.Initialize(ctx, init); err != nil {
 		return zapwire.MsgInitialize, nil, fmt.Errorf("vm initialize: %w", err)
 	}
@@ -285,6 +289,12 @@ func (l *zapLogger) IsZero() bool                            { return l.logger =
 
 func (s *zapVMServer) handleShutdown(ctx context.Context) (zapwire.MessageType, []byte, error) {
 	err := s.vm.Shutdown(ctx)
+	// Close the persistent database after the VM shuts down
+	if s.db != nil {
+		if dbErr := s.db.Close(); dbErr != nil {
+			s.logger.Warn("failed to close database on shutdown", "error", dbErr)
+		}
+	}
 	return zapwire.MsgShutdown, nil, err
 }
 
@@ -294,7 +304,6 @@ func (s *zapVMServer) handleSetState(ctx context.Context, payload []byte) (zapwi
 		return zapwire.MsgSetState, nil, err
 	}
 
-	// SetState takes uint32 directly
 	err := s.vm.SetState(ctx, uint32(req.State))
 	return zapwire.MsgSetState, nil, err
 }
@@ -326,7 +335,6 @@ func (s *zapVMServer) handleCreateHandlers(ctx context.Context) (zapwire.Message
 
 	handlerVM, ok := s.vm.(vmWithHandlers)
 	if !ok {
-		s.logger.Info("VM does not implement CreateHandlers")
 		resp := &zapwire.CreateHandlersResponse{
 			Handlers: []zapwire.HTTPHandler{},
 		}
@@ -340,11 +348,8 @@ func (s *zapVMServer) handleCreateHandlers(ctx context.Context) (zapwire.Message
 
 	handlers, err := handlerVM.CreateHandlers(ctx)
 	if err != nil {
-		s.logger.Error("CreateHandlers failed", "error", err)
 		return zapwire.MsgCreateHandlers, nil, err
 	}
-
-	s.logger.Info("CreateHandlers returned", "count", len(handlers))
 
 	resp := &zapwire.CreateHandlersResponse{
 		Handlers: make([]zapwire.HTTPHandler, 0, len(handlers)),
@@ -354,12 +359,10 @@ func (s *zapVMServer) handleCreateHandlers(ctx context.Context) (zapwire.Message
 		// Create HTTP listener on a random port
 		listener, err := net.Listen("tcp", "127.0.0.1:0")
 		if err != nil {
-			s.logger.Error("Failed to create listener for handler", "prefix", prefix, "error", err)
 			return zapwire.MsgCreateHandlers, nil, err
 		}
 
 		serverAddr := listener.Addr().String()
-		s.logger.Info("Starting HTTP server for handler", "prefix", prefix, "addr", serverAddr)
 
 		// Start HTTP server in background
 		server := &http.Server{Handler: handler}
@@ -381,15 +384,38 @@ func (s *zapVMServer) handleCreateHandlers(ctx context.Context) (zapwire.Message
 	copy(result, buf.Bytes())
 	zapwire.PutBuffer(buf)
 
-	s.logger.Info("CreateHandlers completed", "handlers", len(resp.Handlers))
 	return zapwire.MsgCreateHandlers, result, nil
 }
 
 func (s *zapVMServer) handleBuildBlock(ctx context.Context) (zapwire.MessageType, []byte, error) {
-	log.Info("[ZAP SERVER] handleBuildBlock called")
-	block, err := s.vm.BuildBlock(ctx)
+	s.pendingBlockLock.Lock()
+	defer s.pendingBlockLock.Unlock()
+
+	// Return cached block if one is already pending consensus vote.
+	// This prevents rebuilding with a new timestamp which would change
+	// the block ID and invalidate in-flight votes.
+	if s.pendingBlock != nil {
+		blk := s.pendingBlock
+		blkID := blk.ID()
+		parentID := blk.Parent()
+		resp := &zapwire.BlockResponse{
+			ID:        blkID[:],
+			ParentID:  parentID[:],
+			Bytes:     blk.Bytes(),
+			Height:    blk.Height(),
+			Timestamp: blk.Timestamp().UnixNano(),
+			Err:       zapwire.ErrorUnspecified,
+		}
+		buf := zapwire.GetBuffer()
+		resp.Encode(buf)
+		result := make([]byte, len(buf.Bytes()))
+		copy(result, buf.Bytes())
+		zapwire.PutBuffer(buf)
+		return zapwire.MsgBuildBlock, result, nil
+	}
+
+	blk, err := s.vm.BuildBlock(ctx)
 	if err != nil {
-		log.Error("[ZAP SERVER] handleBuildBlock error", "error", err)
 		resp := &zapwire.BlockResponse{
 			Err: errorToZAP(err),
 		}
@@ -401,16 +427,17 @@ func (s *zapVMServer) handleBuildBlock(ctx context.Context) (zapwire.MessageType
 		return zapwire.MsgBuildBlock, result, nil
 	}
 
-	blkID := block.ID()
-	parentID := block.Parent()
-	log.Info("[ZAP SERVER] handleBuildBlock success",
-		"blkID", blkID, "parentID", parentID, "height", block.Height(), "bytesLen", len(block.Bytes()))
+	// Cache the block so subsequent calls return the same block ID.
+	s.pendingBlock = blk
+
+	blkID := blk.ID()
+	parentID := blk.Parent()
 	resp := &zapwire.BlockResponse{
 		ID:        blkID[:],
 		ParentID:  parentID[:],
-		Bytes:     block.Bytes(),
-		Height:    block.Height(),
-		Timestamp: block.Timestamp().UnixNano(),
+		Bytes:     blk.Bytes(),
+		Height:    blk.Height(),
+		Timestamp: blk.Timestamp().UnixNano(),
 		Err:       zapwire.ErrorUnspecified,
 	}
 
@@ -429,7 +456,7 @@ func (s *zapVMServer) handleParseBlock(ctx context.Context, payload []byte) (zap
 		return zapwire.MsgParseBlock, nil, err
 	}
 
-	block, err := s.vm.ParseBlock(ctx, req.Bytes)
+	blk, err := s.vm.ParseBlock(ctx, req.Bytes)
 	if err != nil {
 		resp := &zapwire.BlockResponse{
 			Err: errorToZAP(err),
@@ -442,14 +469,14 @@ func (s *zapVMServer) handleParseBlock(ctx context.Context, payload []byte) (zap
 		return zapwire.MsgParseBlock, result, nil
 	}
 
-	blkID := block.ID()
-	parentID := block.Parent()
+	blkID := blk.ID()
+	parentID := blk.Parent()
 	resp := &zapwire.BlockResponse{
 		ID:        blkID[:],
 		ParentID:  parentID[:],
-		Bytes:     block.Bytes(),
-		Height:    block.Height(),
-		Timestamp: block.Timestamp().UnixNano(),
+		Bytes:     blk.Bytes(),
+		Height:    blk.Height(),
+		Timestamp: blk.Timestamp().UnixNano(),
 		Err:       zapwire.ErrorUnspecified,
 	}
 
@@ -471,7 +498,7 @@ func (s *zapVMServer) handleGetBlock(ctx context.Context, payload []byte) (zapwi
 	var blkID [32]byte
 	copy(blkID[:], req.ID)
 
-	block, err := s.vm.GetBlock(ctx, blkID)
+	blk, err := s.vm.GetBlock(ctx, blkID)
 	if err != nil {
 		resp := &zapwire.BlockResponse{
 			Err: errorToZAP(err),
@@ -484,14 +511,14 @@ func (s *zapVMServer) handleGetBlock(ctx context.Context, payload []byte) (zapwi
 		return zapwire.MsgGetBlock, result, nil
 	}
 
-	retrievedBlkID := block.ID()
-	parentID := block.Parent()
+	retrievedBlkID := blk.ID()
+	parentID := blk.Parent()
 	resp := &zapwire.BlockResponse{
 		ID:        retrievedBlkID[:],
 		ParentID:  parentID[:],
-		Bytes:     block.Bytes(),
-		Height:    block.Height(),
-		Timestamp: block.Timestamp().UnixNano(),
+		Bytes:     blk.Bytes(),
+		Height:    blk.Height(),
+		Timestamp: blk.Timestamp().UnixNano(),
 		Err:       zapwire.ErrorUnspecified,
 	}
 
@@ -523,13 +550,12 @@ func (s *zapVMServer) handleBlockVerify(ctx context.Context, payload []byte) (za
 		return zapwire.MsgBlockVerify, nil, err
 	}
 
-	// Parse and verify the block
-	block, err := s.vm.ParseBlock(ctx, req.Bytes)
+	blk, err := s.vm.ParseBlock(ctx, req.Bytes)
 	if err != nil {
 		return zapwire.MsgBlockVerify, nil, err
 	}
 
-	err = block.Verify(ctx)
+	err = blk.Verify(ctx)
 	return zapwire.MsgBlockVerify, nil, err
 }
 
@@ -542,12 +568,18 @@ func (s *zapVMServer) handleBlockAccept(ctx context.Context, payload []byte) (za
 	var blkID [32]byte
 	copy(blkID[:], req.ID)
 
-	block, err := s.vm.GetBlock(ctx, blkID)
+	blk, err := s.vm.GetBlock(ctx, blkID)
 	if err != nil {
 		return zapwire.MsgBlockAccept, nil, err
 	}
 
-	err = block.Accept(ctx)
+	err = blk.Accept(ctx)
+
+	// Clear pending block cache so the next BuildBlock creates a fresh block.
+	s.pendingBlockLock.Lock()
+	s.pendingBlock = nil
+	s.pendingBlockLock.Unlock()
+
 	return zapwire.MsgBlockAccept, nil, err
 }
 
@@ -560,12 +592,18 @@ func (s *zapVMServer) handleBlockReject(ctx context.Context, payload []byte) (za
 	var blkID [32]byte
 	copy(blkID[:], req.ID)
 
-	block, err := s.vm.GetBlock(ctx, blkID)
+	blk, err := s.vm.GetBlock(ctx, blkID)
 	if err != nil {
 		return zapwire.MsgBlockReject, nil, err
 	}
 
-	err = block.Reject(ctx)
+	err = blk.Reject(ctx)
+
+	// Clear pending block cache so the next BuildBlock creates a fresh block.
+	s.pendingBlockLock.Lock()
+	s.pendingBlock = nil
+	s.pendingBlockLock.Unlock()
+
 	return zapwire.MsgBlockReject, nil, err
 }
 
@@ -583,11 +621,189 @@ func (s *zapVMServer) handleHealth(ctx context.Context) (zapwire.MessageType, []
 	return zapwire.MsgHealth, result, nil
 }
 
+func (s *zapVMServer) handleWaitForEvent(ctx context.Context) (zapwire.MessageType, []byte, error) {
+	type waitForEventer interface {
+		WaitForEvent(ctx context.Context) (block.Message, error)
+	}
+
+	wfe, ok := s.vm.(waitForEventer)
+	if !ok {
+		return zapwire.MsgWaitForEvent, nil, fmt.Errorf("VM does not implement WaitForEvent")
+	}
+
+	msg, err := wfe.WaitForEvent(ctx)
+	if err != nil {
+		return zapwire.MsgWaitForEvent, nil, err
+	}
+
+	resp := &zapwire.WaitForEventResponse{
+		Message: uint8(msg.Type),
+	}
+
+	buf := zapwire.GetBuffer()
+	resp.Encode(buf)
+	result := make([]byte, len(buf.Bytes()))
+	copy(result, buf.Bytes())
+	zapwire.PutBuffer(buf)
+
+	return zapwire.MsgWaitForEvent, result, nil
+}
+
+func (s *zapVMServer) handleBatchedParseBlock(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
+	req := &zapwire.BatchedParseBlockRequest{}
+	if err := req.Decode(zapwire.NewReader(payload)); err != nil {
+		return zapwire.MsgBatchedParseBlock, nil, err
+	}
+
+	resp := &zapwire.BatchedParseBlockResponse{
+		Responses: make([]zapwire.BlockResponse, len(req.Requests)),
+	}
+
+	for i, blockBytes := range req.Requests {
+		blk, err := s.vm.ParseBlock(ctx, blockBytes)
+		if err != nil {
+			resp.Responses[i] = zapwire.BlockResponse{
+				Err: errorToZAP(err),
+			}
+			continue
+		}
+
+		blkID := blk.ID()
+		parentID := blk.Parent()
+		resp.Responses[i] = zapwire.BlockResponse{
+			ID:        blkID[:],
+			ParentID:  parentID[:],
+			Bytes:     blk.Bytes(),
+			Height:    blk.Height(),
+			Timestamp: blk.Timestamp().UnixNano(),
+			Err:       zapwire.ErrorUnspecified,
+		}
+	}
+
+	buf := zapwire.GetBuffer()
+	resp.Encode(buf)
+	result := make([]byte, len(buf.Bytes()))
+	copy(result, buf.Bytes())
+	zapwire.PutBuffer(buf)
+
+	return zapwire.MsgBatchedParseBlock, result, nil
+}
+
+func (s *zapVMServer) handleGetAncestors(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
+	req := &zapwire.GetAncestorsRequest{}
+	if err := req.Decode(zapwire.NewReader(payload)); err != nil {
+		return zapwire.MsgGetAncestors, nil, err
+	}
+
+	var blkID [32]byte
+	copy(blkID[:], req.BlkID)
+
+	ancestors := make([][]byte, 0, req.MaxBlocksNum)
+	currentID := blkID
+
+	for i := int32(0); i < req.MaxBlocksNum; i++ {
+		blk, err := s.vm.GetBlock(ctx, currentID)
+		if err != nil {
+			break
+		}
+		ancestors = append(ancestors, blk.Bytes())
+		currentID = blk.Parent()
+	}
+
+	resp := &zapwire.GetAncestorsResponse{
+		BlksBytes: ancestors,
+	}
+
+	buf := zapwire.GetBuffer()
+	resp.Encode(buf)
+	result := make([]byte, len(buf.Bytes()))
+	copy(result, buf.Bytes())
+	zapwire.PutBuffer(buf)
+
+	return zapwire.MsgGetAncestors, result, nil
+}
+
+func (s *zapVMServer) handleConnected(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
+	req := &zapwire.ConnectedRequest{}
+	if err := req.Decode(zapwire.NewReader(payload)); err != nil {
+		return zapwire.MsgConnected, nil, err
+	}
+	s.logger.Debug("peer connected", "nodeID", fmt.Sprintf("%x", req.NodeID))
+	return zapwire.MsgConnected, nil, nil
+}
+
+func (s *zapVMServer) handleDisconnected(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
+	req := &zapwire.DisconnectedRequest{}
+	if err := req.Decode(zapwire.NewReader(payload)); err != nil {
+		return zapwire.MsgDisconnected, nil, err
+	}
+	s.logger.Debug("peer disconnected", "nodeID", fmt.Sprintf("%x", req.NodeID))
+	return zapwire.MsgDisconnected, nil, nil
+}
+
+func (s *zapVMServer) handleGetBlockIDAtHeight(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
+	req := &zapwire.GetBlockIDAtHeightRequest{}
+	if err := req.Decode(zapwire.NewReader(payload)); err != nil {
+		return zapwire.MsgGetBlockIDAtHeight, nil, err
+	}
+
+	type heightIndexer interface {
+		GetBlockIDAtHeight(ctx context.Context, height uint64) (ids.ID, error)
+	}
+
+	hi, ok := s.vm.(heightIndexer)
+	if !ok {
+		resp := &zapwire.GetBlockIDAtHeightResponse{
+			Err: zapwire.ErrorNotFound,
+		}
+		buf := zapwire.GetBuffer()
+		resp.Encode(buf)
+		result := make([]byte, len(buf.Bytes()))
+		copy(result, buf.Bytes())
+		zapwire.PutBuffer(buf)
+		return zapwire.MsgGetBlockIDAtHeight, result, nil
+	}
+
+	blkID, err := hi.GetBlockIDAtHeight(ctx, req.Height)
+	if err != nil {
+		resp := &zapwire.GetBlockIDAtHeightResponse{
+			Err: errorToZAP(err),
+		}
+		buf := zapwire.GetBuffer()
+		resp.Encode(buf)
+		result := make([]byte, len(buf.Bytes()))
+		copy(result, buf.Bytes())
+		zapwire.PutBuffer(buf)
+		return zapwire.MsgGetBlockIDAtHeight, result, nil
+	}
+
+	resp := &zapwire.GetBlockIDAtHeightResponse{
+		BlkID: blkID[:],
+		Err:   zapwire.ErrorUnspecified,
+	}
+	buf := zapwire.GetBuffer()
+	resp.Encode(buf)
+	result := make([]byte, len(buf.Bytes()))
+	copy(result, buf.Bytes())
+	zapwire.PutBuffer(buf)
+	return zapwire.MsgGetBlockIDAtHeight, result, nil
+}
+
+func (s *zapVMServer) handleNewHTTPHandler(ctx context.Context) (zapwire.MessageType, []byte, error) {
+	// Return empty response - main handlers are via CreateHandlers
+	resp := &zapwire.NewHTTPHandlerResponse{}
+	buf := zapwire.GetBuffer()
+	resp.Encode(buf)
+	result := make([]byte, len(buf.Bytes()))
+	copy(result, buf.Bytes())
+	zapwire.PutBuffer(buf)
+	return zapwire.MsgNewHTTPHandler, result, nil
+}
+
 func errorToZAP(err error) zapwire.Error {
 	if err == nil {
 		return zapwire.ErrorUnspecified
 	}
-	// Check for common errors
 	if err == database.ErrClosed {
 		return zapwire.ErrorClosed
 	}
