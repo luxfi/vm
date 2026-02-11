@@ -36,6 +36,8 @@ import (
 // This function connects to the runtime, creates a ZAP listener, sends the handshake,
 // and then serves VM requests over ZAP.
 func Serve(ctx context.Context, logger log.Logger, vm chain.ChainVM) (retErr error) {
+	fmt.Fprintf(os.Stderr, "[ZAP-SERVE] starting Serve\n")
+
 	// Get runtime address from ENV
 	runtimeAddr := os.Getenv(runtime.EngineAddressKey)
 	if runtimeAddr == "" {
@@ -51,6 +53,7 @@ func Serve(ctx context.Context, logger log.Logger, vm chain.ChainVM) (retErr err
 		return fmt.Errorf("failed to create ZAP listener: %w", err)
 	}
 	vmAddr := listener.Addr().String()
+	fmt.Fprintf(os.Stderr, "[ZAP-SERVE] listening on %s\n", vmAddr)
 
 	// Connect to runtime for handshake
 	runtimeConn, err := net.Dial("tcp", runtimeAddr)
@@ -86,13 +89,16 @@ func Serve(ctx context.Context, logger log.Logger, vm chain.ChainVM) (retErr err
 		return fmt.Errorf("handshake failed: ack=%d", ack[0])
 	}
 	runtimeConn.Close()
+	fmt.Fprintf(os.Stderr, "[ZAP-SERVE] handshake complete, starting ZAP server\n")
 
 	// Create ZAP server for VM operations
 	server := newZAPVMServer(vm, logger)
 	zapServer := zapwire.NewServer(listener, server)
 
 	// Serve requests (blocks until closed)
-	return zapServer.Serve(ctx)
+	err = zapServer.Serve(ctx)
+	fmt.Fprintf(os.Stderr, "[ZAP-SERVE] Serve returned: %v\n", err)
+	return err
 }
 
 // zapVMServer implements zapwire.Handler for a VM
