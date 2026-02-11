@@ -12,6 +12,7 @@ import (
 	"net/http"
 
 	"github.com/luxfi/ids"
+	"github.com/luxfi/vm"
 )
 
 // VM defines the common interface that all VM shapes must implement.
@@ -35,8 +36,9 @@ type VM interface {
 	// Shutdown gracefully shuts down the VM
 	Shutdown(context.Context) error
 
-	// SetState sets the VM's operational state
-	SetState(context.Context, State) error
+	// SetState sets the VM's operational state.
+	// State values are defined in github.com/luxfi/vm (vm.State).
+	SetState(context.Context, vm.State) error
 
 	// Version returns the VM's version string
 	Version(context.Context) (string, error)
@@ -54,19 +56,9 @@ type VM interface {
 	LastAccepted(context.Context) (ids.ID, error)
 }
 
-// State represents the operational state of a VM
-type State uint32
-
-const (
-	// StateInitializing indicates the VM is initializing
-	StateInitializing State = iota
-	// StateStateSyncing indicates the VM is state syncing
-	StateStateSyncing
-	// StateBootstrapping indicates the VM is bootstrapping
-	StateBootstrapping
-	// StateNormalOp indicates the VM is in normal operation
-	StateNormalOp
-)
+// State is the canonical VM lifecycle state from the root vm package.
+// Kept as an alias for backward compatibility.
+type State = vm.State
 
 // HTTPHandler provides HTTP handler creation capability
 type HTTPHandler interface {
