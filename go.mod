@@ -10,7 +10,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/holiman/uint256 v1.3.2
 	github.com/luxfi/accel v1.0.1
-	github.com/luxfi/api v1.0.1
+	github.com/luxfi/api v1.0.4
 	github.com/luxfi/atomic v1.0.0
 	github.com/luxfi/cache v1.2.1
 	github.com/luxfi/codec v1.1.3
