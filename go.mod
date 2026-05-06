@@ -18,12 +18,12 @@ require (
 	github.com/luxfi/consensus v1.22.70
 	github.com/luxfi/constants v1.4.7
 	github.com/luxfi/crypto v1.17.45
-	github.com/luxfi/database v1.17.44
+	github.com/luxfi/database v1.18.3
 	github.com/luxfi/filesystem v0.0.1
 	github.com/luxfi/ids v1.2.9
 	github.com/luxfi/lattice/v7 v7.0.1
 	github.com/luxfi/log v1.4.1
-	github.com/luxfi/math v1.2.4
+	github.com/luxfi/math v1.4.0
 	github.com/luxfi/metric v1.5.1
 	github.com/luxfi/mock v0.1.1
 	github.com/luxfi/node v1.23.35
@@ -55,6 +55,7 @@ require (
 )
 
 require (
+	filippo.io/hpke v0.4.0 // indirect
 	github.com/DataDog/zstd v1.5.7 // indirect
 	github.com/btcsuite/btcd/btcutil v1.1.6 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
@@ -68,32 +69,41 @@ require (
 	github.com/dgraph-io/ristretto/v2 v2.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/getsentry/sentry-go v0.44.1 // indirect
+	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/renameio/v2 v2.0.2 // indirect
 	github.com/klauspost/compress v1.18.5 // indirect
+	github.com/klauspost/crc32 v1.3.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/luxfi/address v1.0.1 // indirect
+	github.com/luxfi/age v1.4.0 // indirect
 	github.com/luxfi/compress v0.0.5 // indirect
 	github.com/luxfi/concurrent v0.0.3 // indirect
 	github.com/luxfi/container v0.0.4 // indirect
 	github.com/luxfi/geth v1.16.79 // indirect
 	github.com/luxfi/keychain v1.0.2 // indirect
-	github.com/luxfi/zapdb v1.0.0 // indirect
+	github.com/luxfi/zapdb v1.8.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/minio/crc64nvme v1.1.1 // indirect
+	github.com/minio/md5-simd v1.1.2 // indirect
+	github.com/minio/minio-go/v7 v7.0.100 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354 // indirect
+	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
+	github.com/rs/xid v1.6.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220614013038-64ee5596c38a // indirect
+	github.com/tinylib/msgp v1.6.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
 	github.com/tklauser/numcpus v0.11.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
