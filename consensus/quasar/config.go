@@ -24,7 +24,7 @@ var (
 // Core Consensus Parameters (compile-time, immutable after construction)
 // -----------------------------------------------------------------------------
 
-// CoreParams defines the fundamental Snow consensus parameters.
+// CoreParams defines the fundamental Quasar consensus parameters.
 // These are protocol-critical and must match across all validators.
 type CoreParams struct {
 	// K is the sample size for each consensus query round.
