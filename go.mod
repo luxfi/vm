@@ -1,6 +1,6 @@
 module github.com/luxfi/vm
 
-go 1.26.1
+go 1.26.3
 
 require (
 	connectrpc.com/connect v1.19.1
@@ -17,7 +17,7 @@ require (
 	github.com/luxfi/config v1.1.2
 	github.com/luxfi/consensus v1.22.70
 	github.com/luxfi/constants v1.4.7
-	github.com/luxfi/crypto v1.17.45
+	github.com/luxfi/crypto v1.19.0
 	github.com/luxfi/database v1.18.3
 	github.com/luxfi/filesystem v0.0.1
 	github.com/luxfi/ids v1.2.9
