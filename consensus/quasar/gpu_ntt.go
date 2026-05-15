@@ -3,7 +3,7 @@
 
 //go:build !cgo
 
-// Package quasar provides NTT operations for Ringtail consensus.
+// Package quasar provides NTT operations for Corona consensus.
 // This file provides pure Go CPU implementation when CGO is not available.
 // All operations use the luxfi/lattice library which provides optimized
 // NTT implementations in pure Go.
@@ -16,7 +16,7 @@ import (
 	"github.com/luxfi/lattice/v7/ring"
 )
 
-// GPUNTTAccelerator provides NTT operations for Ringtail.
+// GPUNTTAccelerator provides NTT operations for Corona.
 // When CGO is disabled, this uses the pure Go lattice library
 // which provides optimized CPU-based NTT transforms.
 type GPUNTTAccelerator struct {

@@ -86,7 +86,7 @@ func DefaultCoreParams() CoreParams {
 }
 
 // -----------------------------------------------------------------------------
-// Threshold Signing Parameters (compile-time, for Ringtail/BLS threshold)
+// Threshold Signing Parameters (compile-time, for Corona/BLS threshold)
 // -----------------------------------------------------------------------------
 
 // ThresholdParams defines t-of-n threshold signature configuration.

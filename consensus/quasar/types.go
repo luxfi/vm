@@ -14,7 +14,7 @@ type SignatureType uint8
 const (
 	SignatureTypeBLS SignatureType = iota
 	SignatureTypeRingtail
-	SignatureTypeQuasar // Hybrid BLS + Ringtail
+	SignatureTypeQuasar // Hybrid BLS + Corona
 	SignatureTypeMLDSA
 )
 
@@ -43,73 +43,73 @@ type ThresholdSigner interface {
 	Threshold() int
 }
 
-// RingtailConfig holds configuration for Ringtail threshold signatures
-type RingtailConfig struct {
+// CoronaConfig holds configuration for Corona threshold signatures
+type CoronaConfig struct {
 	NumParties int
 	Threshold  int
 	PartyIndex int
 }
 
-// RingtailStats contains statistics about the Ringtail coordinator
-type RingtailStats struct {
+// CoronaStats contains statistics about the Corona coordinator
+type CoronaStats struct {
 	NumParties  int
 	Threshold   int
 	Initialized bool
 }
 
-// RingtailSignature represents a threshold Ringtail signature
-type RingtailSignature struct {
+// CoronaSignature represents a threshold Corona signature
+type CoronaSignature struct {
 	sig     []byte
 	signers []ids.NodeID
 }
 
-// NewRingtailSignature creates a new Ringtail signature
-func NewRingtailSignature(sig []byte, signers []ids.NodeID) *RingtailSignature {
-	return &RingtailSignature{sig: sig, signers: signers}
+// NewCoronaSignature creates a new Corona signature
+func NewCoronaSignature(sig []byte, signers []ids.NodeID) *CoronaSignature {
+	return &CoronaSignature{sig: sig, signers: signers}
 }
 
-func (s *RingtailSignature) Bytes() []byte         { return s.sig }
-func (s *RingtailSignature) Type() SignatureType   { return SignatureTypeRingtail }
-func (s *RingtailSignature) Signers() []ids.NodeID { return s.signers }
+func (s *CoronaSignature) Bytes() []byte         { return s.sig }
+func (s *CoronaSignature) Type() SignatureType   { return SignatureTypeRingtail }
+func (s *CoronaSignature) Signers() []ids.NodeID { return s.signers }
 
-// RingtailCoordinator manages the threshold signing protocol
-type RingtailCoordinator struct {
+// CoronaCoordinator manages the threshold signing protocol
+type CoronaCoordinator struct {
 	log         log.Logger
-	config      RingtailConfig
+	config      CoronaConfig
 	initialized bool
 	validators  []ids.NodeID
 }
 
-// NewRingtailCoordinator creates a new Ringtail coordinator
-func NewRingtailCoordinator(log log.Logger, config RingtailConfig) (*RingtailCoordinator, error) {
-	return &RingtailCoordinator{
+// NewCoronaCoordinator creates a new Corona coordinator
+func NewCoronaCoordinator(log log.Logger, config CoronaConfig) (*CoronaCoordinator, error) {
+	return &CoronaCoordinator{
 		log:    log,
 		config: config,
 	}, nil
 }
 
-func (rc *RingtailCoordinator) Initialize(validators []ids.NodeID) error {
+func (rc *CoronaCoordinator) Initialize(validators []ids.NodeID) error {
 	rc.validators = validators
 	rc.initialized = true
 	return nil
 }
 
-func (rc *RingtailCoordinator) IsInitialized() bool {
+func (rc *CoronaCoordinator) IsInitialized() bool {
 	return rc.initialized
 }
 
-func (rc *RingtailCoordinator) Sign(msg []byte) (Signature, error) {
+func (rc *CoronaCoordinator) Sign(msg []byte) (Signature, error) {
 	// Create threshold signature with RT prefix for verification
 	sig := append([]byte("RT"), msg[:min(32, len(msg))]...)
-	return NewRingtailSignature(sig, rc.validators), nil
+	return NewCoronaSignature(sig, rc.validators), nil
 }
 
-func (rc *RingtailCoordinator) Verify(msg []byte, sig Signature) bool {
+func (rc *CoronaCoordinator) Verify(msg []byte, sig Signature) bool {
 	return sig != nil && len(sig.Bytes()) > 0
 }
 
-func (rc *RingtailCoordinator) Stats() RingtailStats {
-	return RingtailStats{
+func (rc *CoronaCoordinator) Stats() CoronaStats {
+	return CoronaStats{
 		NumParties:  rc.config.NumParties,
 		Threshold:   rc.config.Threshold,
 		Initialized: rc.initialized,
@@ -117,12 +117,12 @@ func (rc *RingtailCoordinator) Stats() RingtailStats {
 }
 
 // Threshold returns the threshold required for signing
-func (rc *RingtailCoordinator) Threshold() int {
+func (rc *CoronaCoordinator) Threshold() int {
 	return rc.config.Threshold
 }
 
 // NumParties returns the number of parties in the threshold scheme
-func (rc *RingtailCoordinator) NumParties() int {
+func (rc *CoronaCoordinator) NumParties() int {
 	return rc.config.NumParties
 }
 
@@ -147,20 +147,20 @@ func (s *BLSSignature) Bytes() []byte         { return s.sig }
 func (s *BLSSignature) Type() SignatureType   { return SignatureTypeBLS }
 func (s *BLSSignature) Signers() []ids.NodeID { return s.signers }
 
-// QuasarSignature combines BLS and Ringtail signatures for P/Q security
+// QuasarSignature combines BLS and Corona signatures for P/Q security
 type QuasarSignature struct {
 	bls      *BLSSignature
-	ringtail *RingtailSignature
+	corona *CoronaSignature
 }
 
-func NewQuasarSignature(bls *BLSSignature, ringtail *RingtailSignature) *QuasarSignature {
-	return &QuasarSignature{bls: bls, ringtail: ringtail}
+func NewQuasarSignature(bls *BLSSignature, corona *CoronaSignature) *QuasarSignature {
+	return &QuasarSignature{bls: bls, corona: corona}
 }
 
 func (s *QuasarSignature) Bytes() []byte {
-	// Concatenate BLS + Ringtail bytes with length prefix
+	// Concatenate BLS + Corona bytes with length prefix
 	blsBytes := s.bls.Bytes()
-	rtBytes := s.ringtail.Bytes()
+	rtBytes := s.corona.Bytes()
 	result := make([]byte, 4+len(blsBytes)+len(rtBytes))
 	// Length of BLS signature (big endian)
 	result[0] = byte(len(blsBytes) >> 24)
@@ -180,14 +180,14 @@ func (s *QuasarSignature) Signers() []ids.NodeID {
 }
 
 func (s *QuasarSignature) BLS() *BLSSignature           { return s.bls }
-func (s *QuasarSignature) Ringtail() *RingtailSignature { return s.ringtail }
+func (s *QuasarSignature) Corona() *CoronaSignature { return s.corona }
 
 // QuasarSigner combines classical and post-quantum signers
 type QuasarSigner interface {
 	Signer
-	// SignQuasar signs with both BLS and Ringtail in parallel
+	// SignQuasar signs with both BLS and Corona in parallel
 	SignQuasar(msg []byte) (*QuasarSignature, error)
-	// VerifyQuasar verifies both BLS and Ringtail signatures
+	// VerifyQuasar verifies both BLS and Corona signatures
 	VerifyQuasar(msg []byte, sig *QuasarSignature) bool
 }
 
