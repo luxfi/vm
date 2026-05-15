@@ -11,7 +11,7 @@ import (
 
 const (
 	// Address of the runtime engine server.
-	EngineAddressKey = "LUX_VM_RUNTIME_ENGINE_ADDR"
+	EngineAddressKey = "VM_RUNTIME_ENGINE_ADDR"
 
 	// Duration before handshake timeout during bootstrap.
 	DefaultHandshakeTimeout = 5 * time.Second
