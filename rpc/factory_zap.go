@@ -60,7 +60,7 @@ func (f *factory) New(logger log.Logger) (interface{}, error) {
 
 	// Tell subprocess to use ZAP transport
 	cmd := subprocess.NewCmd(f.path)
-	cmd.Env = append(cmd.Env, "LUX_VM_TRANSPORT=zap")
+	cmd.Env = append(cmd.Env, "VM_TRANSPORT=zap")
 
 	status, stopper, err := subprocess.Bootstrap(
 		context.TODO(),
