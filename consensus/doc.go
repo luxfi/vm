@@ -25,7 +25,7 @@ Engine: Chain and DAG consensus engine interfaces located in the engine
 subpackage. The chain/vote.go file defines vote message types.
 
 Quasar: Hybrid quantum-safe finality engine combining BLS aggregate
-signatures (classical) with Ringtail threshold signatures (post-quantum).
+signatures (classical) with Corona threshold signatures (post-quantum).
 Located in the quasar subpackage.
 
 # Quasar Consensus
@@ -34,7 +34,7 @@ The Quasar engine achieves hybrid finality by running two signature paths
 in parallel:
 
   - BLS Path: Fast aggregate signatures from 2/3+ validators
-  - Ringtail Path: Post-quantum threshold signatures (t-of-n)
+  - Corona Path: Post-quantum threshold signatures (t-of-n)
 
 Blocks achieve quantum finality only when both paths complete successfully.
 
