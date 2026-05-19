@@ -6,7 +6,7 @@
 package dag
 
 import (
-	pwarp "github.com/luxfi/protocol/p/warp"
+	pwarp "github.com/luxfi/proto/p/warp"
 	"github.com/luxfi/warp"
 )
 
