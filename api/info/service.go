@@ -20,7 +20,7 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/protocol/p/signer"
+	"github.com/luxfi/proto/p/signer"
 	"github.com/luxfi/upgrade"
 	"github.com/luxfi/utxo/nftfx"
 	"github.com/luxfi/utxo/propertyfx"
