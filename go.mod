@@ -27,7 +27,7 @@ require (
 	github.com/luxfi/mock v0.1.1
 	github.com/luxfi/p2p v1.19.2
 	github.com/luxfi/password v0.0.1
-	github.com/luxfi/protocol v0.0.5
+	github.com/luxfi/proto v1.0.0
 	github.com/luxfi/resource v0.0.1
 	github.com/luxfi/rpc v1.0.2
 	github.com/luxfi/runtime v1.0.1
