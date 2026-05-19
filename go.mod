@@ -27,7 +27,7 @@ require (
 	github.com/luxfi/mock v0.1.1
 	github.com/luxfi/p2p v1.19.2
 	github.com/luxfi/password v0.0.1
-	github.com/luxfi/protocol v0.0.5
+	github.com/luxfi/proto v0.0.0-proto-rename
 	github.com/luxfi/resource v0.0.1
 	github.com/luxfi/rpc v1.0.2
 	github.com/luxfi/runtime v1.0.1
@@ -178,3 +178,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+// Local-dev overlay for the protocol → proto rename.
+// Strip once GitHub admin renames luxfi/protocol → luxfi/proto and a real tag exists.
+replace github.com/luxfi/proto => ../protocol
