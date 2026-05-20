@@ -104,5 +104,8 @@ func (c *Context) GetWarpSigner() runtime.WarpSigner { return c.WarpSigner }
 // GetSender implements VMContext
 func (c *Context) GetSender() warp.Sender { return c.Sender }
 
-// GetNetworkUpgrades implements VMContext
-func (c *Context) GetNetworkUpgrades() runtime.NetworkUpgrades { return &c.NetworkUpgrades }
+// NOTE: GetNetworkUpgrades was removed from the VMContext interface in
+// the runtime decomplect (commit 3eea32ad — "rip NetworkUpgrades
+// interface (14 always-true predicates) from Runtime + VMContext").
+// Callers that need upgrade-config should read c.NetworkUpgrades
+// directly. No backwards-compat shim — forwards only.
