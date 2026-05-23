@@ -31,8 +31,8 @@ type GenesisConfig struct {
 
 // Allocation represents an initial fund allocation
 type Allocation struct {
-	ETHAddr        string         `json:"ethAddr"`
-	LUXAddr        string         `json:"luxAddr"`
+	ETHAddr        string         `json:"evmAddr"`
+	LUXAddr        string         `json:"utxoAddr"`
 	InitialAmount  uint64         `json:"initialAmount"`
 	UnlockSchedule []UnlockPeriod `json:"unlockSchedule,omitempty"`
 }
