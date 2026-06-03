@@ -14,57 +14,32 @@ Go package for Lux blockchain virtual machines. Provides the core interfaces and
 
 ### Transport Selection
 
-The package supports two transport options for VM<->Node communication:
-
-1. **ZAP (default)**: Zero-copy binary wire protocol for high performance
-2. **gRPC (optional)**: Traditional gRPC for compatibility/testing
+The package uses ZAP-native (LP-200) as the ONLY transport for VM<->Node
+communication. The historical gRPC fallback (and `-tags=grpc` opt-in) was
+retired in v1.26.31; ZAP is the canonical and exclusive wire protocol.
 
 ```bash
-# Default build - ZAP only (production)
+# Build — ZAP only, no build tags
 go build ./...
-
-# With gRPC support - for testing/compatibility
-go build -tags=grpc ./...
 ```
 
-### Build Tag Architecture
-
-The `grpc` build tag controls which transport is compiled:
-
-| Package | Default (ZAP) | With `-tags=grpc` |
-|---------|---------------|-------------------|
-| rpc/grpcutils | excluded | included |
-| rpc/ghttp/* | excluded | included |
-| rpc/gruntime | excluded | included |
-| rpc/gvalidators | excluded | included |
-| rpc/messenger | excluded | included |
-| rpc/chain | excluded | included |
-| gkeystore | excluded | included |
-| gsharedmemory | excluded | included |
-
 **Factory Pattern**:
-- `rpc/factory_zap.go` (`!grpc`) - Full ZAP-based plugin factory
-- `rpc/factory_grpc.go` (`grpc`) - Full gRPC-based plugin factory
+- `rpc/factory_zap.go` — ZAP-based plugin factory (the only factory)
 
 **VM Client**:
-- `rpc/vm_client_zap.go` (`!grpc`) - ZAP-based VM client (ZAPClient + zapBlock)
-- `rpc/vm_client.go` (`grpc`) - gRPC-based VM client
+- `rpc/vm_client_zap.go` — ZAP-based VM client (ZAPClient + zapBlock)
 
 **Subprocess Bootstrap**:
-- `rpc/runtime/subprocess/runtime_zap.go` (`!grpc`) - Binary handshake protocol
-- `rpc/runtime/subprocess/runtime.go` (`grpc`) - gRPC handshake
-- `rpc/runtime/subprocess/config.go` - Shared Config and Status types
+- `rpc/runtime/subprocess/runtime_zap.go` — Binary handshake protocol
+- `rpc/runtime/subprocess/config.go` — Shared Config and Status types
 
 ### Sender Package
 
 The `rpc/sender` package provides p2p.Sender implementations:
 
 ```go
-// ZAP transport (always available)
+// ZAP transport (the only transport)
 s := sender.ZAP(zapConn)
-
-// gRPC transport (requires -tags=grpc)
-s := sender.GRPC(senderpb.NewSenderClient(grpcConn))
 ```
 
 ## Key Packages
@@ -78,8 +53,7 @@ s := sender.GRPC(senderpb.NewSenderClient(grpcConn))
 ### RPC Layer
 
 - `rpc/` - VM<->Node communication
-  - `sender/` - p2p.Sender implementations (ZAP + gRPC)
-  - `grpcutils/` - gRPC utilities (excluded by default)
+  - `sender/` - p2p.Sender implementations (ZAP-native, LP-200)
   - `runtime/` - VM runtime management
 
 ### Storage
@@ -100,31 +74,22 @@ s := sender.GRPC(senderpb.NewSenderClient(grpcConn))
 ### Build
 
 ```bash
-# Production build (ZAP only)
+# Build (ZAP only — no build tags exist)
 go build ./...
-
-# Development build with gRPC
-go build -tags=grpc ./...
 ```
 
 ### Test
 
 ```bash
-# Run tests (default transport)
+# Run tests
 go test -v ./...
-
-# Run tests with gRPC
-go test -tags=grpc -v ./...
 ```
 
-### Verify Build Separation
+### Verify Zero gRPC
 
 ```bash
-# Check gRPC deps in ZAP build
-go list -deps ./rpc | grep grpc  # Should be empty
-
-# Check gRPC deps in gRPC build
-go list -tags=grpc -deps ./rpc | grep grpc  # Should show ~62 deps
+# Confirm zero gRPC in the dep graph
+go list -deps ./rpc | grep grpc  # Must be empty
 ```
 
 ## ZAP Wire Protocol
