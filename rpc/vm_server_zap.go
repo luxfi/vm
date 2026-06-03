@@ -215,7 +215,7 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 		PublicKey:     req.PublicKey,
 		XChainID:     xChainID,
 		CChainID:     cChainID,
-		XAssetID:     luxAssetID,
+		UTXOAssetID:  luxAssetID,
 		ChainDataDir: req.ChainDataDir,
 		Log:          s.logger,
 		Metrics:      metric.NewMultiGatherer(),
