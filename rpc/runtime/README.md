@@ -5,9 +5,9 @@ The `VMRE` handles the lifecycle, compatibility and logging IO of a managed VM p
 ## How it works
 
 The `runtime.Initializer` interface could be implemented to manage local or remote VM processes.
-This implementation is consumed by a gRPC server which serves the `Runtime`
+This implementation is consumed by a ZAP-native server (LP-186) which serves the `Runtime`
 service. The server interacts with the underlying process and allows for the VM
-binary to communicate with Lux Node.
+binary to communicate with Lux Node. (Historical gRPC fallback was retired in v1.26.31.)
 
 ### Subprocess VM management
 
