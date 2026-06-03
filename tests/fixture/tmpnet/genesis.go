@@ -124,7 +124,7 @@ func getBasicCChainGenesis(networkID uint32) string {
 			"banffBlockTimestamp":             0,
 			"cortinaBlockTimestamp":           0,
 			"durangoBlockTimestamp":           0,
-			"etnaTimestamp":                   0,
+			"quasarTimestamp":                   0,
 		},
 		"nonce":      "0x0",
 		"timestamp":  "0x0",
