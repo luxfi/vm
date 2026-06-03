@@ -40,7 +40,7 @@ var (
 		AddNetworkValidatorFee: json.Uint64(constants.MilliLux),
 		AddNetworkDelegatorFee: json.Uint64(constants.MilliLux),
 	}
-	fujiGetTxFeeResponse = GetTxFeeResponse{
+	testnetGetTxFeeResponse = GetTxFeeResponse{
 		CreateNetworkTxFee:     json.Uint64(100 * constants.MilliLux),
 		TransformChainTxFee:    json.Uint64(1 * constants.Lux),
 		CreateChainTxFee:       json.Uint64(100 * constants.MilliLux),
@@ -445,8 +445,8 @@ func (i *Info) GetTxFee(_ *http.Request, _ *struct{}, reply *GetTxFeeResponse) e
 	switch i.NetworkID {
 	case constants.MainnetID:
 		*reply = mainnetGetTxFeeResponse
-	// case constants.FujiID: // FujiID not available in constants package
-	// 	*reply = fujiGetTxFeeResponse
+	case constants.TestnetID:
+		*reply = testnetGetTxFeeResponse
 	default:
 		*reply = defaultGetTxFeeResponse
 	}
