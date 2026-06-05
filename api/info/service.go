@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/netip"
+	"time"
 
 	"github.com/gorilla/rpc/v2"
 
 	"github.com/luxfi/ids"
-	"github.com/luxfi/p2p/peer"
 
 	// "github.com/luxfi/consensus/networking/benchlist" // Unused
 	"github.com/luxfi/atomic"
@@ -29,6 +29,23 @@ import (
 	"github.com/luxfi/version"
 	"github.com/luxfi/vm/manager"
 )
+
+// PeerInfo is the JSON wire shape for a peer in the Peers RPC reply. It is
+// the local owner of this shape; previously this type came from
+// github.com/luxfi/p2p/peer.Info, but that module is being archived per
+// LP-201. Field tags are stable across the rename.
+type PeerInfo struct {
+	IP             netip.AddrPort  `json:"ip"`
+	PublicIP       netip.AddrPort  `json:"publicIP,omitempty"`
+	ID             ids.NodeID      `json:"nodeID"`
+	Version        string          `json:"version"`
+	LastSent       time.Time       `json:"lastSent"`
+	LastReceived   time.Time       `json:"lastReceived"`
+	ObservedUptime json.Uint32     `json:"observedUptime"`
+	TrackedChains  set.Set[ids.ID] `json:"trackedChains"`
+	SupportedLPs   set.Set[uint32] `json:"supportedLPs"`
+	ObjectedLPs    set.Set[uint32] `json:"objectedLPs"`
+}
 
 var (
 	errNoChainProvided = errors.New("argument 'chain' not given")
@@ -57,7 +74,7 @@ var (
 )
 
 type Networking interface {
-	PeerInfo(nodeIDs []ids.NodeID) []peer.Info
+	PeerInfo(nodeIDs []ids.NodeID) []PeerInfo
 	NodeUptime() (UptimeResult, error)
 }
 
@@ -244,7 +261,7 @@ type PeersArgs struct {
 }
 
 type Peer struct {
-	peer.Info
+	PeerInfo
 
 	Benched []string `json:"benched"`
 }
@@ -278,8 +295,8 @@ func (i *Info) Peers(_ *http.Request, args *PeersArgs, reply *PeersReply) error 
 		// 	benchedAliases[idx] = alias
 		// }
 		peerInfo[index] = Peer{
-			Info:    peer,
-			Benched: benchedAliases,
+			PeerInfo: peer,
+			Benched:  benchedAliases,
 		}
 	}
 
