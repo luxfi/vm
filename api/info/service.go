@@ -16,12 +16,12 @@ import (
 
 	// "github.com/luxfi/consensus/networking/benchlist" // Unused
 	"github.com/luxfi/atomic"
-	"github.com/luxfi/codec/jsonrpc"
 	"github.com/luxfi/constants"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/proto/p/signer"
 	"github.com/luxfi/upgrade"
+	"github.com/luxfi/utils/json"
 	"github.com/luxfi/utxo/nftfx"
 	"github.com/luxfi/utxo/propertyfx"
 	"github.com/luxfi/utxo/secp256k1fx"
