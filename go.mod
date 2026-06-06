@@ -90,7 +90,7 @@ require (
 	github.com/luxfi/lattice/v7 v7.1.4 // indirect
 	github.com/luxfi/lens v0.1.4 // indirect
 	github.com/luxfi/mdns v0.1.1 // indirect
-	github.com/luxfi/p2p v1.19.2 // indirect
+	github.com/luxfi/p2p v1.21.1 // indirect
 	github.com/luxfi/pq v1.0.3 // indirect
 	github.com/luxfi/pulsar v1.1.1 // indirect
 	github.com/luxfi/threshold v1.9.4 // indirect
