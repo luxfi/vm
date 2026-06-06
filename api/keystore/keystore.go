@@ -10,13 +10,13 @@ import (
 	"sync"
 
 	"github.com/gorilla/rpc/v2"
-	"github.com/luxfi/codec/jsonrpc"
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/encdb"
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/password"
+	"github.com/luxfi/utils/json"
 	"github.com/luxfi/vm/chains/atomic"
 )
 
