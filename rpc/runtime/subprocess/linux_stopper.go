@@ -11,10 +11,10 @@ package subprocess
 
 import (
 	"context"
+	"errors"
 	"os/exec"
 	"syscall"
 
-	"github.com/luxfi/codec/wrappers"
 	"github.com/luxfi/log"
 	"github.com/luxfi/vm/rpc/runtime"
 )
@@ -29,12 +29,9 @@ func stop(ctx context.Context, log log.Logger, cmd *exec.Cmd) {
 	waitChan := make(chan error)
 	go func() {
 		// attempt graceful shutdown
-		errs := wrappers.Errs{}
-		err := cmd.Process.Signal(syscall.SIGTERM)
-		errs.Add(err)
-		_, err = cmd.Process.Wait()
-		errs.Add(err)
-		waitChan <- errs.Err
+		sigErr := cmd.Process.Signal(syscall.SIGTERM)
+		_, waitErr := cmd.Process.Wait()
+		waitChan <- errors.Join(sigErr, waitErr)
 		close(waitChan)
 	}()
 
