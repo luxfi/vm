@@ -71,9 +71,7 @@ func (u *user) GetAddresses() ([]ids.ShortID, error) {
 		return nil, err
 	}
 
-	var addresses []ids.ShortID
-	_, err = LegacyCodec.Unmarshal(addressBytes, &addresses)
-	return addresses, err
+	return unmarshalAddresses(addressBytes)
 }
 
 func (u *user) PutKeys(privKeys ...*secp256k1.PrivateKey) error {
@@ -119,7 +117,7 @@ func (u *user) PutKeys(privKeys ...*secp256k1.PrivateKey) error {
 		addresses = append(addresses, address)
 	}
 
-	addressBytes, err := Codec.Marshal(CodecVersion, addresses)
+	addressBytes, err := marshalAddresses(addresses)
 	if err != nil {
 		return err
 	}
