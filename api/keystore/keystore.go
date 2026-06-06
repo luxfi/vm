@@ -187,7 +187,7 @@ func (ks *keystore) CreateUser(username, pw string) error {
 		return err
 	}
 
-	passwordBytes, err := Codec.Marshal(CodecVersion, passwordHash)
+	passwordBytes, err := marshalPasswordHash(passwordHash)
 	if err != nil {
 		return err
 	}
@@ -287,14 +287,14 @@ func (ks *keystore) ImportUser(username, pw string, userBytes []byte) error {
 	}
 
 	userData := user{}
-	if _, err := Codec.Unmarshal(userBytes, &userData); err != nil {
+	if err := unmarshalUser(userBytes, &userData); err != nil {
 		return err
 	}
 	if !userData.Hash.Check(pw) {
 		return fmt.Errorf("%w: user %q", errIncorrectPassword, username)
 	}
 
-	usrBytes, err := Codec.Marshal(CodecVersion, &userData.Hash)
+	usrBytes, err := marshalPasswordHash(&userData.Hash)
 	if err != nil {
 		return err
 	}
@@ -354,7 +354,7 @@ func (ks *keystore) ExportUser(username, pw string) ([]byte, error) {
 	}
 
 	// Return the byte representation of the user
-	return Codec.Marshal(CodecVersion, &userData)
+	return marshalUser(&userData)
 }
 
 func (ks *keystore) getPassword(username string) (*password.Hash, error) {
@@ -376,6 +376,8 @@ func (ks *keystore) getPassword(username string) (*password.Hash, error) {
 	}
 
 	passwordHash = &password.Hash{}
-	_, err = Codec.Unmarshal(userBytes, passwordHash)
-	return passwordHash, err
+	if err := unmarshalPasswordHash(userBytes, passwordHash); err != nil {
+		return nil, err
+	}
+	return passwordHash, nil
 }
