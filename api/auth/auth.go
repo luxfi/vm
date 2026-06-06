@@ -16,11 +16,11 @@ import (
 
 	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/rpc/v2"
-	"github.com/luxfi/codec/jsonrpc"
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/password"
 	"github.com/luxfi/timer/mockable"
+	"github.com/luxfi/utils/json"
 )
 
 const (

@@ -15,7 +15,6 @@ import (
 
 	"github.com/gorilla/rpc/v2"
 
-	"github.com/luxfi/codec/jsonrpc"
 	"github.com/luxfi/constants"
 	"github.com/luxfi/database"
 	"github.com/luxfi/filesystem/perms"
@@ -24,6 +23,7 @@ import (
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/metric/profiler"
+	"github.com/luxfi/utils/json"
 	"github.com/luxfi/vm/api"
 	"github.com/luxfi/vm/api/server"
 	"github.com/luxfi/vm/manager"
