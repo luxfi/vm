@@ -11,7 +11,7 @@ require (
 	github.com/luxfi/api v1.0.12
 	github.com/luxfi/atomic v1.0.0
 	github.com/luxfi/cache v1.2.1
-	github.com/luxfi/consensus v1.25.0
+	github.com/luxfi/consensus v1.25.15
 	github.com/luxfi/constants v1.5.8-0.20260603055356-93c2c2ceb9ca
 	github.com/luxfi/crypto v1.19.17
 	github.com/luxfi/database v1.18.3
@@ -22,15 +22,15 @@ require (
 	github.com/luxfi/metric v1.5.7
 	github.com/luxfi/mock v0.1.1
 	github.com/luxfi/password v0.0.1
-	github.com/luxfi/proto v1.0.0
+	github.com/luxfi/proto v1.3.4
 	github.com/luxfi/resource v0.0.1
 	github.com/luxfi/rpc v1.0.2
-	github.com/luxfi/runtime v1.1.0
+	github.com/luxfi/runtime v1.1.1
 	github.com/luxfi/timer v1.0.2
 	github.com/luxfi/tls v1.0.3
 	github.com/luxfi/trace v0.1.4
 	github.com/luxfi/upgrade v1.0.1-0.20260603055252-f51810805436
-	github.com/luxfi/utils v1.1.5
+	github.com/luxfi/utils v1.2.0
 	github.com/luxfi/utxo v0.3.7
 	github.com/luxfi/validators v1.2.0
 	github.com/luxfi/version v1.0.1
@@ -89,6 +89,7 @@ require (
 	github.com/luxfi/keychain v1.0.2 // indirect
 	github.com/luxfi/lattice/v7 v7.1.4 // indirect
 	github.com/luxfi/lens v0.1.4 // indirect
+	github.com/luxfi/magnetar v1.2.0 // indirect
 	github.com/luxfi/mdns v0.1.1 // indirect
 	github.com/luxfi/p2p v1.21.1 // indirect
 	github.com/luxfi/pq v1.0.3 // indirect
