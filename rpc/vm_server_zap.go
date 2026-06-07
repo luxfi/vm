@@ -194,25 +194,37 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 		"genesisLen", len(req.GenesisBytes),
 	)
 
-	// Build runtime.Runtime from the request data
-	var chainID, nodeID ids.ID
-	var xChainID, cChainID, luxAssetID ids.ID
-	copy(chainID[:], req.ChainID)
-	copy(nodeID[:], req.NodeID)
-	copy(xChainID[:], req.XChainID)
-	copy(cChainID[:], req.CChainID)
-	copy(luxAssetID[:], req.LuxAssetID)
-
-	// Create a NodeID from the bytes
-	var nodeIDTyped ids.NodeID
-	copy(nodeIDTyped[:], req.NodeID)
+	// Decode fixed-length identifiers through the validating constructors;
+	// ids.ToID/ToNodeID reject a wire field whose length isn't exactly the ID
+	// size, instead of copy() silently zero-padding or truncating it into a
+	// different ID.
+	chainID, err := ids.ToID(req.ChainID)
+	if err != nil {
+		return zapwire.MsgInitialize, nil, fmt.Errorf("initialize chainID: %w", err)
+	}
+	xChainID, err := ids.ToID(req.XChainID)
+	if err != nil {
+		return zapwire.MsgInitialize, nil, fmt.Errorf("initialize xChainID: %w", err)
+	}
+	cChainID, err := ids.ToID(req.CChainID)
+	if err != nil {
+		return zapwire.MsgInitialize, nil, fmt.Errorf("initialize cChainID: %w", err)
+	}
+	luxAssetID, err := ids.ToID(req.LuxAssetID)
+	if err != nil {
+		return zapwire.MsgInitialize, nil, fmt.Errorf("initialize luxAssetID: %w", err)
+	}
+	nodeIDTyped, err := ids.ToNodeID(req.NodeID)
+	if err != nil {
+		return zapwire.MsgInitialize, nil, fmt.Errorf("initialize nodeID: %w", err)
+	}
 
 	// Build runtime with all configuration
 	rt := &luxruntime.Runtime{
 		NetworkID:    req.NetworkID,
 		ChainID:      chainID,
 		NodeID:       nodeIDTyped,
-		PublicKey:     req.PublicKey,
+		PublicKey:    req.PublicKey,
 		XChainID:     xChainID,
 		CChainID:     cChainID,
 		UTXOAssetID:  luxAssetID,
@@ -501,8 +513,10 @@ func (s *zapVMServer) handleGetBlock(ctx context.Context, payload []byte) (zapwi
 		return zapwire.MsgGetBlock, nil, err
 	}
 
-	var blkID [32]byte
-	copy(blkID[:], req.ID)
+	blkID, err := ids.ToID(req.ID)
+	if err != nil {
+		return zapwire.MsgGetBlock, nil, err
+	}
 
 	blk, err := s.vm.GetBlock(ctx, blkID)
 	if err != nil {
@@ -543,10 +557,12 @@ func (s *zapVMServer) handleSetPreference(ctx context.Context, payload []byte) (
 		return zapwire.MsgSetPreference, nil, err
 	}
 
-	var blkID [32]byte
-	copy(blkID[:], req.ID)
+	blkID, err := ids.ToID(req.ID)
+	if err != nil {
+		return zapwire.MsgSetPreference, nil, err
+	}
 
-	err := s.vm.SetPreference(ctx, blkID)
+	err = s.vm.SetPreference(ctx, blkID)
 	return zapwire.MsgSetPreference, nil, err
 }
 
@@ -571,8 +587,10 @@ func (s *zapVMServer) handleBlockAccept(ctx context.Context, payload []byte) (za
 		return zapwire.MsgBlockAccept, nil, err
 	}
 
-	var blkID [32]byte
-	copy(blkID[:], req.ID)
+	blkID, err := ids.ToID(req.ID)
+	if err != nil {
+		return zapwire.MsgBlockAccept, nil, err
+	}
 
 	blk, err := s.vm.GetBlock(ctx, blkID)
 	if err != nil {
@@ -595,8 +613,10 @@ func (s *zapVMServer) handleBlockReject(ctx context.Context, payload []byte) (za
 		return zapwire.MsgBlockReject, nil, err
 	}
 
-	var blkID [32]byte
-	copy(blkID[:], req.ID)
+	blkID, err := ids.ToID(req.ID)
+	if err != nil {
+		return zapwire.MsgBlockReject, nil, err
+	}
 
 	blk, err := s.vm.GetBlock(ctx, blkID)
 	if err != nil {
@@ -701,8 +721,13 @@ func (s *zapVMServer) handleGetAncestors(ctx context.Context, payload []byte) (z
 		return zapwire.MsgGetAncestors, nil, err
 	}
 
-	var blkID [32]byte
-	copy(blkID[:], req.BlkID)
+	blkID, err := ids.ToID(req.BlkID)
+	if err != nil {
+		return zapwire.MsgGetAncestors, nil, err
+	}
+	if req.MaxBlocksNum < 0 {
+		return zapwire.MsgGetAncestors, nil, fmt.Errorf("getancestors: negative MaxBlocksNum %d", req.MaxBlocksNum)
+	}
 
 	ancestors := make([][]byte, 0, req.MaxBlocksNum)
 	currentID := blkID

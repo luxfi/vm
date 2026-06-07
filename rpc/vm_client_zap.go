@@ -88,7 +88,11 @@ func (c *ZAPClient) Initialize(
 		return fmt.Errorf("zap decode initialize response: %w", err)
 	}
 
-	copy(c.lastAcceptedID[:], resp.LastAcceptedID)
+	lastAcceptedID, err := ids.ToID(resp.LastAcceptedID)
+	if err != nil {
+		return fmt.Errorf("zap initialize: invalid lastAcceptedID: %w", err)
+	}
+	c.lastAcceptedID = lastAcceptedID
 
 	c.logger.Info("VM initialized via ZAP",
 		"height", resp.Height,
@@ -161,9 +165,14 @@ func (c *ZAPClient) BuildBlock(ctx context.Context) (chain.Block, error) {
 		return nil, errorFromZAP(resp.Err)
 	}
 
-	var id, parentID ids.ID
-	copy(id[:], resp.ID)
-	copy(parentID[:], resp.ParentID)
+	id, err := ids.ToID(resp.ID)
+	if err != nil {
+		return nil, fmt.Errorf("zap buildblock: invalid id: %w", err)
+	}
+	parentID, err := ids.ToID(resp.ParentID)
+	if err != nil {
+		return nil, fmt.Errorf("zap buildblock: invalid parentID: %w", err)
+	}
 
 	log.Info("[ZAP CLIENT] BuildBlock returning", "id", id, "parentID", parentID, "height", resp.Height)
 
@@ -201,9 +210,14 @@ func (c *ZAPClient) ParseBlock(ctx context.Context, blockBytes []byte) (chain.Bl
 		return nil, errorFromZAP(resp.Err)
 	}
 
-	var id, parentID ids.ID
-	copy(id[:], resp.ID)
-	copy(parentID[:], resp.ParentID)
+	id, err := ids.ToID(resp.ID)
+	if err != nil {
+		return nil, fmt.Errorf("zap parseblock: invalid id: %w", err)
+	}
+	parentID, err := ids.ToID(resp.ParentID)
+	if err != nil {
+		return nil, fmt.Errorf("zap parseblock: invalid parentID: %w", err)
+	}
 
 	return &zapBlock{
 		client:    c,
@@ -239,8 +253,10 @@ func (c *ZAPClient) GetBlock(ctx context.Context, blkID ids.ID) (chain.Block, er
 		return nil, errorFromZAP(resp.Err)
 	}
 
-	var parentID ids.ID
-	copy(parentID[:], resp.ParentID)
+	parentID, err := ids.ToID(resp.ParentID)
+	if err != nil {
+		return nil, fmt.Errorf("zap getblock: invalid parentID: %w", err)
+	}
 
 	return &zapBlock{
 		client:    c,
