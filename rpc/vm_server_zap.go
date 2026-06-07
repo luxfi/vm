@@ -210,9 +210,9 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 	if err != nil {
 		return zapwire.MsgInitialize, nil, fmt.Errorf("initialize cChainID: %w", err)
 	}
-	luxAssetID, err := ids.ToID(req.LuxAssetID)
+	utxoAssetID, err := ids.ToID(req.UTXOAssetID)
 	if err != nil {
-		return zapwire.MsgInitialize, nil, fmt.Errorf("initialize luxAssetID: %w", err)
+		return zapwire.MsgInitialize, nil, fmt.Errorf("initialize utxoAssetID: %w", err)
 	}
 	nodeIDTyped, err := ids.ToNodeID(req.NodeID)
 	if err != nil {
@@ -227,7 +227,7 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 		PublicKey:    req.PublicKey,
 		XChainID:     xChainID,
 		CChainID:     cChainID,
-		UTXOAssetID:  luxAssetID,
+		UTXOAssetID:  utxoAssetID,
 		ChainDataDir: req.ChainDataDir,
 		Log:          s.logger,
 		Metrics:      metric.NewMultiGatherer(),
