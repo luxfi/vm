@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/rpc v1.2.1
 	github.com/holiman/uint256 v1.3.2
-	github.com/luxfi/api v1.0.12
+	github.com/luxfi/api v1.0.14
 	github.com/luxfi/atomic v1.0.0
 	github.com/luxfi/cache v1.2.1
 	github.com/luxfi/consensus v1.25.15
@@ -16,7 +16,7 @@ require (
 	github.com/luxfi/crypto v1.19.17
 	github.com/luxfi/database v1.18.3
 	github.com/luxfi/filesystem v0.0.1
-	github.com/luxfi/ids v1.2.10
+	github.com/luxfi/ids v1.2.15
 	github.com/luxfi/log v1.4.1
 	github.com/luxfi/math v1.4.1
 	github.com/luxfi/metric v1.5.7
@@ -34,7 +34,7 @@ require (
 	github.com/luxfi/utxo v0.3.7
 	github.com/luxfi/validators v1.2.0
 	github.com/luxfi/version v1.0.1
-	github.com/luxfi/warp v1.18.6
+	github.com/luxfi/warp v1.19.2
 	github.com/rs/cors v1.11.1
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.43.0
@@ -76,7 +76,7 @@ require (
 	github.com/klauspost/crc32 v1.3.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/luxfi/accel v1.1.9 // indirect
+	github.com/luxfi/accel v1.2.2 // indirect
 	github.com/luxfi/address v1.0.1 // indirect
 	github.com/luxfi/age v1.5.0 // indirect
 	github.com/luxfi/codec v1.1.4 // indirect
@@ -145,7 +145,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/luxfi/formatting v1.0.1
 	github.com/luxfi/math/big v0.1.0 // indirect
-	github.com/luxfi/sampler v1.0.0 // indirect
+	github.com/luxfi/sampler v1.1.0 // indirect
 	github.com/montanaflynn/stats v0.9.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
