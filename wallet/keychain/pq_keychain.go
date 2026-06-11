@@ -47,7 +47,7 @@ const (
 	KeyTypeMLKEM1024 // ML-KEM-1024
 
 	// Privacy-preserving
-	KeyTypeCorona // Ring signatures
+	KeyTypeCorona // R-LWE threshold signatures
 
 	// Hybrid modes (classical + post-quantum)
 	KeyTypeHybridSecp256k1MLDSA44
