@@ -31,7 +31,7 @@ import (
 //       ├─────────────────────────────────────────┐
 //       │                                         │
 //       ▼                                         ▼
-//   BLS PATH (fast)                    RINGTAIL PATH (quantum-safe)
+//   BLS PATH (fast)                    CORONA PATH (quantum-safe)
 //   ────────────────                   ─────────────────────────────
 //   All validators sign                Round 1: All validators
 //   with BLS keys                      generate commitments
@@ -189,8 +189,8 @@ func (q *Quasar) ConnectQuantumFallback(f QuantumSignerFallback) {
 	q.log.Info("quasar: quantum fallback connected")
 }
 
-// ConnectRingtail connects the Corona threshold coordinator
-func (q *Quasar) ConnectRingtail(rc *CoronaCoordinator) {
+// ConnectCorona connects the Corona threshold coordinator
+func (q *Quasar) ConnectCorona(rc *CoronaCoordinator) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -198,8 +198,8 @@ func (q *Quasar) ConnectRingtail(rc *CoronaCoordinator) {
 	q.log.Info("quasar: Corona coordinator connected")
 }
 
-// InitializeRingtail initializes the Corona coordinator with validators
-func (q *Quasar) InitializeRingtail(validators []ids.NodeID) error {
+// InitializeCorona initializes the Corona coordinator with validators
+func (q *Quasar) InitializeCorona(validators []ids.NodeID) error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -335,7 +335,7 @@ func (q *Quasar) processFinality(ctx context.Context, event FinalityEvent) error
 		} else {
 			// Full threshold signing
 			start := time.Now()
-			coronaSig, coronaErr = q.collectRingtail(msgStr)
+			coronaSig, coronaErr = q.collectCorona(msgStr)
 			coronaLatency = time.Since(start)
 		}
 	}()
@@ -451,8 +451,8 @@ func (q *Quasar) collectBLS(event FinalityEvent, msg []byte) ([]byte, []byte, ui
 	return agg.BLSAggregated, signerBitset, signerWeight, nil
 }
 
-// collectRingtail runs the 2-round Corona threshold protocol in parallel
-func (q *Quasar) collectRingtail(message string) (Signature, error) {
+// collectCorona runs the 2-round Corona threshold protocol in parallel
+func (q *Quasar) collectCorona(message string) (Signature, error) {
 	if q.corona == nil {
 		return nil, ErrCoronaNotConnected
 	}
@@ -598,8 +598,8 @@ func (q *Quasar) GetCore() *quasar.Quasar {
 	return q.core
 }
 
-// GetRingtail returns the Corona coordinator
-func (q *Quasar) GetRingtail() *CoronaCoordinator {
+// GetCorona returns the Corona coordinator
+func (q *Quasar) GetCorona() *CoronaCoordinator {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
 	return q.corona

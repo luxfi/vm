@@ -142,9 +142,9 @@ func createTestEvent(height uint64, validators []ValidatorState) FinalityEvent {
 	}
 }
 
-// setupQuasarWithRingtail creates a Quasar with Corona coordinator.
+// setupQuasarWithCorona creates a Quasar with Corona coordinator.
 // Returns nil for Quasar if Corona initialization fails (e.g., lattice lib constraint).
-func setupQuasarWithRingtail(t *testing.T, numParties int) (*Quasar, *mockPChainProvider, []ids.NodeID, error) {
+func setupQuasarWithCorona(t *testing.T, numParties int) (*Quasar, *mockPChainProvider, []ids.NodeID, error) {
 	t.Helper()
 
 	validatorStates := generateValidatorStates(numParties)
@@ -165,7 +165,7 @@ func setupQuasarWithRingtail(t *testing.T, numParties int) (*Quasar, *mockPChain
 		nodeIDs[i] = v.NodeID
 	}
 
-	err = q.InitializeRingtail(nodeIDs)
+	err = q.InitializeCorona(nodeIDs)
 	if err != nil {
 		pchain.Close()
 		return nil, nil, nil, err
@@ -288,13 +288,13 @@ func TestQuasarFullFlow(t *testing.T) {
 	})
 }
 
-// TestQuasarWithRingtail tests full threshold signing flow
-func TestQuasarWithRingtail(t *testing.T) {
+// TestQuasarWithCorona tests full threshold signing flow
+func TestQuasarWithCorona(t *testing.T) {
 	// All Corona tests require the lattice library to work correctly.
 	// Skip if the library has constraints (e.g., requires prime moduli).
 
 	t.Run("initialize_and_sign", func(t *testing.T) {
-		q, pchain, _, err := setupQuasarWithRingtail(t, 5)
+		q, pchain, _, err := setupQuasarWithCorona(t, 5)
 		if isLatticeUnavailable(err) {
 			t.Skipf("Skipping: lattice library constraint: %v", err)
 		}
@@ -307,7 +307,7 @@ func TestQuasarWithRingtail(t *testing.T) {
 	})
 
 	t.Run("sign_and_verify", func(t *testing.T) {
-		q, pchain, _, err := setupQuasarWithRingtail(t, 5)
+		q, pchain, _, err := setupQuasarWithCorona(t, 5)
 		if isLatticeUnavailable(err) {
 			t.Skipf("Skipping: lattice library constraint: %v", err)
 		}
@@ -326,7 +326,7 @@ func TestQuasarWithRingtail(t *testing.T) {
 	})
 
 	t.Run("multiple_signing_sessions", func(t *testing.T) {
-		q, pchain, _, err := setupQuasarWithRingtail(t, 5)
+		q, pchain, _, err := setupQuasarWithCorona(t, 5)
 		if isLatticeUnavailable(err) {
 			t.Skipf("Skipping: lattice library constraint: %v", err)
 		}
@@ -343,7 +343,7 @@ func TestQuasarWithRingtail(t *testing.T) {
 	})
 
 	t.Run("threshold_parameter_check", func(t *testing.T) {
-		q, pchain, _, err := setupQuasarWithRingtail(t, 5)
+		q, pchain, _, err := setupQuasarWithCorona(t, 5)
 		if isLatticeUnavailable(err) {
 			t.Skipf("Skipping: lattice library constraint: %v", err)
 		}
@@ -400,7 +400,7 @@ func TestQuasarConcurrent(t *testing.T) {
 
 // TestQuasarConcurrentCoronaSigning tests concurrent Corona signing
 func TestQuasarConcurrentCoronaSigning(t *testing.T) {
-	q, pchain, _, err := setupQuasarWithRingtail(t, 5)
+	q, pchain, _, err := setupQuasarWithCorona(t, 5)
 	if isLatticeUnavailable(err) {
 		t.Skipf("Skipping: lattice library constraint: %v", err)
 	}
@@ -703,8 +703,8 @@ func TestQuasarHealthStatus(t *testing.T) {
 		require.Equal(t, 0, stats.FinalizedBlocks)
 	})
 
-	t.Run("after_ringtail_init", func(t *testing.T) {
-		q, pchain, _, err := setupQuasarWithRingtail(t, 5)
+	t.Run("after_corona_init", func(t *testing.T) {
+		q, pchain, _, err := setupQuasarWithCorona(t, 5)
 		if isLatticeUnavailable(err) {
 			t.Skipf("Skipping: lattice library constraint: %v", err)
 		}
