@@ -12,7 +12,7 @@ require (
 	github.com/luxfi/atomic v1.0.0
 	github.com/luxfi/cache v1.2.1
 	github.com/luxfi/consensus v1.25.15
-	github.com/luxfi/constants v1.5.8-0.20260603055356-93c2c2ceb9ca
+	github.com/luxfi/constants v1.5.8
 	github.com/luxfi/crypto v1.19.17
 	github.com/luxfi/database v1.18.3
 	github.com/luxfi/filesystem v0.0.1
@@ -29,7 +29,7 @@ require (
 	github.com/luxfi/timer v1.0.2
 	github.com/luxfi/tls v1.0.3
 	github.com/luxfi/trace v0.1.4
-	github.com/luxfi/upgrade v1.0.1-0.20260603055252-f51810805436
+	github.com/luxfi/upgrade v1.0.1
 	github.com/luxfi/utils v1.2.0
 	github.com/luxfi/utxo v0.3.7
 	github.com/luxfi/validators v1.2.0
@@ -145,7 +145,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/luxfi/formatting v1.0.1
 	github.com/luxfi/math/big v0.1.0 // indirect
-	github.com/luxfi/sampler v1.0.0 // indirect
+	github.com/luxfi/sampler v1.1.0 // indirect
 	github.com/montanaflynn/stats v0.9.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
