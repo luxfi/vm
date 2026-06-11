@@ -13,7 +13,7 @@ type SignatureType uint8
 
 const (
 	SignatureTypeBLS SignatureType = iota
-	SignatureTypeRingtail
+	SignatureTypeCorona
 	SignatureTypeQuasar // Hybrid BLS + Corona
 	SignatureTypeMLDSA
 )
@@ -69,7 +69,7 @@ func NewCoronaSignature(sig []byte, signers []ids.NodeID) *CoronaSignature {
 }
 
 func (s *CoronaSignature) Bytes() []byte         { return s.sig }
-func (s *CoronaSignature) Type() SignatureType   { return SignatureTypeRingtail }
+func (s *CoronaSignature) Type() SignatureType   { return SignatureTypeCorona }
 func (s *CoronaSignature) Signers() []ids.NodeID { return s.signers }
 
 // CoronaCoordinator manages the threshold signing protocol
