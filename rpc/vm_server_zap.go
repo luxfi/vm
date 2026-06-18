@@ -18,7 +18,7 @@ import (
 	zapwire "github.com/luxfi/api/zap"
 	"github.com/luxfi/consensus/engine/chain/block"
 	"github.com/luxfi/database"
-	"github.com/luxfi/database/badgerdb"
+	"github.com/luxfi/database/zapdb"
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
@@ -210,9 +210,9 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 	if err != nil {
 		return zapwire.MsgInitialize, nil, fmt.Errorf("initialize cChainID: %w", err)
 	}
-	luxAssetID, err := ids.ToID(req.LuxAssetID)
+	utxoAssetID, err := ids.ToID(req.UTXOAssetID)
 	if err != nil {
-		return zapwire.MsgInitialize, nil, fmt.Errorf("initialize luxAssetID: %w", err)
+		return zapwire.MsgInitialize, nil, fmt.Errorf("initialize utxoAssetID: %w", err)
 	}
 	nodeIDTyped, err := ids.ToNodeID(req.NodeID)
 	if err != nil {
@@ -227,7 +227,7 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 		PublicKey:    req.PublicKey,
 		XChainID:     xChainID,
 		CChainID:     cChainID,
-		UTXOAssetID:  luxAssetID,
+		UTXOAssetID:  utxoAssetID,
 		ChainDataDir: req.ChainDataDir,
 		Log:          s.logger,
 		Metrics:      metric.NewMultiGatherer(),
@@ -237,7 +237,7 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 	// The database is opened directly by the plugin process since
 	// ZAP transport cannot proxy database access across processes.
 	dbPath := filepath.Join(req.ChainDataDir, "db")
-	baseDB, err := badgerdb.New(dbPath, nil, "vm", metric.NewRegistry())
+	baseDB, err := zapdb.New(dbPath, nil, "vm", metric.NewRegistry())
 	if err != nil {
 		return zapwire.MsgInitialize, nil, fmt.Errorf("open database at %s: %w", dbPath, err)
 	}
