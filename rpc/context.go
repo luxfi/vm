@@ -26,7 +26,7 @@ type Context struct {
 
 	XChainID     ids.ID
 	CChainID     ids.ID
-	LUXAssetID   ids.ID
+	UTXOAssetID  ids.ID
 	ChainDataDir string
 
 	Log            log.Logger
@@ -78,7 +78,7 @@ func (c *Context) GetXChainID() ids.ID { return c.XChainID }
 func (c *Context) GetCChainID() ids.ID { return c.CChainID }
 
 // GetAssetID implements VMContext
-func (c *Context) GetAssetID() ids.ID { return c.LUXAssetID }
+func (c *Context) GetAssetID() ids.ID { return c.UTXOAssetID }
 
 // GetChainDataDir implements VMContext
 func (c *Context) GetChainDataDir() string { return c.ChainDataDir }
