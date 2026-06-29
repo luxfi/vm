@@ -83,7 +83,7 @@ require (
 	github.com/luxfi/compress v0.0.5 // indirect
 	github.com/luxfi/concurrent v0.0.3 // indirect
 	github.com/luxfi/container v0.0.4 // indirect
-	github.com/luxfi/corona v0.7.6 // indirect
+	github.com/luxfi/corona v0.10.2 // indirect
 	github.com/luxfi/crypto/ipa v1.2.4 // indirect
 	github.com/luxfi/geth v1.16.98 // indirect
 	github.com/luxfi/keychain v1.0.2 // indirect
@@ -91,9 +91,10 @@ require (
 	github.com/luxfi/lens v0.1.4 // indirect
 	github.com/luxfi/magnetar v1.2.0 // indirect
 	github.com/luxfi/mdns v0.1.1 // indirect
+	github.com/luxfi/mlwe v0.2.1 // indirect
 	github.com/luxfi/p2p v1.21.1 // indirect
 	github.com/luxfi/pq v1.0.3 // indirect
-	github.com/luxfi/pulsar v1.1.1 // indirect
+	github.com/luxfi/pulsar v1.7.1 // indirect
 	github.com/luxfi/threshold v1.9.4 // indirect
 	github.com/luxfi/zap v0.7.2 // indirect
 	github.com/luxfi/zapdb v1.10.0 // indirect
