@@ -8,6 +8,7 @@ package rpc
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -269,6 +270,9 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 	if err != nil {
 		return zapwire.MsgInitialize, nil, fmt.Errorf("get last accepted block: %w", err)
 	}
+	if lastBlock == nil {
+		return zapwire.MsgInitialize, nil, fmt.Errorf("get last accepted block: %w", errNilBlock)
+	}
 
 	parentID := lastBlock.Parent()
 	resp := &zapwire.InitializeResponse{
@@ -433,6 +437,12 @@ func (s *zapVMServer) handleBuildBlock(ctx context.Context) (zapwire.MessageType
 	}
 
 	blk, err := s.vm.BuildBlock(ctx)
+	// A VM must never return (nil, nil); under load some do ("no block to build
+	// right now"). Surface it as a not-found error so consensus retries next tick,
+	// and NEVER cache or dereference the nil block (the ZAP-handler nil panic).
+	if err == nil && blk == nil {
+		err = errNilBlock
+	}
 	if err != nil {
 		resp := &zapwire.BlockResponse{
 			Err: errorToZAP(err),
@@ -475,6 +485,9 @@ func (s *zapVMServer) handleParseBlock(ctx context.Context, payload []byte) (zap
 	}
 
 	blk, err := s.vm.ParseBlock(ctx, req.Bytes)
+	if err == nil && blk == nil {
+		err = errNilBlock
+	}
 	if err != nil {
 		resp := &zapwire.BlockResponse{
 			Err: errorToZAP(err),
@@ -519,6 +532,9 @@ func (s *zapVMServer) handleGetBlock(ctx context.Context, payload []byte) (zapwi
 	}
 
 	blk, err := s.vm.GetBlock(ctx, blkID)
+	if err == nil && blk == nil {
+		err = errNilBlock
+	}
 	if err != nil {
 		resp := &zapwire.BlockResponse{
 			Err: errorToZAP(err),
@@ -576,6 +592,9 @@ func (s *zapVMServer) handleBlockVerify(ctx context.Context, payload []byte) (za
 	if err != nil {
 		return zapwire.MsgBlockVerify, nil, err
 	}
+	if blk == nil {
+		return zapwire.MsgBlockVerify, nil, errNilBlock
+	}
 
 	err = blk.Verify(ctx)
 	return zapwire.MsgBlockVerify, nil, err
@@ -595,6 +614,9 @@ func (s *zapVMServer) handleBlockAccept(ctx context.Context, payload []byte) (za
 	blk, err := s.vm.GetBlock(ctx, blkID)
 	if err != nil {
 		return zapwire.MsgBlockAccept, nil, err
+	}
+	if blk == nil {
+		return zapwire.MsgBlockAccept, nil, errNilBlock
 	}
 
 	err = blk.Accept(ctx)
@@ -621,6 +643,9 @@ func (s *zapVMServer) handleBlockReject(ctx context.Context, payload []byte) (za
 	blk, err := s.vm.GetBlock(ctx, blkID)
 	if err != nil {
 		return zapwire.MsgBlockReject, nil, err
+	}
+	if blk == nil {
+		return zapwire.MsgBlockReject, nil, errNilBlock
 	}
 
 	err = blk.Reject(ctx)
@@ -687,6 +712,9 @@ func (s *zapVMServer) handleBatchedParseBlock(ctx context.Context, payload []byt
 
 	for i, blockBytes := range req.Requests {
 		blk, err := s.vm.ParseBlock(ctx, blockBytes)
+		if err == nil && blk == nil {
+			err = errNilBlock
+		}
 		if err != nil {
 			resp.Responses[i] = zapwire.BlockResponse{
 				Err: errorToZAP(err),
@@ -734,7 +762,7 @@ func (s *zapVMServer) handleGetAncestors(ctx context.Context, payload []byte) (z
 
 	for i := int32(0); i < req.MaxBlocksNum; i++ {
 		blk, err := s.vm.GetBlock(ctx, currentID)
-		if err != nil {
+		if err != nil || blk == nil {
 			break
 		}
 		ancestors = append(ancestors, blk.Bytes())
@@ -831,6 +859,14 @@ func (s *zapVMServer) handleNewHTTPHandler(ctx context.Context) (zapwire.Message
 	return zapwire.MsgNewHTTPHandler, result, nil
 }
 
+// errNilBlock guards the (nil block, nil error) contract violation a VM can
+// return under heavy concurrent load: the block interface never checks blk==nil
+// after a VM call, so dereferencing the nil Block (blk.ID()/Bytes()/Verify()/…)
+// panics — the recovered "panic in ZAP handler" that corrupts build/verify under
+// a fresh-chain storm. Every handler now maps a nil block to this sentinel and
+// returns a clean not-found error instead of ever touching the nil.
+var errNilBlock = errors.New("vm returned a nil block with no error")
+
 func errorToZAP(err error) zapwire.Error {
 	if err == nil {
 		return zapwire.ErrorUnspecified
@@ -838,7 +874,7 @@ func errorToZAP(err error) zapwire.Error {
 	if err == database.ErrClosed {
 		return zapwire.ErrorClosed
 	}
-	if err == database.ErrNotFound {
+	if err == database.ErrNotFound || errors.Is(err, errNilBlock) {
 		return zapwire.ErrorNotFound
 	}
 	return zapwire.ErrorUnspecified
