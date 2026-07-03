@@ -114,6 +114,16 @@ type zapVMServer struct {
 	// Cleared on BlockAccept or BlockReject.
 	pendingBlock     chain.Block
 	pendingBlockLock sync.Mutex
+
+	// vmCallLock serializes VM state calls. The ZAP transport dispatches
+	// every request in its own goroutine, but the underlying chain.State
+	// (and the EVM VM) assume the consensus engine's single-threaded call
+	// contract — concurrent ParseBlock/Verify race on the unsynchronized
+	// verifiedBlocks map (fatal: concurrent map read and map write). This
+	// lock restores that contract for all state-touching ops. WaitForEvent
+	// is deliberately excluded (it is a long-poll and must not block other
+	// VM calls — the reason the transport parallelized dispatch).
+	vmCallLock sync.Mutex
 }
 
 func newZAPVMServer(vm chain.ChainVM, logger log.Logger) *zapVMServer {
@@ -135,6 +145,13 @@ func (s *zapVMServer) Handle(ctx context.Context, msgType zapwire.MessageType, p
 			retErr = fmt.Errorf("panic in handler: %v", r)
 		}
 	}()
+	// Serialize VM state calls to honor the consensus engine's
+	// single-threaded call contract. WaitForEvent is a long-poll and must
+	// run concurrently, so it is excluded from the lock.
+	if msgType != zapwire.MsgWaitForEvent {
+		s.vmCallLock.Lock()
+		defer s.vmCallLock.Unlock()
+	}
 	switch msgType {
 	case zapwire.MsgInitialize:
 		return s.handleInitialize(ctx, payload)
