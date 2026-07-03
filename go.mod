@@ -94,7 +94,7 @@ require (
 	github.com/luxfi/p2p v1.21.1 // indirect
 	github.com/luxfi/pq v1.0.3 // indirect
 	github.com/luxfi/pulsar v1.1.1 // indirect
-	github.com/luxfi/threshold v1.9.4 // indirect
+	github.com/luxfi/threshold v1.12.0 // indirect
 	github.com/luxfi/zap v0.7.2 // indirect
 	github.com/luxfi/zapdb v1.10.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
