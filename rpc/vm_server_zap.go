@@ -18,8 +18,8 @@ import (
 	zapwire "github.com/luxfi/api/zap"
 	"github.com/luxfi/consensus/engine/chain/block"
 	"github.com/luxfi/database"
-	"github.com/luxfi/database/zapdb"
 	"github.com/luxfi/database/prefixdb"
+	"github.com/luxfi/database/zapdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/log"
 	"github.com/luxfi/metric"
@@ -101,12 +101,37 @@ func Serve(ctx context.Context, logger log.Logger, vm chain.ChainVM) (retErr err
 	return err
 }
 
+// quasarExporter is the OPTIONAL VM-side surface behind zapwire.CapQuasarExport.
+// A concrete ChainVM (the C-Chain EVM) implements it to track a Quasar
+// (⅔-by-stake) EXPORT-FINAL height distinct from its reorgable local accept tip.
+// It is NOT part of the generic chain.ChainVM contract: the plugin server PROBES
+// the wrapped VM for it once at construction and, when present, advertises
+// CapQuasarExport at the Initialize handshake AND serves the MsgSetQuasarFinalized
+// / MsgQuasarHeight round-trips. The method set mirrors the node-side client
+// (github.com/luxfi/node/vms/rpcchainvm/zap.Client) so the two ends compose
+// across the ZAP boundary. Absent it, the node keeps this chain Nova-only.
+type quasarExporter interface {
+	// SetLastQuasarFinalized records that the block at height reached ⅔-stake
+	// EXPORT finality (drives the VM's finalized/safe tags + warp export gate).
+	SetLastQuasarFinalized(height uint64)
+	// LastQuasarHeight returns the VM's accept-tip-clamped EXPORT-FINAL height
+	// (0 before the first export forms).
+	LastQuasarHeight() uint64
+}
+
 // zapVMServer implements zapwire.Handler for a VM
 type zapVMServer struct {
 	vm            chain.ChainVM
 	logger        log.Logger
 	allowShutdown *bool
 	db            database.Database // persistent database, closed on shutdown
+
+	// quasarVM is the wrapped VM viewed through the OPTIONAL quasarExporter
+	// surface, or nil if the VM does not implement it. Resolved ONCE by probing vm
+	// at construction (a VM's method set is fixed for its life), then read by
+	// capabilities() and the two Quasar handlers. nil ⇒ the server never sets
+	// CapQuasarExport and refuses the Quasar messages, so the node stays Nova-only.
+	quasarVM quasarExporter
 
 	// pendingBlock caches the last built block to prevent rebuilding
 	// with a new timestamp while consensus is voting on it.
@@ -117,11 +142,32 @@ type zapVMServer struct {
 
 func newZAPVMServer(vm chain.ChainVM, logger log.Logger) *zapVMServer {
 	allowShutdown := false
-	return &zapVMServer{
+	s := &zapVMServer{
 		vm:            vm,
 		logger:        logger,
 		allowShutdown: &allowShutdown,
 	}
+	// Probe the wrapped VM ONCE for the OPTIONAL Quasar export surface. A hit here
+	// is what turns CapQuasarExport from dead-on-arrival into a real capability: the
+	// bit is advertised at Initialize and the two Quasar handlers dispatch to this
+	// VM. A miss leaves quasarVM nil → generic VM, no export surface.
+	if qvm, ok := vm.(quasarExporter); ok {
+		s.quasarVM = qvm
+	}
+	return s
+}
+
+// capabilities returns the OPTIONAL cross-boundary add-on bitfield this server
+// advertises in InitializeResponse.Capabilities, derived from the one-time probe
+// of the wrapped VM. A generic VM implements no add-ons → 0 → the node stays on
+// the generic path. This is the SINGLE source of the advertised bitfield; every
+// bit set here MUST have a matching handler wired in Handle.
+func (s *zapVMServer) capabilities() uint64 {
+	var caps uint64
+	if s.quasarVM != nil {
+		caps |= zapwire.CapQuasarExport
+	}
+	return caps
 }
 
 // Handle implements zapwire.Handler
@@ -176,6 +222,10 @@ func (s *zapVMServer) Handle(ctx context.Context, msgType zapwire.MessageType, p
 		return s.handleGetBlockIDAtHeight(ctx, payload)
 	case zapwire.MsgNewHTTPHandler:
 		return s.handleNewHTTPHandler(ctx)
+	case zapwire.MsgSetQuasarFinalized:
+		return s.handleSetQuasarFinalized(ctx, payload)
+	case zapwire.MsgQuasarHeight:
+		return s.handleQuasarHeight(ctx)
 	default:
 		s.logger.Warn("unknown ZAP message type", "msgType", msgType)
 		return msgType, nil, nil
@@ -277,6 +327,9 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 		Height:               lastBlock.Height(),
 		Bytes:                lastBlock.Bytes(),
 		Timestamp:            lastBlock.Timestamp().UnixNano(),
+		// Capabilities is probed from the wrapped VM (0 for a generic VM). The
+		// node reads it once here to decide which OPTIONAL add-ons to wire.
+		Capabilities: s.capabilities(),
 	}
 
 	buf := zapwire.GetBuffer()
@@ -288,6 +341,7 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 	s.logger.Info("ZAP VM initialized successfully",
 		"lastAcceptedID", lastAccepted,
 		"height", lastBlock.Height(),
+		"quasarExport", s.quasarVM != nil,
 	)
 
 	return zapwire.MsgInitialize, result, nil
@@ -829,6 +883,38 @@ func (s *zapVMServer) handleNewHTTPHandler(ctx context.Context) (zapwire.Message
 	copy(result, buf.Bytes())
 	zapwire.PutBuffer(buf)
 	return zapwire.MsgNewHTTPHandler, result, nil
+}
+
+// handleSetQuasarFinalized applies a node-pushed Quasar (⅔-by-stake) EXPORT-FINAL
+// height to the wrapped VM. Only reachable when the VM advertised CapQuasarExport
+// (quasarVM != nil); a stray message on a non-capable VM is refused, not silently
+// dropped. The response is empty — the node-side caller is fire-and-forget.
+func (s *zapVMServer) handleSetQuasarFinalized(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
+	if s.quasarVM == nil {
+		return zapwire.MsgSetQuasarFinalized, nil, fmt.Errorf("vm does not support quasar export")
+	}
+	req := &zapwire.SetQuasarFinalizedRequest{}
+	if err := req.Decode(zapwire.NewReader(payload)); err != nil {
+		return zapwire.MsgSetQuasarFinalized, nil, fmt.Errorf("decode set-quasar-finalized: %w", err)
+	}
+	s.quasarVM.SetLastQuasarFinalized(req.Height)
+	return zapwire.MsgSetQuasarFinalized, nil, nil
+}
+
+// handleQuasarHeight returns the wrapped VM's accept-tip-clamped Quasar
+// EXPORT-FINAL height (0 before the first export). Only reachable when the VM
+// advertised CapQuasarExport.
+func (s *zapVMServer) handleQuasarHeight(ctx context.Context) (zapwire.MessageType, []byte, error) {
+	if s.quasarVM == nil {
+		return zapwire.MsgQuasarHeight, nil, fmt.Errorf("vm does not support quasar export")
+	}
+	resp := &zapwire.QuasarHeightResponse{Height: s.quasarVM.LastQuasarHeight()}
+	buf := zapwire.GetBuffer()
+	resp.Encode(buf)
+	result := make([]byte, len(buf.Bytes()))
+	copy(result, buf.Bytes())
+	zapwire.PutBuffer(buf)
+	return zapwire.MsgQuasarHeight, result, nil
 }
 
 func errorToZAP(err error) zapwire.Error {
