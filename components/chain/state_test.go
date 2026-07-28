@@ -15,7 +15,7 @@ import (
 	"github.com/luxfi/crypto/hash"
 	"github.com/luxfi/database"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/vm/chain"
+	block "github.com/luxfi/vm/chain"
 	"github.com/luxfi/vm/chain/blocktest"
 )
 

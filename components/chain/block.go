@@ -41,7 +41,11 @@ func (bw *BlockWrapper) Verify(ctx context.Context) error {
 
 	blkID := bw.ID()
 	bw.state.unverifiedBlocks.Evict(blkID)
+	// verifiedBlocks is a plain map shared with every concurrent ZAP RPC handler; State
+	// owns its lock. Taken AFTER Block.Verify so it is never held across the inner VM.
+	bw.state.blocksLock.Lock()
 	bw.state.verifiedBlocks[blkID] = bw
+	bw.state.blocksLock.Unlock()
 	return nil
 }
 
@@ -89,9 +93,11 @@ func (bw *BlockWrapper) ShouldVerifyWithRuntime(ctx context.Context) (bool, erro
 // block, and updates the last accepted block.
 func (bw *BlockWrapper) Accept(ctx context.Context) error {
 	blkID := bw.ID()
+	bw.state.blocksLock.Lock()
 	delete(bw.state.verifiedBlocks, blkID)
-	bw.state.decidedBlocks.Put(blkID, bw)
 	bw.state.lastAcceptedBlock = bw
+	bw.state.blocksLock.Unlock()
+	bw.state.decidedBlocks.Put(blkID, bw)
 
 	return bw.Block.Accept(ctx)
 }
@@ -100,7 +106,9 @@ func (bw *BlockWrapper) Accept(ctx context.Context) error {
 // decided block.
 func (bw *BlockWrapper) Reject(ctx context.Context) error {
 	blkID := bw.ID()
+	bw.state.blocksLock.Lock()
 	delete(bw.state.verifiedBlocks, blkID)
+	bw.state.blocksLock.Unlock()
 	bw.state.decidedBlocks.Put(blkID, bw)
 	return bw.Block.Reject(ctx)
 }
