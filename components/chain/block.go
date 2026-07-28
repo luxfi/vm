@@ -92,25 +92,35 @@ func (bw *BlockWrapper) ShouldVerifyWithRuntime(ctx context.Context) (bool, erro
 // Accept accepts the underlying block, removes it from verifiedBlocks, caches it as a decided
 // block, and updates the last accepted block.
 func (bw *BlockWrapper) Accept(ctx context.Context) error {
+	// Accept the underlying block FIRST — see chain.BlockWrapper.Accept. Advancing
+	// lastAcceptedBlock before the inner VM commits is the wrapper-vs-inner split that
+	// later reads as "finality index is BEHIND the inner VM tip".
+	if err := bw.Block.Accept(ctx); err != nil {
+		return err
+	}
+
 	blkID := bw.ID()
 	bw.state.blocksLock.Lock()
 	delete(bw.state.verifiedBlocks, blkID)
 	bw.state.lastAcceptedBlock = bw
 	bw.state.blocksLock.Unlock()
 	bw.state.decidedBlocks.Put(blkID, bw)
-
-	return bw.Block.Accept(ctx)
+	return nil
 }
 
 // Reject rejects the underlying block, removes it from processing blocks, and caches it as a
 // decided block.
 func (bw *BlockWrapper) Reject(ctx context.Context) error {
+	if err := bw.Block.Reject(ctx); err != nil {
+		return err
+	}
+
 	blkID := bw.ID()
 	bw.state.blocksLock.Lock()
 	delete(bw.state.verifiedBlocks, blkID)
 	bw.state.blocksLock.Unlock()
 	bw.state.decidedBlocks.Put(blkID, bw)
-	return bw.Block.Reject(ctx)
+	return nil
 }
 
 // OracleBlock is a block that can have multiple valid children, and one needs
