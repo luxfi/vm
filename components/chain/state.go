@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/luxfi/cache"
 	"github.com/luxfi/cache/lru"
@@ -45,6 +46,20 @@ type State struct {
 	// If nil, [BuildBlockWithRuntime] returns [BuildBlock].
 	buildBlockWithRuntime func(context.Context, *runtime.Runtime) (vmchain.Block, error)
 
+	// blocksLock guards the two pieces of State that are NOT self-synchronising:
+	// verifiedBlocks (a plain map) and lastAcceptedBlock (a pointer field). Every
+	// cache.Cacher field below carries its own mutex, so they need no protection here.
+	//
+	// State was written against avalanchego's contract that the consensus engine holds the
+	// chain lock across every VM call, so one VM call runs at a time. The ZAP VM server
+	// (rpc/vm_server_zap.go) does NOT reinstate that contract — it dispatches ParseBlock,
+	// GetBlock and the Verify/Accept/Reject wrappers concurrently — which turned
+	// getCachedBlock's verifiedBlocks read into a "concurrent map read and map write" fatal
+	// that kills the plugin process outright (luxd survives, its chain does not, and there
+	// is no self-heal). The state belongs to State, so State owns its synchronisation.
+	//
+	// INVARIANT: never held across a call into the inner VM or the wrapped block.
+	blocksLock sync.RWMutex
 	// verifiedBlocks is a map of blocks that have been verified and are
 	// therefore currently in consensus.
 	verifiedBlocks map[ids.ID]*BlockWrapper
@@ -156,6 +171,9 @@ var errSetAcceptedWithProcessing = errors.New("cannot set last accepted block wi
 // This also flushes [lastAcceptedBlock] from missingBlocks and unverifiedBlocks
 // to ensure that their contents stay valid.
 func (s *State) SetLastAcceptedBlock(lastAcceptedBlock vmchain.Block) error {
+	s.blocksLock.Lock()
+	defer s.blocksLock.Unlock()
+
 	if len(s.verifiedBlocks) != 0 {
 		return fmt.Errorf("%w: %d", errSetAcceptedWithProcessing, len(s.verifiedBlocks))
 	}
@@ -213,7 +231,10 @@ func (s *State) GetBlock(ctx context.Context, blkID ids.ID) (vmchain.Block, erro
 // getCachedBlock checks the caches for [blkID] by priority. Returning
 // true if [blkID] is found in one of the caches.
 func (s *State) getCachedBlock(blkID ids.ID) (vmchain.Block, bool) {
-	if blk, ok := s.verifiedBlocks[blkID]; ok {
+	s.blocksLock.RLock()
+	blk, ok := s.verifiedBlocks[blkID]
+	s.blocksLock.RUnlock()
+	if ok {
 		return blk, true
 	}
 
@@ -407,7 +428,10 @@ func (s *State) addBlockOutsideConsensus(blk vmchain.Block) vmchain.Block {
 	}
 
 	blkID := blk.ID()
-	if blk.Height() <= s.lastAcceptedBlock.Height() {
+	s.blocksLock.RLock()
+	lastAcceptedHeight := s.lastAcceptedBlock.Height()
+	s.blocksLock.RUnlock()
+	if blk.Height() <= lastAcceptedHeight {
 		s.decidedBlocks.Put(blkID, wrappedBlk)
 	} else {
 		s.unverifiedBlocks.Put(blkID, wrappedBlk)
@@ -417,11 +441,13 @@ func (s *State) addBlockOutsideConsensus(blk vmchain.Block) vmchain.Block {
 }
 
 func (s *State) LastAccepted(context.Context) (ids.ID, error) {
-	return s.lastAcceptedBlock.ID(), nil
+	return s.LastAcceptedBlock().ID(), nil
 }
 
 // LastAcceptedBlock returns the last accepted wrapped block
 func (s *State) LastAcceptedBlock() *BlockWrapper {
+	s.blocksLock.RLock()
+	defer s.blocksLock.RUnlock()
 	return s.lastAcceptedBlock
 }
 
@@ -432,6 +458,8 @@ func (s *State) LastAcceptedBlockInternal() vmchain.Block {
 
 // IsProcessing returns whether [blkID] is processing in consensus
 func (s *State) IsProcessing(blkID ids.ID) bool {
+	s.blocksLock.RLock()
+	defer s.blocksLock.RUnlock()
 	_, ok := s.verifiedBlocks[blkID]
 	return ok
 }
