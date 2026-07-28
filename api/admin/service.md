@@ -13,7 +13,7 @@ This API uses the `json 2.0` RPC format. For details, see [here](https://docs.lu
 ## Endpoint
 
 ```
-/ext/admin
+/v1/admin
 ```
 
 ## Methods
@@ -28,7 +28,7 @@ Assign an API endpoint an alias, a different endpoint for the API. The original 
 admin.alias({endpoint:string, alias:string}) -> {}
 ```
 
-- `endpoint` is the original endpoint of the API. `endpoint` should only include the part of the endpoint after `/ext/`.
+- `endpoint` is the original endpoint of the API. `endpoint` should only include the part of the endpoint after `/v1/`.
 - The API being aliased can now be called at `ext/alias`.
 - `alias` can be at most 512 characters.
 
@@ -43,7 +43,7 @@ curl -X POST --data '{
         "alias":"myAlias",
         "endpoint":"bc/X"
     }
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/admin
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/admin
 ```
 
 **Example Response**:
@@ -56,7 +56,7 @@ curl -X POST --data '{
 }
 ```
 
-Now, calls to the X-Chain can be made to either `/ext/bc/X` or, equivalently, to `/ext/myAlias`.
+Now, calls to the X-Chain can be made to either `/v1/bc/X` or, equivalently, to `/v1/myAlias`.
 
 ### `admin.aliasChain`
 
@@ -93,7 +93,7 @@ curl -X POST --data '{
         "chain":"sV6o671RtkGBcno1FiaDbVcFv2sG5aVXMZYzKdP4VQAWmJQnM",
         "alias":"myBlockchainAlias"
     }
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/admin
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/admin
 ```
 
 **Example Response**:
@@ -106,7 +106,7 @@ curl -X POST --data '{
 }
 ```
 
-Now, instead of interacting with the blockchain whose ID is `sV6o671RtkGBcno1FiaDbVcFv2sG5aVXMZYzKdP4VQAWmJQnM` by making API calls to `/ext/bc/sV6o671RtkGBcno1FiaDbVcFv2sG5aVXMZYzKdP4VQAWmJQnM`, one can also make calls to `ext/bc/myBlockchainAlias`.
+Now, instead of interacting with the blockchain whose ID is `sV6o671RtkGBcno1FiaDbVcFv2sG5aVXMZYzKdP4VQAWmJQnM` by making API calls to `/v1/bc/sV6o671RtkGBcno1FiaDbVcFv2sG5aVXMZYzKdP4VQAWmJQnM`, one can also make calls to `ext/bc/myBlockchainAlias`.
 
 ### `admin.getChainAliases`
 
@@ -134,7 +134,7 @@ curl -X POST --data '{
     "params": {
         "chain":"sV6o671RtkGBcno1FiaDbVcFv2sG5aVXMZYzKdP4VQAWmJQnM"
     }
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/admin
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/admin
 ```
 
 **Example Response**:
@@ -186,7 +186,7 @@ curl -X POST --data '{
     "params": {
         "loggerName": "C"
     }
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/admin
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/admin
 ```
 
 **Example Response**:
@@ -229,7 +229,7 @@ curl -X POST --data '{
     "id"     :1,
     "method" :"admin.loadVMs",
     "params" :{}
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/admin
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/admin
 ```
 
 **Example Response**:
@@ -267,7 +267,7 @@ curl -X POST --data '{
     "id"     :1,
     "method" :"admin.lockProfile",
     "params" :{}
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/admin
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/admin
 ```
 
 **Example Response**:
@@ -298,7 +298,7 @@ curl -X POST --data '{
     "id"     :1,
     "method" :"admin.memoryProfile",
     "params" :{}
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/admin
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/admin
 ```
 
 **Example Response**:
@@ -345,7 +345,7 @@ curl -X POST --data '{
         "logLevel": "DEBUG",
         "displayLevel": "INFO"
     }
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/admin
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/admin
 ```
 
 **Example Response**:
@@ -376,7 +376,7 @@ curl -X POST --data '{
     "id"     :1,
     "method" :"admin.startCPUProfiler",
     "params" :{}
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/admin
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/admin
 ```
 
 **Example Response**:
@@ -406,7 +406,7 @@ curl -X POST --data '{
     "jsonrpc":"2.0",
     "id"     :1,
     "method" :"admin.stopCPUProfiler"
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/admin
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/admin
 ```
 
 **Example Response**:

@@ -7,7 +7,7 @@ This API uses the `json 2.0` RPC format. For more information on making JSON RPC
 ## Endpoint
 
 ```
-/ext/info
+/v1/info
 ```
 
 ## Methods
@@ -38,7 +38,7 @@ curl -sX POST --data '{
     "id"     :1,
     "method" :"info.lps",
     "params" :{}
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/info
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/info
 ```
 
 **Example Response**:
@@ -125,7 +125,7 @@ curl -X POST --data '{
     "params": {
         "chain":"X"
     }
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/info
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/info
 ```
 
 **Example Response**:
@@ -160,7 +160,7 @@ curl -X POST --data '{
     "params": {
         "alias":"X"
     }
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/info
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/info
 ```
 
 **Example Response**:
@@ -192,7 +192,7 @@ curl -X POST --data '{
     "jsonrpc":"2.0",
     "id"     :1,
     "method" :"info.getNetworkID"
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/info
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/info
 ```
 
 **Example Response**:
@@ -226,7 +226,7 @@ curl -X POST --data '{
     "jsonrpc":"2.0",
     "id"     :1,
     "method" :"info.getNetworkName"
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/info
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/info
 ```
 
 **Example Response**:
@@ -273,7 +273,7 @@ curl -X POST --data '{
     "jsonrpc":"2.0",
     "id"     :1,
     "method" :"info.getNodeID"
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/info
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/info
 ```
 
 **Example Response**:
@@ -313,7 +313,7 @@ curl -X POST --data '{
     "jsonrpc":"2.0",
     "id"     :1,
     "method" :"info.getNodeIP"
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/info
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/info
 ```
 
 **Example Response**:
@@ -359,7 +359,7 @@ curl -X POST --data '{
     "jsonrpc":"2.0",
     "id"     :1,
     "method" :"info.getNodeVersion"
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/info
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/info
 ```
 
 **Example Response**:
@@ -426,7 +426,7 @@ curl -X POST --data '{
     "jsonrpc":"2.0",
     "id"     :1,
     "method" :"info.getTxFee"
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/info
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/info
 ```
 
 **Example Response**:
@@ -473,7 +473,7 @@ curl -X POST --data '{
     "id"     :1,
     "method" :"info.getVMs",
     "params" :{}
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/info
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/info
 ```
 
 **Example Response**:
@@ -540,7 +540,7 @@ curl -X POST --data '{
     "params": {
         "nodeIDs": []
     }
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/info
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/info
 ```
 
 **Example Response**:
@@ -619,7 +619,7 @@ curl -X POST --data '{
     "jsonrpc":"2.0",
     "id"     :1,
     "method" :"info.uptime"
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/info
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/info
 ```
 
 **Example Response**:
@@ -645,7 +645,7 @@ curl -X POST --data '{
     "params" :{
         "subnetID":"29uVeLPJB1eQJkzRemU8g8wZDw5uJRqpab5U2mX9euieVwiEbL"
     }
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/info
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/info
 ```
 
 #### Example Lux L1 Response
@@ -672,7 +672,7 @@ curl -X POST --data '{
     "jsonrpc":"2.0",
     "id"     :1,
     "method" :"info.upgrades"
-}' -H 'content-type:application/json;' 127.0.0.1:9650/ext/info
+}' -H 'content-type:application/json;' 127.0.0.1:9650/v1/info
 ```
 
 **Example Response**:
