@@ -48,7 +48,7 @@ This API uses the `json 2.0` API format. For more information on making JSON RPC
 ## Endpoint
 
 ```text
-/ext/keystore
+/v1/keystore
 ```
 
 ## Methods
@@ -89,7 +89,7 @@ curl -X POST --data '{
         "username":"myUsername",
         "password":"myPassword"
     }
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/keystore
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/keystore
 ```
 
 **Example Response:**
@@ -129,7 +129,7 @@ curl -X POST --data '{
         "username":"myUsername",
         "password":"myPassword"
     }
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/keystore
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/keystore
 ```
 
 **Example Response:**
@@ -183,7 +183,7 @@ curl -X POST --data '{
         "username":"myUsername",
         "password":"myPassword"
     }
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/keystore
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/keystore
 ```
 
 **Example Response:**
@@ -238,7 +238,7 @@ curl -X POST --data '{
         "password":"myPassword",
         "user"    :"0x7655a29df6fc2747b0874e1148b423b954a25fcdb1f170d0ec8eb196430f7001942ce55b02a83b1faf50a674b1e55bfc000000008cf2d869"
     }
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/keystore
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/keystore
 ```
 
 **Example Response:**
@@ -274,7 +274,7 @@ curl -X POST --data '{
     "jsonrpc":"2.0",
     "id"     :1,
     "method" :"keystore.listUsers"
-}' -H 'content-type:application/json;' 127.0.0.1:9630/ext/keystore
+}' -H 'content-type:application/json;' 127.0.0.1:9630/v1/keystore
 ```
 
 **Example Response:**
