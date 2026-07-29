@@ -180,3 +180,31 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+// v1.3.1 was published, then the tag was re-pointed onto different code.
+// It first resolved to c374a4f2, whose go.mod required pulsar v1.9.1; five
+// minutes later the tag was moved to 243d2d3a, which requires pulsar v1.9.2.
+// That is a real dependency change, so BOTH recorded hashes differ:
+//
+//	first  zip h1:U2Bv7IDRFv8JtjUARfY53ZnOPRB2iPrPHSMDCQ+T0Js=
+//	       mod h1:6YR/uFV2FoofmogQShv+HM7V8alz5rbrQYjp5w0bNVA=
+//	second zip h1:rLCbygaajehVkUoJ5czwhpUAJaC5J5okq3p+j2QSPSo=
+//	       mod h1:uViH3COP8hhCbj42v1MTohkPCDwYQCZanNIOb/StWqY=
+//
+// (A later fleet-wide history rewrite re-parented 243d2d3a to 686efc68. That
+// left the tree byte-identical, so it did not move the hashes again — only the
+// pulsar bump did.)
+//
+// proxy.golang.org and sum.golang.org still serve and notarise the FIRST
+// content and always will: a published version is immutable to them, so the
+// first body of code is what v1.3.1 means to anyone outside this org. Builds
+// that go through the proxy and builds that go direct to GitHub therefore
+// disagree, and the direct ones only appear to work because GOPRIVATE skips
+// the checksum database. That is a checksum SECURITY ERROR waiting for the
+// first consumer who builds without our GOPRIVATE.
+//
+// A version whose checksum is not a stable identity must not be selected by
+// anything new, and the answer to a moved tag is a new version, never a
+// re-pointed one. Use v1.3.2 or later, which carry the pulsar v1.9.2 go.mod
+// and are stable at a single hash.
+retract v1.3.1
