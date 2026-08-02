@@ -140,6 +140,20 @@ type zapVMServer struct {
 	pendingBlockLock sync.Mutex
 }
 
+// NewZAPHandler builds the ZAP-wire server side for a VM.
+//
+// This is the ONLY way to stand up a real rpc server from outside the package:
+// newZAPVMServer is unexported, so without this a consumer can test its client
+// against a mock but never against the actual server. It existed through v1.2.7,
+// was dropped somewhere in the 1.3 line, and luxfi/node still calls it --
+// vms/rpcchainvm/zap/client_quasar_test.go:102 -- so that package failed to
+// build outright:
+//
+//	undefined: rpc.NewZAPHandler
+func NewZAPHandler(vm chain.ChainVM, logger log.Logger) zapwire.Handler {
+	return newZAPVMServer(vm, logger)
+}
+
 func newZAPVMServer(vm chain.ChainVM, logger log.Logger) *zapVMServer {
 	allowShutdown := false
 	s := &zapVMServer{
