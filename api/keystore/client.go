@@ -38,7 +38,7 @@ type client struct {
 // instead.
 func NewClient(uri string) Client {
 	return &client{requester: rpc.NewEndpointRequester(
-		uri + "/ext/keystore",
+		uri + "/v1/keystore",
 	)}
 }
 
