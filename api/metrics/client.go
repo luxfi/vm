@@ -32,7 +32,7 @@ type Client struct {
 // NewClient returns a new Metrics API Client
 func NewClient(uri string) *Client {
 	return &Client{
-		uri: uri + "/ext/metrics",
+		uri: uri + "/v1/metrics",
 	}
 }
 
