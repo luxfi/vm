@@ -26,6 +26,7 @@ import (
 	luxruntime "github.com/luxfi/runtime"
 	"github.com/luxfi/version"
 	"github.com/luxfi/vm/chain"
+	"github.com/luxfi/vm/chains/atomic/atomiczap"
 	"github.com/luxfi/vm/rpc/runtime"
 )
 
@@ -132,6 +133,12 @@ type zapVMServer struct {
 	// capabilities() and the two Quasar handlers. nil ⇒ the server never sets
 	// CapQuasarExport and refuses the Quasar messages, so the node stays Nova-only.
 	quasarVM quasarExporter
+
+	// atomicSM is the connection to the node's per-chain atomic shared-memory
+	// server, opened at Initialize when the node offered one. Held so Shutdown
+	// closes it deterministically alongside the database. nil when the node
+	// wired no shared memory for this chain.
+	atomicSM *atomiczap.Client
 
 	// pendingBlock caches the last built block to prevent rebuilding
 	// with a new timestamp while consensus is voting on it.
@@ -297,6 +304,41 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 		Metrics:      metric.NewMultiGatherer(),
 	}
 
+	// CROSS-CHAIN ATOMIC CAPABILITY. SharedMemory and BCLookup are interfaces
+	// over node-owned state, so they cannot be copied into the literal above —
+	// which is why every plugin-hosted VM (the C-Chain EVM, the dexvm) saw a nil
+	// handle and the DEX 0x9999 seam was dark. The node instead binds a ZAP
+	// server over its per-chain handle and names it here; we dial it and install
+	// a SharedMemory that speaks to it.
+	//
+	// An empty addr means the node wired no shared memory for this chain (an old
+	// node, or a single-chain dev harness). Leave the handle nil so a settlement
+	// precompile reverts fail-closed rather than fabricate value — the behavior
+	// this build already had.
+	dChainID, derr := optionalID("dChainID", req.DChainID)
+	if derr != nil {
+		return zapwire.MsgInitialize, nil, derr
+	}
+	rt.BCLookup = newStaticBCLookup(cChainID, xChainID, dChainID)
+	if req.AtomicServerAddr != "" {
+		sm, aerr := atomiczap.Dial(ctx, req.AtomicServerAddr)
+		if aerr != nil {
+			// Fail Initialize rather than proceed without it. A chain whose node
+			// offered the capability but could not deliver it must not quietly
+			// run with a dark value seam: that is the difference between "swaps
+			// revert" and "operators believe swaps work".
+			return zapwire.MsgInitialize, nil, fmt.Errorf("atomic capability: %w", aerr)
+		}
+		s.atomicSM = sm
+		rt.SharedMemory = sm
+		s.logger.Info("cross-chain atomic capability wired",
+			"addr", req.AtomicServerAddr,
+			"dChainID", dChainID,
+		)
+	} else {
+		s.logger.Info("no cross-chain atomic capability offered by the node — settlement seam stays closed")
+	}
+
 	// Open persistent database at ChainDataDir for the VM.
 	// The database is opened directly by the plugin process since
 	// ZAP transport cannot proxy database access across processes.
@@ -379,6 +421,13 @@ func (s *zapVMServer) handleShutdown(ctx context.Context) (zapwire.MessageType, 
 	if s.db != nil {
 		if dbErr := s.db.Close(); dbErr != nil {
 			s.logger.Warn("failed to close database on shutdown", "error", dbErr)
+		}
+	}
+	// Close the atomic shared-memory connection last: the VM's own shutdown may
+	// still flush cross-chain ops through it.
+	if s.atomicSM != nil {
+		if smErr := s.atomicSM.Close(); smErr != nil {
+			s.logger.Warn("failed to close atomic shared-memory connection on shutdown", "error", smErr)
 		}
 	}
 	return zapwire.MsgShutdown, nil, err
