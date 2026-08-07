@@ -301,16 +301,28 @@ func (c *Client) Indexed(
 
 // Apply commits a block's cross-chain puts and removes.
 //
-// EXACTLY-ONCE WITHOUT THE BATCH. In process, Apply takes the caller's database
+// NO BATCH ACROSS A PROCESS BOUNDARY. In process, Apply takes the caller's database
 // batch so the state commit and the shared-memory mutation are one write. That
 // batch cannot cross a process boundary, so passing one is refused.
 //
-// The flush path does not need it. Its request set is derived from a monotone
-// seq that is part of consensus state, so a replayed window produces
-// byte-identical Puts and Removes, and both are idempotent. At-least-once
-// delivery therefore has exactly-once effect — provided the caller advances its
-// flushed-seq marker only AFTER this returns. A crash between the Apply and the
-// marker advance re-sends the same window, which is a no-op.
+// WHAT THE CALLER MUST THEN DO — AND WHAT IT MUST NOT ASSUME. A previous version of
+// this comment claimed a replayed window is a harmless no-op because Puts and
+// Removes are idempotent. THEY ARE NOT, and a caller that believes it will halt its
+// chain. In chains/atomic/state.go:
+//
+//   - SetValue on a key that is present returns errDuplicatePut. A replayed Put is
+//     therefore a hard error, which on an accept path is fatal.
+//   - SetValue on a key the peer has already CONSUMED succeeds and RE-CREATES the
+//     object, because the consume deleted it outright. A replayed Put can hand the
+//     peer the same value twice.
+//   - RemoveValue on an already-removed key does not error, but writes a tombstone.
+//
+// So at-least-once delivery does NOT give exactly-once effect by itself. Until this
+// package exposes a typed duplicate-operation error that survives the wire, a
+// plugin-hosted caller must commit its state (marker included) BEFORE calling Apply
+// and accept at-most-once: a crash in the window between the two writes SKIPS an op,
+// which is recoverable at the application layer, whereas replaying one is not. See
+// evm/plugin/evm/block.go Accept for the full argument.
 func (c *Client) Apply(requests map[ids.ID]*atomic.Requests, batches ...database.Batch) error {
 	if len(batches) > 0 {
 		return ErrBatchUnsupported
