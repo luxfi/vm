@@ -213,6 +213,13 @@ func (s *zapVMServer) capabilities() uint64 {
 	if s.quasarVM != nil {
 		caps |= zapwire.CapQuasarExport
 	}
+	// Both bits come from the same probes the handlers dispatch on, so what is
+	// advertised and what can be served cannot disagree. A server that announces
+	// a surface and then refuses it tells a node to stop looking elsewhere for
+	// something it will not get.
+	if s.syncVM != nil {
+		caps |= zapwire.CapStateSync
+	}
 	return caps
 }
 

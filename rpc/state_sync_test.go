@@ -402,3 +402,32 @@ func mustCall(t *testing.T, call func() (zapwire.MessageType, []byte, error)) []
 	}
 	return payload
 }
+
+// The advertised bit and the servable handlers come from one probe, so a node
+// that reads the capability and a node that sends the messages get the same
+// answer. Announcing a surface and then refusing it tells a node to stop
+// looking elsewhere for something it will not get.
+func TestTheAdvertisedBitMatchesWhatIsServed(t *testing.T) {
+	logger := log.NewTestLogger(log.DebugLevel)
+
+	syncable := newSyncServer(t, &syncableVM{})
+	if syncable.capabilities()&zapwire.CapStateSync == 0 {
+		t.Fatal("a state-syncable VM did not advertise CapStateSync")
+	}
+
+	plain := newZAPVMServer(baseVM{}, logger)
+	if plain.capabilities()&zapwire.CapStateSync != 0 {
+		t.Fatal("a VM with no sync surface advertised CapStateSync")
+	}
+	_, payload, err := plain.handleStateSyncEnabled(context.Background())
+	if err != nil {
+		t.Fatalf("state sync enabled: %v", err)
+	}
+	resp := zapwire.StateSyncEnabledResponse{}
+	if err := resp.Decode(zapwire.NewReader(payload)); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Err != zapwire.ErrorStateSyncNotImplemented {
+		t.Fatalf("Err = %v, want ErrorStateSyncNotImplemented — the bit and the handler disagree", resp.Err)
+	}
+}
