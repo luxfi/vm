@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"sync"
 
 	zapwire "github.com/luxfi/api/zap"
@@ -196,7 +197,13 @@ func (s *zapVMServer) capabilities() uint64 {
 func (s *zapVMServer) Handle(ctx context.Context, msgType zapwire.MessageType, payload []byte) (retType zapwire.MessageType, retPayload []byte, retErr error) {
 	defer func() {
 		if r := recover(); r != nil {
-			s.logger.Error("panic in ZAP handler", "msgType", msgType, "panic", r)
+			// The stack, not just the value. A recovered panic reported as a value
+			// alone says only that something was nil somewhere behind a message
+			// type, which is a whole dispatch table's worth of places; the stack
+			// names the one. Recovering here keeps the plugin alive, and the cost
+			// of that is the diagnosis, unless it is carried out with the report.
+			s.logger.Error("panic in ZAP handler",
+				"msgType", msgType, "panic", r, "stack", string(debug.Stack()))
 			retType = msgType
 			retPayload = nil
 			retErr = fmt.Errorf("panic in handler: %v", r)
