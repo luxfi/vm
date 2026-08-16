@@ -1002,10 +1002,19 @@ func (s *zapVMServer) handleStateSummaryAccept(ctx context.Context, payload []by
 		return zapwire.MsgStateSummaryAccept, nil, err
 	}
 
-	// The lock is held for the lookup alone. Accept runs for as long as the VM
-	// needs to start syncing, and every other handler would be queued behind it.
+	// Claiming the summary and removing it are one step. Accept starts a sync
+	// that discards the local chain below the summary's height, so it must run
+	// once per summary however many callers name it: a lookup that leaves the
+	// entry behind lets a second Accept arrive while the first is still running
+	// and start the same destructive work twice.
+	//
+	// The lock covers the claim alone. Accept runs for as long as the VM needs
+	// to begin syncing, and every other handler would queue behind it.
 	s.summariesLock.Lock()
 	summary, known := s.summaries[id]
+	if known {
+		delete(s.summaries, id)
+	}
 	s.summariesLock.Unlock()
 	if !known {
 		resp := zapwire.StateSummaryAcceptResponse{Err: zapwire.ErrorNotFound}
@@ -1014,12 +1023,15 @@ func (s *zapVMServer) handleStateSummaryAccept(ctx context.Context, payload []by
 
 	mode, err := summary.Accept(ctx)
 	if err != nil {
+		// The reason, never the success code. Reporting a failed accept as
+		// ErrorUnspecified hands the caller mode zero — skipped — under the name
+		// of a decision the VM never made.
 		resp := zapwire.StateSummaryAcceptResponse{Err: errorToZAP(err)}
 		return send(zapwire.MsgStateSummaryAccept, &resp)
 	}
 
 	// This decision supersedes every other candidate, so none of them is worth
-	// remembering — including the accepted one, which the VM now owns.
+	// remembering. The accepted one is already gone, claimed above.
 	s.summariesLock.Lock()
 	clear(s.summaries)
 	s.summariesLock.Unlock()
@@ -1074,9 +1086,9 @@ func errorToZAP(err error) zapwire.Error {
 	switch {
 	case err == nil:
 		return zapwire.ErrorUnspecified
-	case err == database.ErrClosed:
+	case errors.Is(err, database.ErrClosed):
 		return zapwire.ErrorClosed
-	case err == database.ErrNotFound:
+	case errors.Is(err, database.ErrNotFound):
 		return zapwire.ErrorNotFound
 	case errors.Is(err, block.ErrStateSyncableVMNotImplemented):
 		// A VM can carry the state-sync methods and still decline one of them.
