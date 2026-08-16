@@ -8,6 +8,7 @@ package rpc
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -371,7 +372,7 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 	}
 
 	// Get the last accepted block details for the response
-	lastBlock, err := s.vm.GetBlock(ctx, lastAccepted)
+	lastBlock, err := answered(s.vm.GetBlock(ctx, lastAccepted))
 	if err != nil {
 		return zapwire.MsgInitialize, nil, fmt.Errorf("get last accepted block: %w", err)
 	}
@@ -526,63 +527,20 @@ func (s *zapVMServer) handleBuildBlock(ctx context.Context) (zapwire.MessageType
 	s.pendingBlockLock.Lock()
 	defer s.pendingBlockLock.Unlock()
 
-	// Return cached block if one is already pending consensus vote.
-	// This prevents rebuilding with a new timestamp which would change
-	// the block ID and invalidate in-flight votes.
+	// A block already awaiting a vote is returned as-is. Rebuilding would take
+	// a fresh timestamp, change the ID, and strand the votes already in flight.
 	if s.pendingBlock != nil {
-		blk := s.pendingBlock
-		blkID := blk.ID()
-		parentID := blk.Parent()
-		resp := &zapwire.BlockResponse{
-			ID:        blkID[:],
-			ParentID:  parentID[:],
-			Bytes:     blk.Bytes(),
-			Height:    blk.Height(),
-			Timestamp: blk.Timestamp().UnixNano(),
-			Err:       zapwire.ErrorUnspecified,
-		}
-		buf := zapwire.GetBuffer()
-		resp.Encode(buf)
-		result := make([]byte, len(buf.Bytes()))
-		copy(result, buf.Bytes())
-		zapwire.PutBuffer(buf)
-		return zapwire.MsgBuildBlock, result, nil
+		resp := describe(s.pendingBlock, nil)
+		return send(zapwire.MsgBuildBlock, &resp)
 	}
 
 	blk, err := s.vm.BuildBlock(ctx)
-	if err != nil {
-		resp := &zapwire.BlockResponse{
-			Err: errorToZAP(err),
-		}
-		buf := zapwire.GetBuffer()
-		resp.Encode(buf)
-		result := make([]byte, len(buf.Bytes()))
-		copy(result, buf.Bytes())
-		zapwire.PutBuffer(buf)
-		return zapwire.MsgBuildBlock, result, nil
+	resp := describe(blk, err)
+	if resp.Err == zapwire.ErrorUnspecified {
+		// Only a block worth answering with is worth remembering.
+		s.pendingBlock = blk
 	}
-
-	// Cache the block so subsequent calls return the same block ID.
-	s.pendingBlock = blk
-
-	blkID := blk.ID()
-	parentID := blk.Parent()
-	resp := &zapwire.BlockResponse{
-		ID:        blkID[:],
-		ParentID:  parentID[:],
-		Bytes:     blk.Bytes(),
-		Height:    blk.Height(),
-		Timestamp: blk.Timestamp().UnixNano(),
-		Err:       zapwire.ErrorUnspecified,
-	}
-
-	buf := zapwire.GetBuffer()
-	resp.Encode(buf)
-	result := make([]byte, len(buf.Bytes()))
-	copy(result, buf.Bytes())
-	zapwire.PutBuffer(buf)
-
-	return zapwire.MsgBuildBlock, result, nil
+	return send(zapwire.MsgBuildBlock, &resp)
 }
 
 func (s *zapVMServer) handleParseBlock(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
@@ -592,36 +550,8 @@ func (s *zapVMServer) handleParseBlock(ctx context.Context, payload []byte) (zap
 	}
 
 	blk, err := s.vm.ParseBlock(ctx, req.Bytes)
-	if err != nil {
-		resp := &zapwire.BlockResponse{
-			Err: errorToZAP(err),
-		}
-		buf := zapwire.GetBuffer()
-		resp.Encode(buf)
-		result := make([]byte, len(buf.Bytes()))
-		copy(result, buf.Bytes())
-		zapwire.PutBuffer(buf)
-		return zapwire.MsgParseBlock, result, nil
-	}
-
-	blkID := blk.ID()
-	parentID := blk.Parent()
-	resp := &zapwire.BlockResponse{
-		ID:        blkID[:],
-		ParentID:  parentID[:],
-		Bytes:     blk.Bytes(),
-		Height:    blk.Height(),
-		Timestamp: blk.Timestamp().UnixNano(),
-		Err:       zapwire.ErrorUnspecified,
-	}
-
-	buf := zapwire.GetBuffer()
-	resp.Encode(buf)
-	result := make([]byte, len(buf.Bytes()))
-	copy(result, buf.Bytes())
-	zapwire.PutBuffer(buf)
-
-	return zapwire.MsgParseBlock, result, nil
+	resp := describe(blk, err)
+	return send(zapwire.MsgParseBlock, &resp)
 }
 
 func (s *zapVMServer) handleGetBlock(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
@@ -636,36 +566,8 @@ func (s *zapVMServer) handleGetBlock(ctx context.Context, payload []byte) (zapwi
 	}
 
 	blk, err := s.vm.GetBlock(ctx, blkID)
-	if err != nil {
-		resp := &zapwire.BlockResponse{
-			Err: errorToZAP(err),
-		}
-		buf := zapwire.GetBuffer()
-		resp.Encode(buf)
-		result := make([]byte, len(buf.Bytes()))
-		copy(result, buf.Bytes())
-		zapwire.PutBuffer(buf)
-		return zapwire.MsgGetBlock, result, nil
-	}
-
-	retrievedBlkID := blk.ID()
-	parentID := blk.Parent()
-	resp := &zapwire.BlockResponse{
-		ID:        retrievedBlkID[:],
-		ParentID:  parentID[:],
-		Bytes:     blk.Bytes(),
-		Height:    blk.Height(),
-		Timestamp: blk.Timestamp().UnixNano(),
-		Err:       zapwire.ErrorUnspecified,
-	}
-
-	buf := zapwire.GetBuffer()
-	resp.Encode(buf)
-	result := make([]byte, len(buf.Bytes()))
-	copy(result, buf.Bytes())
-	zapwire.PutBuffer(buf)
-
-	return zapwire.MsgGetBlock, result, nil
+	resp := describe(blk, err)
+	return send(zapwire.MsgGetBlock, &resp)
 }
 
 func (s *zapVMServer) handleSetPreference(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
@@ -689,7 +591,7 @@ func (s *zapVMServer) handleBlockVerify(ctx context.Context, payload []byte) (za
 		return zapwire.MsgBlockVerify, nil, err
 	}
 
-	blk, err := s.vm.ParseBlock(ctx, req.Bytes)
+	blk, err := answered(s.vm.ParseBlock(ctx, req.Bytes))
 	if err != nil {
 		return zapwire.MsgBlockVerify, nil, err
 	}
@@ -709,7 +611,7 @@ func (s *zapVMServer) handleBlockAccept(ctx context.Context, payload []byte) (za
 		return zapwire.MsgBlockAccept, nil, err
 	}
 
-	blk, err := s.vm.GetBlock(ctx, blkID)
+	blk, err := answered(s.vm.GetBlock(ctx, blkID))
 	if err != nil {
 		return zapwire.MsgBlockAccept, nil, err
 	}
@@ -735,7 +637,7 @@ func (s *zapVMServer) handleBlockReject(ctx context.Context, payload []byte) (za
 		return zapwire.MsgBlockReject, nil, err
 	}
 
-	blk, err := s.vm.GetBlock(ctx, blkID)
+	blk, err := answered(s.vm.GetBlock(ctx, blkID))
 	if err != nil {
 		return zapwire.MsgBlockReject, nil, err
 	}
@@ -803,24 +705,7 @@ func (s *zapVMServer) handleBatchedParseBlock(ctx context.Context, payload []byt
 	}
 
 	for i, blockBytes := range req.Requests {
-		blk, err := s.vm.ParseBlock(ctx, blockBytes)
-		if err != nil {
-			resp.Responses[i] = zapwire.BlockResponse{
-				Err: errorToZAP(err),
-			}
-			continue
-		}
-
-		blkID := blk.ID()
-		parentID := blk.Parent()
-		resp.Responses[i] = zapwire.BlockResponse{
-			ID:        blkID[:],
-			ParentID:  parentID[:],
-			Bytes:     blk.Bytes(),
-			Height:    blk.Height(),
-			Timestamp: blk.Timestamp().UnixNano(),
-			Err:       zapwire.ErrorUnspecified,
-		}
+		resp.Responses[i] = describe(s.vm.ParseBlock(ctx, blockBytes))
 	}
 
 	buf := zapwire.GetBuffer()
@@ -850,7 +735,7 @@ func (s *zapVMServer) handleGetAncestors(ctx context.Context, payload []byte) (z
 	currentID := blkID
 
 	for i := int32(0); i < req.MaxBlocksNum; i++ {
-		blk, err := s.vm.GetBlock(ctx, currentID)
+		blk, err := answered(s.vm.GetBlock(ctx, currentID))
 		if err != nil {
 			break
 		}
@@ -981,14 +866,61 @@ func (s *zapVMServer) handleQuasarHeight(ctx context.Context) (zapwire.MessageTy
 }
 
 func errorToZAP(err error) zapwire.Error {
-	if err == nil {
+	switch {
+	case err == nil:
 		return zapwire.ErrorUnspecified
-	}
-	if err == database.ErrClosed {
+	case err == database.ErrClosed:
 		return zapwire.ErrorClosed
-	}
-	if err == database.ErrNotFound {
+	case err == database.ErrNotFound:
 		return zapwire.ErrorNotFound
+	default:
+		return zapwire.ErrorInternal
 	}
-	return zapwire.ErrorUnspecified
+}
+
+// errNoBlock reports a VM that returned neither a block nor a reason. A
+// plugin's return value is input, and input gets checked: the server answers
+// for it instead of dereferencing the nil.
+var errNoBlock = errors.New("vm returned no block")
+
+// answered holds the VM to its contract: a nil block and a nil error is not an
+// answer. Wraps every call that returns a block, so no handler reaches a
+// dereference on the strength of the error alone.
+func answered(blk chain.Block, err error) (chain.Block, error) {
+	if err == nil && blk == nil {
+		return nil, errNoBlock
+	}
+	return blk, err
+}
+
+// describe turns the result of a block-returning call into the reply value.
+// Every path that answers with a block comes through here, so the empty answer
+// is handled once rather than at each site that has to remember to.
+func describe(blk chain.Block, err error) zapwire.BlockResponse {
+	blk, err = answered(blk, err)
+	if err != nil {
+		return zapwire.BlockResponse{Err: errorToZAP(err)}
+	}
+	id, parent := blk.ID(), blk.Parent()
+	return zapwire.BlockResponse{
+		ID:        id[:],
+		ParentID:  parent[:],
+		Bytes:     blk.Bytes(),
+		Height:    blk.Height(),
+		Timestamp: blk.Timestamp().UnixNano(),
+		Err:       zapwire.ErrorUnspecified,
+	}
+}
+
+// encoder is what every ZAP reply value can do.
+type encoder interface{ Encode(*zapwire.Buffer) }
+
+// send writes one reply onto the wire and hands back an owned copy of it.
+func send(op zapwire.MessageType, resp encoder) (zapwire.MessageType, []byte, error) {
+	buf := zapwire.GetBuffer()
+	resp.Encode(buf)
+	out := make([]byte, len(buf.Bytes()))
+	copy(out, buf.Bytes())
+	zapwire.PutBuffer(buf)
+	return op, out, nil
 }

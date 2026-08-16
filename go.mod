@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/rpc v1.2.1
 	github.com/holiman/uint256 v1.3.2
-	github.com/luxfi/api v1.1.3
+	github.com/luxfi/api v1.1.4
 	github.com/luxfi/atomic v1.0.0
 	github.com/luxfi/cache v1.3.1
 	github.com/luxfi/consensus v1.36.2
