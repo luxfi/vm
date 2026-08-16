@@ -6,6 +6,7 @@ package rpc
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 
 	zapwire "github.com/luxfi/api/zap"
@@ -429,5 +430,106 @@ func TestTheAdvertisedBitMatchesWhatIsServed(t *testing.T) {
 	}
 	if resp.Err != zapwire.ErrorStateSyncNotImplemented {
 		t.Fatalf("Err = %v, want ErrorStateSyncNotImplemented — the bit and the handler disagree", resp.Err)
+	}
+}
+
+// A summary is accepted once however many callers name it. Accept starts a sync
+// that discards the chain below the summary's height; running it twice starts
+// that work twice, and the second caller believes it began a sync the VM had
+// already begun.
+func TestASummaryIsAcceptedOnce(t *testing.T) {
+	var mu sync.Mutex
+	accepts := 0
+	entered, release := make(chan struct{}), make(chan struct{})
+	summary := &blocktest.StateSummary{
+		IDV: ids.GenerateTestID(), HeightV: 7, BytesV: []byte("state at 7"),
+		AcceptF: func(context.Context) (chain.StateSyncMode, error) {
+			mu.Lock()
+			accepts++
+			first := accepts == 1
+			mu.Unlock()
+			if first {
+				// Hold the window open. A second caller now does its lookup while
+				// this sync is already running, which is the state a claim that
+				// leaves the entry behind cannot distinguish from the first.
+				close(entered)
+				<-release
+			}
+			return chain.StateSyncStatic, nil
+		},
+	}
+	vm := &syncableVM{}
+	vm.GetLastStateSummaryF = func(context.Context) (chain.StateSummary, error) { return summary, nil }
+	s := newSyncServer(t, vm)
+
+	if _, _, err := s.handleGetLastStateSummary(context.Background()); err != nil {
+		t.Fatalf("produce: %v", err)
+	}
+	id := summary.IDV
+	req := encode(&zapwire.StateSummaryAcceptRequest{ID: id[:]})
+
+	accept := func() zapwire.Error {
+		_, payload, err := s.handleStateSummaryAccept(context.Background(), req)
+		if err != nil {
+			t.Errorf("accept: %v", err)
+			return zapwire.ErrorInternal
+		}
+		resp := zapwire.StateSummaryAcceptResponse{}
+		if err := resp.Decode(zapwire.NewReader(payload)); err != nil {
+			t.Errorf("decode: %v", err)
+			return zapwire.ErrorInternal
+		}
+		return resp.Err
+	}
+
+	firstErr := make(chan zapwire.Error, 1)
+	go func() { firstErr <- accept() }()
+	<-entered
+
+	second := accept()
+	close(release)
+
+	if got := <-firstErr; got != zapwire.ErrorUnspecified {
+		t.Fatalf("the first caller was refused: %v", got)
+	}
+	if second != zapwire.ErrorNotFound {
+		t.Fatalf("a second accept during the first got %v, want ErrorNotFound", second)
+	}
+	mu.Lock()
+	got := accepts
+	mu.Unlock()
+	if got != 1 {
+		t.Fatalf("the VM accepted the same summary %d times", got)
+	}
+}
+
+// A failed accept reports the reason. Answering ErrorUnspecified would hand the
+// caller mode zero — skipped — under the name of a decision the VM never made.
+func TestAFailedAcceptIsNotReportedAsSuccess(t *testing.T) {
+	boom := errors.New("the trie is unreachable")
+	summary := &blocktest.StateSummary{
+		IDV: ids.GenerateTestID(), HeightV: 3, BytesV: []byte("state at 3"),
+		AcceptF: func(context.Context) (chain.StateSyncMode, error) {
+			return chain.StateSyncSkipped, boom
+		},
+	}
+	vm := &syncableVM{}
+	vm.GetLastStateSummaryF = func(context.Context) (chain.StateSummary, error) { return summary, nil }
+	s := newSyncServer(t, vm)
+
+	if _, _, err := s.handleGetLastStateSummary(context.Background()); err != nil {
+		t.Fatalf("produce: %v", err)
+	}
+	id := summary.IDV
+	_, payload, err := s.handleStateSummaryAccept(context.Background(), encode(&zapwire.StateSummaryAcceptRequest{ID: id[:]}))
+	if err != nil {
+		t.Fatalf("accept: %v", err)
+	}
+	resp := zapwire.StateSummaryAcceptResponse{}
+	if err := resp.Decode(zapwire.NewReader(payload)); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Err != zapwire.ErrorInternal {
+		t.Fatalf("Err = %v, want ErrorInternal — a failed accept must not carry the success code", resp.Err)
 	}
 }
