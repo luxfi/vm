@@ -14,10 +14,10 @@ import (
 
 // Client is a plugin-side validators.State backed by the node's handle.
 //
-// It implements the FULL interface rather than only the method M-Chain happens
-// to call. A partial implementation would compile — the missing methods would
-// panic or return zero — and a zero validator set is not a smaller answer, it is
-// a different quorum. Every method therefore either answers or errors.
+// It implements the FULL interface, not only the method M-Chain happens to call.
+// A partial implementation would compile and the missing methods would return
+// zero — and a zero validator set is not a smaller answer to the same question,
+// it is a different quorum.
 type Client struct {
 	conn *zapwire.Conn
 }
@@ -26,10 +26,9 @@ var _ validators.State = (*Client)(nil)
 
 // Dial connects to a node-hosted validator server.
 //
-// A caller holding an empty addr must NOT call this. An absent address means the
-// node wired no validator state for the chain, and the plugin must leave
-// Runtime.ValidatorState nil so a committee lookup fails loudly rather than
-// succeeding over an empty set.
+// An empty addr means the node wired no validator state for the chain, so this
+// refuses rather than returning a client that would answer every query with an
+// empty set.
 func Dial(ctx context.Context, addr string) (*Client, error) {
 	if addr == "" {
 		return nil, ErrNoValidatorState
@@ -37,8 +36,8 @@ func Dial(ctx context.Context, addr string) (*Client, error) {
 	cfg := zapwire.DefaultConfig()
 	// A validator-set read sits on the ceremony path, which is slow by nature —
 	// a DKG round waits on peers. A read deadline expiring mid-call would surface
-	// as a transport error whose timing differs per node, i.e. a ceremony that
-	// fails on some validators and not others for no reason in the protocol.
+	// as a transport error whose timing differs per node: a ceremony failing on
+	// some validators and not others for no reason in the protocol.
 	cfg.ReadTimeout = 0
 	conn, err := zapwire.Dial(ctx, addr, cfg)
 	if err != nil {
@@ -54,99 +53,93 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-func (c *Client) call(ctx context.Context, enc func(*zapwire.Buffer)) ([]byte, error) {
-	const msgType = zapwire.MsgValidatorState
+// ask sends one query and returns a scan over the reply. Every method below is
+// then its arguments and its result shape, with no transport in between.
+func (c *Client) ask(ctx context.Context, m method, args func(*zapwire.Buffer)) (*scan, error) {
 	if c == nil || c.conn == nil {
 		return nil, ErrNoValidatorState
 	}
 	buf := zapwire.GetBuffer()
 	defer zapwire.PutBuffer(buf)
-	enc(buf)
+	buf.WriteUint8(uint8(m))
+	if args != nil {
+		args(buf)
+	}
 
-	respType, respData, err := c.conn.Call(ctx, msgType, buf.Bytes())
+	respType, respData, err := c.conn.Call(ctx, zapwire.MsgValidatorState, buf.Bytes())
 	if err != nil {
 		return nil, err
 	}
-	if respType&^(zapwire.MsgResponseFlag|zapwire.MsgErrorFlag) != msgType {
-		return nil, fmt.Errorf("validatorzap: unexpected response type %d for request %d", respType, msgType)
+	if respType&^(zapwire.MsgResponseFlag|zapwire.MsgErrorFlag) != zapwire.MsgValidatorState {
+		return nil, fmt.Errorf("validatorzap: unexpected response type %d", respType)
 	}
-	return respData, nil
+	return newScan(respData), nil
 }
 
-func (c *Client) getSet(ctx context.Context, m method, height uint64, netID ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
-	data, err := c.call(ctx, func(buf *zapwire.Buffer) {
-		buf.WriteUint8(uint8(m))
+func heightAndNet(height uint64, netID ids.ID) func(*zapwire.Buffer) {
+	return func(buf *zapwire.Buffer) {
 		buf.WriteUint64(height)
 		buf.WriteBytes(netID[:])
-	})
+	}
+}
+
+func (c *Client) set(ctx context.Context, m method, height uint64, netID ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
+	s, err := c.ask(ctx, m, heightAndNet(height, netID))
 	if err != nil {
 		return nil, err
 	}
-	return readValidators(zapwire.NewReader(data))
+	out := s.validatorSet()
+	return out, s.err
 }
 
 func (c *Client) GetValidatorSet(ctx context.Context, height uint64, netID ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
-	return c.getSet(ctx, mValidatorSet, height, netID)
+	return c.set(ctx, mValidatorSet, height, netID)
 }
 
 func (c *Client) GetCurrentValidators(ctx context.Context, height uint64, netID ids.ID) (map[ids.NodeID]*validators.GetValidatorOutput, error) {
-	return c.getSet(ctx, mCurrentValidators, height, netID)
+	return c.set(ctx, mCurrentValidators, height, netID)
 }
 
-func (c *Client) getHeight(ctx context.Context, m method) (uint64, error) {
-	data, err := c.call(ctx, func(buf *zapwire.Buffer) { buf.WriteUint8(uint8(m)) })
+func (c *Client) height(ctx context.Context, m method) (uint64, error) {
+	s, err := c.ask(ctx, m, nil)
 	if err != nil {
 		return 0, err
 	}
-	return zapwire.NewReader(data).ReadUint64()
+	v := s.u64()
+	return v, s.err
 }
 
 func (c *Client) GetCurrentHeight(ctx context.Context) (uint64, error) {
-	return c.getHeight(ctx, mCurrentHeight)
+	return c.height(ctx, mCurrentHeight)
 }
 
 func (c *Client) GetMinimumHeight(ctx context.Context) (uint64, error) {
-	return c.getHeight(ctx, mMinimumHeight)
+	return c.height(ctx, mMinimumHeight)
 }
 
-func (c *Client) getID(m method, in ids.ID) (ids.ID, error) {
-	data, err := c.call(context.Background(), func(buf *zapwire.Buffer) {
-		buf.WriteUint8(uint8(m))
-		buf.WriteBytes(in[:])
-	})
+func (c *Client) lookup(m method, in ids.ID) (ids.ID, error) {
+	s, err := c.ask(context.Background(), m, func(buf *zapwire.Buffer) { buf.WriteBytes(in[:]) })
 	if err != nil {
 		return ids.Empty, err
 	}
-	raw, err := zapwire.NewReader(data).ReadBytes()
-	if err != nil {
-		return ids.Empty, err
-	}
-	return ids.ToID(raw)
+	v := s.id()
+	return v, s.err
 }
 
-func (c *Client) GetChainID(netID ids.ID) (ids.ID, error) {
-	return c.getID(mChainID, netID)
-}
-
-func (c *Client) GetNetworkID(chainID ids.ID) (ids.ID, error) {
-	return c.getID(mNetworkID, chainID)
-}
+func (c *Client) GetChainID(netID ids.ID) (ids.ID, error)   { return c.lookup(mChainID, netID) }
+func (c *Client) GetNetworkID(chainID ids.ID) (ids.ID, error) { return c.lookup(mNetworkID, chainID) }
 
 func (c *Client) GetWarpValidatorSet(ctx context.Context, height uint64, netID ids.ID) (*validators.WarpSet, error) {
-	data, err := c.call(ctx, func(buf *zapwire.Buffer) {
-		buf.WriteUint8(uint8(mWarpSet))
-		buf.WriteUint64(height)
-		buf.WriteBytes(netID[:])
-	})
+	s, err := c.ask(ctx, mWarpSet, heightAndNet(height, netID))
 	if err != nil {
 		return nil, err
 	}
-	return readWarpSet(zapwire.NewReader(data))
+	ws := s.warpSet()
+	return ws, s.err
 }
 
 func (c *Client) GetWarpValidatorSets(ctx context.Context, heights []uint64, netIDs []ids.ID) (map[ids.ID]map[uint64]*validators.WarpSet, error) {
-	data, err := c.call(ctx, func(buf *zapwire.Buffer) {
-		buf.WriteUint8(uint8(mWarpSets))
+	s, err := c.ask(ctx, mWarpSets, func(buf *zapwire.Buffer) {
 		buf.WriteUint32(uint32(len(heights)))
 		for _, h := range heights {
 			buf.WriteUint64(h)
@@ -160,38 +153,6 @@ func (c *Client) GetWarpValidatorSets(ctx context.Context, heights []uint64, net
 	if err != nil {
 		return nil, err
 	}
-	r := zapwire.NewReader(data)
-	n, err := r.ReadUint32()
-	if err != nil {
-		return nil, err
-	}
-	out := make(map[ids.ID]map[uint64]*validators.WarpSet, n)
-	for i := uint32(0); i < n; i++ {
-		raw, err := r.ReadBytes()
-		if err != nil {
-			return nil, err
-		}
-		netID, err := ids.ToID(raw)
-		if err != nil {
-			return nil, err
-		}
-		m, err := r.ReadUint32()
-		if err != nil {
-			return nil, err
-		}
-		byHeight := make(map[uint64]*validators.WarpSet, m)
-		for j := uint32(0); j < m; j++ {
-			height, err := r.ReadUint64()
-			if err != nil {
-				return nil, err
-			}
-			ws, err := readWarpSet(r)
-			if err != nil {
-				return nil, err
-			}
-			byHeight[height] = ws
-		}
-		out[netID] = byHeight
-	}
-	return out, nil
+	out := s.warpSets()
+	return out, s.err
 }
