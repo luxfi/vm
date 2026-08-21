@@ -117,6 +117,23 @@ Message types (zapwire.Msg*):
 - MsgVersion, MsgHealth, etc.
 ```
 
+### State sync
+
+Six messages carry `chain.StateSyncableVM` across the boundary:
+`MsgStateSyncEnabled`, `MsgGetOngoingSyncStateSummary`, `MsgGetLastStateSummary`,
+`MsgParseStateSummary`, `MsgGetStateSummary`, `MsgStateSummaryAccept`.
+
+`newZAPVMServer` probes the wrapped VM for the surface once, the same way it
+probes for Quasar export. A VM without it answers `ErrorStateSyncNotImplemented`
+on all six, so a node knows to bootstrap that chain block by block.
+
+Accept is the asymmetric one. A summary is an object on the plugin side and only
+its id crosses, so the server records every summary it hands out and resolves
+`MsgStateSummaryAccept` against that map. An id the server never produced is
+refused — rebuilding one from caller-supplied bytes would accept a state the
+network never ratified. The map is cleared on a successful accept (the sync that
+starts supersedes every other candidate) and capped at `maxSummaries`.
+
 ### Key Types
 
 ```go
@@ -125,9 +142,11 @@ zapwire.StateStateSyncing
 zapwire.StateBootstrapping
 zapwire.StateNormalOp
 
-// Error constants
-zapwire.ErrorClosed    → database.ErrClosed
-zapwire.ErrorNotFound  → database.ErrNotFound
+// Error constants — ErrorUnspecified is SUCCESS, never a failure's fallback
+zapwire.ErrorClosed                  → database.ErrClosed
+zapwire.ErrorNotFound                → database.ErrNotFound
+zapwire.ErrorStateSyncNotImplemented → block.ErrStateSyncableVMNotImplemented
+zapwire.ErrorInternal                → anything else
 ```
 
 ## Integration with Lux Ecosystem
