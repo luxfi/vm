@@ -18,6 +18,7 @@ import (
 	"sync"
 
 	zapwire "github.com/luxfi/api/zap"
+	"github.com/luxfi/vm/validatorzap"
 	"github.com/luxfi/consensus/engine/chain/block"
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/prefixdb"
@@ -370,6 +371,23 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 		return zapwire.MsgInitialize, nil, derr
 	}
 	rt.BCLookup = newStaticBCLookup(cChainID, xChainID, dChainID)
+
+	// VALIDATOR STATE, same seam and same reasoning as SharedMemory above. An
+	// interface over live node-owned state cannot be copied into the literal, so
+	// the node binds a server over its handle and names it here.
+	//
+	// An empty addr means the node wired no validator state for this chain.
+	// Leave the handle nil: a committee lookup then fails with "no validator
+	// committee available" instead of succeeding over an empty set, and an empty
+	// validator set is a quorum of nobody.
+	if req.ValidatorServerAddr != "" {
+		vs, verr := validatorzap.Dial(ctx, req.ValidatorServerAddr)
+		if verr != nil {
+			return zapwire.MsgInitialize, nil, fmt.Errorf("initialize validator state: %w", verr)
+		}
+		rt.ValidatorState = vs
+		s.logger.Info("plugin dialed node validator state", "addr", req.ValidatorServerAddr)
+	}
 	if req.AtomicServerAddr != "" {
 		sm, aerr := atomiczap.Dial(ctx, req.AtomicServerAddr)
 		if aerr != nil {
