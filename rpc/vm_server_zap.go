@@ -8,14 +8,17 @@ package rpc
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"sync"
 
 	zapwire "github.com/luxfi/api/zap"
+	"github.com/luxfi/vm/validatorzap"
 	"github.com/luxfi/consensus/engine/chain/block"
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/prefixdb"
@@ -134,6 +137,21 @@ type zapVMServer struct {
 	// CapQuasarExport and refuses the Quasar messages, so the node stays Nova-only.
 	quasarVM quasarExporter
 
+	// syncVM is the wrapped VM viewed through chain.StateSyncableVM, or nil if
+	// the VM does not sync state. Resolved ONCE by probing vm at construction,
+	// then read by the six state-sync handlers. nil ⇒ each of them answers
+	// ErrorStateSyncNotImplemented, which is what tells the node to bootstrap
+	// this chain block by block instead of asking it for a summary frontier.
+	syncVM chain.StateSyncableVM
+
+	// summaries holds the state summaries this server has handed out, keyed by
+	// the id a caller names them by. A summary is an object that lives on this
+	// side; only its identity crosses, so Accept can be resolved against
+	// nothing else. An id absent here is refused rather than rebuilt from the
+	// caller's bytes — a rebuilt summary is not the one the network ratified.
+	summaries     map[ids.ID]chain.StateSummary
+	summariesLock sync.Mutex
+
 	// atomicSM is the connection to the node's per-chain atomic shared-memory
 	// server, opened at Initialize when the node offered one. Held so Shutdown
 	// closes it deterministically alongside the database. nil when the node
@@ -167,6 +185,7 @@ func newZAPVMServer(vm chain.ChainVM, logger log.Logger) *zapVMServer {
 		vm:            vm,
 		logger:        logger,
 		allowShutdown: &allowShutdown,
+		summaries:     make(map[ids.ID]chain.StateSummary),
 	}
 	// Probe the wrapped VM ONCE for the OPTIONAL Quasar export surface. A hit here
 	// is what turns CapQuasarExport from dead-on-arrival into a real capability: the
@@ -174,6 +193,13 @@ func newZAPVMServer(vm chain.ChainVM, logger log.Logger) *zapVMServer {
 	// VM. A miss leaves quasarVM nil → generic VM, no export surface.
 	if qvm, ok := vm.(quasarExporter); ok {
 		s.quasarVM = qvm
+	}
+	// Same probe for state sync, and once for the same reason: a VM's method set
+	// is fixed for its life. A hit puts the six state-sync messages through to
+	// the VM; a miss leaves syncVM nil and they all answer that this VM does not
+	// sync state.
+	if ssvm, ok := vm.(chain.StateSyncableVM); ok {
+		s.syncVM = ssvm
 	}
 	return s
 }
@@ -188,6 +214,13 @@ func (s *zapVMServer) capabilities() uint64 {
 	if s.quasarVM != nil {
 		caps |= zapwire.CapQuasarExport
 	}
+	// Both bits come from the same probes the handlers dispatch on, so what is
+	// advertised and what can be served cannot disagree. A server that announces
+	// a surface and then refuses it tells a node to stop looking elsewhere for
+	// something it will not get.
+	if s.syncVM != nil {
+		caps |= zapwire.CapStateSync
+	}
 	return caps
 }
 
@@ -195,7 +228,13 @@ func (s *zapVMServer) capabilities() uint64 {
 func (s *zapVMServer) Handle(ctx context.Context, msgType zapwire.MessageType, payload []byte) (retType zapwire.MessageType, retPayload []byte, retErr error) {
 	defer func() {
 		if r := recover(); r != nil {
-			s.logger.Error("panic in ZAP handler", "msgType", msgType, "panic", r)
+			// The stack, not just the value. A recovered panic reported as a value
+			// alone says only that something was nil somewhere behind a message
+			// type, which is a whole dispatch table's worth of places; the stack
+			// names the one. Recovering here keeps the plugin alive, and the cost
+			// of that is the diagnosis, unless it is carried out with the report.
+			s.logger.Error("panic in ZAP handler",
+				"msgType", msgType, "panic", r, "stack", string(debug.Stack()))
 			retType = msgType
 			retPayload = nil
 			retErr = fmt.Errorf("panic in handler: %v", r)
@@ -241,6 +280,18 @@ func (s *zapVMServer) Handle(ctx context.Context, msgType zapwire.MessageType, p
 		return s.handleDisconnected(ctx, payload)
 	case zapwire.MsgGetBlockIDAtHeight:
 		return s.handleGetBlockIDAtHeight(ctx, payload)
+	case zapwire.MsgStateSyncEnabled:
+		return s.handleStateSyncEnabled(ctx)
+	case zapwire.MsgGetOngoingSyncStateSummary:
+		return s.handleGetOngoingSyncStateSummary(ctx)
+	case zapwire.MsgGetLastStateSummary:
+		return s.handleGetLastStateSummary(ctx)
+	case zapwire.MsgParseStateSummary:
+		return s.handleParseStateSummary(ctx, payload)
+	case zapwire.MsgGetStateSummary:
+		return s.handleGetStateSummary(ctx, payload)
+	case zapwire.MsgStateSummaryAccept:
+		return s.handleStateSummaryAccept(ctx, payload)
 	case zapwire.MsgNewHTTPHandler:
 		return s.handleNewHTTPHandler(ctx)
 	case zapwire.MsgSetQuasarFinalized:
@@ -320,6 +371,23 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 		return zapwire.MsgInitialize, nil, derr
 	}
 	rt.BCLookup = newStaticBCLookup(cChainID, xChainID, dChainID)
+
+	// VALIDATOR STATE, same seam and same reasoning as SharedMemory above. An
+	// interface over live node-owned state cannot be copied into the literal, so
+	// the node binds a server over its handle and names it here.
+	//
+	// An empty addr means the node wired no validator state for this chain.
+	// Leave the handle nil: a committee lookup then fails with "no validator
+	// committee available" instead of succeeding over an empty set, and an empty
+	// validator set is a quorum of nobody.
+	if req.ValidatorServerAddr != "" {
+		vs, verr := validatorzap.Dial(ctx, req.ValidatorServerAddr)
+		if verr != nil {
+			return zapwire.MsgInitialize, nil, fmt.Errorf("initialize validator state: %w", verr)
+		}
+		rt.ValidatorState = vs
+		s.logger.Info("plugin dialed node validator state", "addr", req.ValidatorServerAddr)
+	}
 	if req.AtomicServerAddr != "" {
 		sm, aerr := atomiczap.Dial(ctx, req.AtomicServerAddr)
 		if aerr != nil {
@@ -371,7 +439,7 @@ func (s *zapVMServer) handleInitialize(ctx context.Context, payload []byte) (zap
 	}
 
 	// Get the last accepted block details for the response
-	lastBlock, err := s.vm.GetBlock(ctx, lastAccepted)
+	lastBlock, err := answered(s.vm.GetBlock(ctx, lastAccepted))
 	if err != nil {
 		return zapwire.MsgInitialize, nil, fmt.Errorf("get last accepted block: %w", err)
 	}
@@ -526,63 +594,20 @@ func (s *zapVMServer) handleBuildBlock(ctx context.Context) (zapwire.MessageType
 	s.pendingBlockLock.Lock()
 	defer s.pendingBlockLock.Unlock()
 
-	// Return cached block if one is already pending consensus vote.
-	// This prevents rebuilding with a new timestamp which would change
-	// the block ID and invalidate in-flight votes.
+	// A block already awaiting a vote is returned as-is. Rebuilding would take
+	// a fresh timestamp, change the ID, and strand the votes already in flight.
 	if s.pendingBlock != nil {
-		blk := s.pendingBlock
-		blkID := blk.ID()
-		parentID := blk.Parent()
-		resp := &zapwire.BlockResponse{
-			ID:        blkID[:],
-			ParentID:  parentID[:],
-			Bytes:     blk.Bytes(),
-			Height:    blk.Height(),
-			Timestamp: blk.Timestamp().UnixNano(),
-			Err:       zapwire.ErrorUnspecified,
-		}
-		buf := zapwire.GetBuffer()
-		resp.Encode(buf)
-		result := make([]byte, len(buf.Bytes()))
-		copy(result, buf.Bytes())
-		zapwire.PutBuffer(buf)
-		return zapwire.MsgBuildBlock, result, nil
+		resp := describe(s.pendingBlock, nil)
+		return send(zapwire.MsgBuildBlock, &resp)
 	}
 
 	blk, err := s.vm.BuildBlock(ctx)
-	if err != nil {
-		resp := &zapwire.BlockResponse{
-			Err: errorToZAP(err),
-		}
-		buf := zapwire.GetBuffer()
-		resp.Encode(buf)
-		result := make([]byte, len(buf.Bytes()))
-		copy(result, buf.Bytes())
-		zapwire.PutBuffer(buf)
-		return zapwire.MsgBuildBlock, result, nil
+	resp := describe(blk, err)
+	if resp.Err == zapwire.ErrorUnspecified {
+		// Only a block worth answering with is worth remembering.
+		s.pendingBlock = blk
 	}
-
-	// Cache the block so subsequent calls return the same block ID.
-	s.pendingBlock = blk
-
-	blkID := blk.ID()
-	parentID := blk.Parent()
-	resp := &zapwire.BlockResponse{
-		ID:        blkID[:],
-		ParentID:  parentID[:],
-		Bytes:     blk.Bytes(),
-		Height:    blk.Height(),
-		Timestamp: blk.Timestamp().UnixNano(),
-		Err:       zapwire.ErrorUnspecified,
-	}
-
-	buf := zapwire.GetBuffer()
-	resp.Encode(buf)
-	result := make([]byte, len(buf.Bytes()))
-	copy(result, buf.Bytes())
-	zapwire.PutBuffer(buf)
-
-	return zapwire.MsgBuildBlock, result, nil
+	return send(zapwire.MsgBuildBlock, &resp)
 }
 
 func (s *zapVMServer) handleParseBlock(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
@@ -592,36 +617,8 @@ func (s *zapVMServer) handleParseBlock(ctx context.Context, payload []byte) (zap
 	}
 
 	blk, err := s.vm.ParseBlock(ctx, req.Bytes)
-	if err != nil {
-		resp := &zapwire.BlockResponse{
-			Err: errorToZAP(err),
-		}
-		buf := zapwire.GetBuffer()
-		resp.Encode(buf)
-		result := make([]byte, len(buf.Bytes()))
-		copy(result, buf.Bytes())
-		zapwire.PutBuffer(buf)
-		return zapwire.MsgParseBlock, result, nil
-	}
-
-	blkID := blk.ID()
-	parentID := blk.Parent()
-	resp := &zapwire.BlockResponse{
-		ID:        blkID[:],
-		ParentID:  parentID[:],
-		Bytes:     blk.Bytes(),
-		Height:    blk.Height(),
-		Timestamp: blk.Timestamp().UnixNano(),
-		Err:       zapwire.ErrorUnspecified,
-	}
-
-	buf := zapwire.GetBuffer()
-	resp.Encode(buf)
-	result := make([]byte, len(buf.Bytes()))
-	copy(result, buf.Bytes())
-	zapwire.PutBuffer(buf)
-
-	return zapwire.MsgParseBlock, result, nil
+	resp := describe(blk, err)
+	return send(zapwire.MsgParseBlock, &resp)
 }
 
 func (s *zapVMServer) handleGetBlock(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
@@ -636,36 +633,8 @@ func (s *zapVMServer) handleGetBlock(ctx context.Context, payload []byte) (zapwi
 	}
 
 	blk, err := s.vm.GetBlock(ctx, blkID)
-	if err != nil {
-		resp := &zapwire.BlockResponse{
-			Err: errorToZAP(err),
-		}
-		buf := zapwire.GetBuffer()
-		resp.Encode(buf)
-		result := make([]byte, len(buf.Bytes()))
-		copy(result, buf.Bytes())
-		zapwire.PutBuffer(buf)
-		return zapwire.MsgGetBlock, result, nil
-	}
-
-	retrievedBlkID := blk.ID()
-	parentID := blk.Parent()
-	resp := &zapwire.BlockResponse{
-		ID:        retrievedBlkID[:],
-		ParentID:  parentID[:],
-		Bytes:     blk.Bytes(),
-		Height:    blk.Height(),
-		Timestamp: blk.Timestamp().UnixNano(),
-		Err:       zapwire.ErrorUnspecified,
-	}
-
-	buf := zapwire.GetBuffer()
-	resp.Encode(buf)
-	result := make([]byte, len(buf.Bytes()))
-	copy(result, buf.Bytes())
-	zapwire.PutBuffer(buf)
-
-	return zapwire.MsgGetBlock, result, nil
+	resp := describe(blk, err)
+	return send(zapwire.MsgGetBlock, &resp)
 }
 
 func (s *zapVMServer) handleSetPreference(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
@@ -689,7 +658,7 @@ func (s *zapVMServer) handleBlockVerify(ctx context.Context, payload []byte) (za
 		return zapwire.MsgBlockVerify, nil, err
 	}
 
-	blk, err := s.vm.ParseBlock(ctx, req.Bytes)
+	blk, err := answered(s.vm.ParseBlock(ctx, req.Bytes))
 	if err != nil {
 		return zapwire.MsgBlockVerify, nil, err
 	}
@@ -709,7 +678,7 @@ func (s *zapVMServer) handleBlockAccept(ctx context.Context, payload []byte) (za
 		return zapwire.MsgBlockAccept, nil, err
 	}
 
-	blk, err := s.vm.GetBlock(ctx, blkID)
+	blk, err := answered(s.vm.GetBlock(ctx, blkID))
 	if err != nil {
 		return zapwire.MsgBlockAccept, nil, err
 	}
@@ -735,7 +704,7 @@ func (s *zapVMServer) handleBlockReject(ctx context.Context, payload []byte) (za
 		return zapwire.MsgBlockReject, nil, err
 	}
 
-	blk, err := s.vm.GetBlock(ctx, blkID)
+	blk, err := answered(s.vm.GetBlock(ctx, blkID))
 	if err != nil {
 		return zapwire.MsgBlockReject, nil, err
 	}
@@ -803,24 +772,7 @@ func (s *zapVMServer) handleBatchedParseBlock(ctx context.Context, payload []byt
 	}
 
 	for i, blockBytes := range req.Requests {
-		blk, err := s.vm.ParseBlock(ctx, blockBytes)
-		if err != nil {
-			resp.Responses[i] = zapwire.BlockResponse{
-				Err: errorToZAP(err),
-			}
-			continue
-		}
-
-		blkID := blk.ID()
-		parentID := blk.Parent()
-		resp.Responses[i] = zapwire.BlockResponse{
-			ID:        blkID[:],
-			ParentID:  parentID[:],
-			Bytes:     blk.Bytes(),
-			Height:    blk.Height(),
-			Timestamp: blk.Timestamp().UnixNano(),
-			Err:       zapwire.ErrorUnspecified,
-		}
+		resp.Responses[i] = describe(s.vm.ParseBlock(ctx, blockBytes))
 	}
 
 	buf := zapwire.GetBuffer()
@@ -850,7 +802,7 @@ func (s *zapVMServer) handleGetAncestors(ctx context.Context, payload []byte) (z
 	currentID := blkID
 
 	for i := int32(0); i < req.MaxBlocksNum; i++ {
-		blk, err := s.vm.GetBlock(ctx, currentID)
+		blk, err := answered(s.vm.GetBlock(ctx, currentID))
 		if err != nil {
 			break
 		}
@@ -980,15 +932,237 @@ func (s *zapVMServer) handleQuasarHeight(ctx context.Context) (zapwire.MessageTy
 	return zapwire.MsgQuasarHeight, result, nil
 }
 
+// STATE SYNC. A syncing node asks the VM for the summaries it can start from,
+// picks one, and tells the VM to accept it. Five of the six messages are
+// questions the VM answers out of its own state; the sixth, Accept, is the
+// summary's own behaviour, and a summary is an object that never leaves this
+// process. Only its id crosses, so the server keeps what it handed out and
+// resolves the id against that.
+
+// handleStateSyncEnabled reports whether this VM syncs state and, if it does,
+// whether it is configured to.
+func (s *zapVMServer) handleStateSyncEnabled(ctx context.Context) (zapwire.MessageType, []byte, error) {
+	if s.syncVM == nil {
+		resp := zapwire.StateSyncEnabledResponse{Err: zapwire.ErrorStateSyncNotImplemented}
+		return send(zapwire.MsgStateSyncEnabled, &resp)
+	}
+	enabled, err := s.syncVM.StateSyncEnabled(ctx)
+	// A call that failed has no answer to carry, so it carries none.
+	resp := zapwire.StateSyncEnabledResponse{Enabled: enabled && err == nil, Err: errorToZAP(err)}
+	return send(zapwire.MsgStateSyncEnabled, &resp)
+}
+
+// handleGetOngoingSyncStateSummary returns the summary of a sync already in
+// progress, so a node that restarts mid-sync resumes it rather than starting over.
+func (s *zapVMServer) handleGetOngoingSyncStateSummary(ctx context.Context) (zapwire.MessageType, []byte, error) {
+	if s.syncVM == nil {
+		return notSyncable(zapwire.MsgGetOngoingSyncStateSummary)
+	}
+	resp := s.remember(s.syncVM.GetOngoingSyncStateSummary(ctx))
+	return send(zapwire.MsgGetOngoingSyncStateSummary, &resp)
+}
+
+// handleGetLastStateSummary returns the most recent summary this VM can serve
+// to a peer that wants to sync from it.
+func (s *zapVMServer) handleGetLastStateSummary(ctx context.Context) (zapwire.MessageType, []byte, error) {
+	if s.syncVM == nil {
+		return notSyncable(zapwire.MsgGetLastStateSummary)
+	}
+	resp := s.remember(s.syncVM.GetLastStateSummary(ctx))
+	return send(zapwire.MsgGetLastStateSummary, &resp)
+}
+
+// handleParseStateSummary reads a peer's summary bytes. The VM decides whether
+// they describe a summary at all; the server only carries the verdict.
+func (s *zapVMServer) handleParseStateSummary(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
+	if s.syncVM == nil {
+		return notSyncable(zapwire.MsgParseStateSummary)
+	}
+	req := &zapwire.ParseStateSummaryRequest{}
+	if err := req.Decode(zapwire.NewReader(payload)); err != nil {
+		return zapwire.MsgParseStateSummary, nil, err
+	}
+	resp := s.remember(s.syncVM.ParseStateSummary(ctx, req.Bytes))
+	return send(zapwire.MsgParseStateSummary, &resp)
+}
+
+// handleGetStateSummary returns the summary at the named height, if the VM
+// keeps one there.
+func (s *zapVMServer) handleGetStateSummary(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
+	if s.syncVM == nil {
+		return notSyncable(zapwire.MsgGetStateSummary)
+	}
+	req := &zapwire.GetStateSummaryRequest{}
+	if err := req.Decode(zapwire.NewReader(payload)); err != nil {
+		return zapwire.MsgGetStateSummary, nil, err
+	}
+	resp := s.remember(s.syncVM.GetStateSummary(ctx, req.Height))
+	return send(zapwire.MsgGetStateSummary, &resp)
+}
+
+// handleStateSummaryAccept starts the sync the named summary describes.
+//
+// The name is an id, and it is resolved against the summaries this server
+// produced. An id that resolves to nothing is refused: the alternative is to
+// rebuild a summary from what the caller sends, which accepts a state the
+// network never ratified.
+func (s *zapVMServer) handleStateSummaryAccept(ctx context.Context, payload []byte) (zapwire.MessageType, []byte, error) {
+	if s.syncVM == nil {
+		resp := zapwire.StateSummaryAcceptResponse{Err: zapwire.ErrorStateSyncNotImplemented}
+		return send(zapwire.MsgStateSummaryAccept, &resp)
+	}
+	req := &zapwire.StateSummaryAcceptRequest{}
+	if err := req.Decode(zapwire.NewReader(payload)); err != nil {
+		return zapwire.MsgStateSummaryAccept, nil, err
+	}
+	id, err := ids.ToID(req.ID)
+	if err != nil {
+		return zapwire.MsgStateSummaryAccept, nil, err
+	}
+
+	// Claiming the summary and removing it are one step. Accept starts a sync
+	// that discards the local chain below the summary's height, so it must run
+	// once per summary however many callers name it: a lookup that leaves the
+	// entry behind lets a second Accept arrive while the first is still running
+	// and start the same destructive work twice.
+	//
+	// The lock covers the claim alone. Accept runs for as long as the VM needs
+	// to begin syncing, and every other handler would queue behind it.
+	s.summariesLock.Lock()
+	summary, known := s.summaries[id]
+	if known {
+		delete(s.summaries, id)
+	}
+	s.summariesLock.Unlock()
+	if !known {
+		resp := zapwire.StateSummaryAcceptResponse{Err: zapwire.ErrorNotFound}
+		return send(zapwire.MsgStateSummaryAccept, &resp)
+	}
+
+	mode, err := summary.Accept(ctx)
+	if err != nil {
+		// The reason, never the success code. Reporting a failed accept as
+		// ErrorUnspecified hands the caller mode zero — skipped — under the name
+		// of a decision the VM never made.
+		resp := zapwire.StateSummaryAcceptResponse{Err: errorToZAP(err)}
+		return send(zapwire.MsgStateSummaryAccept, &resp)
+	}
+
+	// This decision supersedes every other candidate, so none of them is worth
+	// remembering. The accepted one is already gone, claimed above.
+	s.summariesLock.Lock()
+	clear(s.summaries)
+	s.summariesLock.Unlock()
+
+	resp := zapwire.StateSummaryAcceptResponse{Mode: uint8(mode), Err: zapwire.ErrorUnspecified}
+	return send(zapwire.MsgStateSummaryAccept, &resp)
+}
+
+// maxSummaries caps the registry. A sync round offers one candidate per peer
+// answer and ends in an Accept, which clears it; this ceiling is far above any
+// such round and exists so a caller cannot make the map follow it forever by
+// naming new bytes.
+const maxSummaries = 1024
+
+// remember describes a summary for the wire and records it under its id, which
+// is the only part of it that crosses. Every answer that carries a summary comes
+// through here, so every summary a caller can name is one the server can find.
+func (s *zapVMServer) remember(summary chain.StateSummary, err error) zapwire.SummaryResponse {
+	summary, err = answered(summary, err)
+	if err != nil {
+		// Nothing was handed out, so there is nothing to record.
+		return zapwire.SummaryResponse{Err: errorToZAP(err)}
+	}
+	id := summary.ID()
+
+	s.summariesLock.Lock()
+	// A round that has offered this many candidates without accepting one is not
+	// going to accept an older one either. A candidate dropped here is refused
+	// at Accept exactly like an id the server never produced.
+	if len(s.summaries) >= maxSummaries {
+		clear(s.summaries)
+	}
+	s.summaries[id] = summary
+	s.summariesLock.Unlock()
+
+	return zapwire.SummaryResponse{
+		ID:     id[:],
+		Height: summary.Height(),
+		Bytes:  summary.Bytes(),
+		Err:    zapwire.ErrorUnspecified,
+	}
+}
+
+// notSyncable is the summary answer of a VM that does not sync state at all,
+// which is a different answer from a syncing VM with no summary to offer.
+func notSyncable(op zapwire.MessageType) (zapwire.MessageType, []byte, error) {
+	resp := zapwire.SummaryResponse{Err: zapwire.ErrorStateSyncNotImplemented}
+	return send(op, &resp)
+}
+
 func errorToZAP(err error) zapwire.Error {
-	if err == nil {
+	switch {
+	case err == nil:
 		return zapwire.ErrorUnspecified
-	}
-	if err == database.ErrClosed {
+	case errors.Is(err, database.ErrClosed):
 		return zapwire.ErrorClosed
-	}
-	if err == database.ErrNotFound {
+	case errors.Is(err, database.ErrNotFound):
 		return zapwire.ErrorNotFound
+	case errors.Is(err, block.ErrStateSyncableVMNotImplemented):
+		// A VM can carry the state-sync methods and still decline one of them.
+		// That is not "nothing at that height", and a caller acts on it
+		// differently: it stops asking.
+		return zapwire.ErrorStateSyncNotImplemented
+	default:
+		return zapwire.ErrorInternal
 	}
-	return zapwire.ErrorUnspecified
+}
+
+// errNoAnswer reports a VM that returned neither a value nor a reason. A
+// plugin's return value is input, and input gets checked: the server answers
+// for it instead of dereferencing the nil.
+var errNoAnswer = errors.New("vm returned nothing and gave no reason")
+
+// answered holds the VM to its contract: nothing returned, and nothing said
+// about why, is not an answer. Wraps every call that returns a block or a
+// summary, so no handler reaches a dereference on the strength of the error
+// alone.
+func answered[T comparable](v T, err error) (T, error) {
+	var none T
+	if err == nil && v == none {
+		return none, errNoAnswer
+	}
+	return v, err
+}
+
+// describe turns the result of a block-returning call into the reply value.
+// Every path that answers with a block comes through here, so the empty answer
+// is handled once rather than at each site that has to remember to.
+func describe(blk chain.Block, err error) zapwire.BlockResponse {
+	blk, err = answered(blk, err)
+	if err != nil {
+		return zapwire.BlockResponse{Err: errorToZAP(err)}
+	}
+	id, parent := blk.ID(), blk.Parent()
+	return zapwire.BlockResponse{
+		ID:        id[:],
+		ParentID:  parent[:],
+		Bytes:     blk.Bytes(),
+		Height:    blk.Height(),
+		Timestamp: blk.Timestamp().UnixNano(),
+		Err:       zapwire.ErrorUnspecified,
+	}
+}
+
+// encoder is what every ZAP reply value can do.
+type encoder interface{ Encode(*zapwire.Buffer) }
+
+// send writes one reply onto the wire and hands back an owned copy of it.
+func send(op zapwire.MessageType, resp encoder) (zapwire.MessageType, []byte, error) {
+	buf := zapwire.GetBuffer()
+	resp.Encode(buf)
+	out := make([]byte, len(buf.Bytes()))
+	copy(out, buf.Bytes())
+	zapwire.PutBuffer(buf)
+	return op, out, nil
 }
