@@ -158,3 +158,16 @@ This package is part of the Lux blockchain ecosystem:
 ---
 
 *Last updated: 2026-01-24*
+
+## Latch
+
+`Latch` is how a VM tells consensus there is work. Consensus calls
+`WaitForEvent` and builds nothing until it returns, so a VM that accepts work
+has to report it, and this is the one way to do that.
+
+`Signal()` says there is work and never blocks, so it is safe to call under a
+lock. `WaitForEvent(ctx)` blocks until there is work or the context ends, which
+is exactly what the ChainVM method of the same name owes consensus — a VM
+delegates to it. Signalling twice before the signal is taken is the same as
+signalling once: what a builder needs to know is that there is work, not how
+much. The zero value is ready to use.
