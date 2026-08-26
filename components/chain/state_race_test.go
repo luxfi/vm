@@ -3,15 +3,7 @@
 
 // state_race_test.go — the unsynchronised block-cache maps.
 //
-// THE INCIDENT (devnet luxd-1, 2026-07-28). The EVM plugin process died with:
-//
-//	fatal error: concurrent map read and map write
-//	github.com/luxfi/vm/components/chain.(*State).getCachedBlock  state.go:216
-//	github.com/luxfi/vm/components/chain.(*State).ParseBlock      state.go:267
-//	github.com/luxfi/evm/plugin/evm.(*VM).ParseBlock              vm.go:340
-//	github.com/luxfi/vm/rpc.(*zapVMServer).handleParseBlock       vm_server_zap.go:477
-//
-// State was written against avalanchego's contract that the consensus engine holds the chain
+// State was written against an upstream contract that the consensus engine holds the chain
 // lock across every VM call, so exactly one VM call runs at a time. The ZAP VM server does
 // NOT reinstate that contract — it dispatches ParseBlock/GetBlock and the
 // Verify/Accept/Reject wrappers concurrently. `verifiedBlocks` (a plain map) and
