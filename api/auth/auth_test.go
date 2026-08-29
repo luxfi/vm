@@ -272,7 +272,7 @@ func TestWrapHandlerAuthEndpoint(t *testing.T) {
 	require.NoError(err)
 
 	wrappedHandler := auth.WrapHandler(dummyHandler)
-	req := httptest.NewRequest(http.MethodPost, "http://127.0.0.1:9630/ext/auth", strings.NewReader(""))
+	req := httptest.NewRequest(http.MethodPost, "http://127.0.0.1:9630/v1/auth", strings.NewReader(""))
 	req.Header.Add("Authorization", headerValStart+tokenStr)
 	rr := httptest.NewRecorder()
 	wrappedHandler.ServeHTTP(rr, req)
