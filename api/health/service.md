@@ -23,7 +23,7 @@ To get an HTTP status code response that indicates the node's health, make a `GE
 To filter GET health checks, add a `tag` query parameter to the request. The `tag` parameter is a string. For example, to filter health results by subnetID `29uVeLPJB1eQJkzRemU8g8wZDw5uJRqpab5U2mX9euieVwiEbL`, use the following query:
 
 ```sh
-curl 'http://localhost:9630/v1/health?tag=29uVeLPJB1eQJkzRemU8g8wZDw5uJRqpab5U2mX9euieVwiEbL'
+curl 'http://localhost:9630/v1/health/ops/health?tag=29uVeLPJB1eQJkzRemU8g8wZDw5uJRqpab5U2mX9euieVwiEbL'
 ```
 
 In this example returned results will contain global health checks and health checks that are related to subnetID `29uVeLPJB1eQJkzRemU8g8wZDw5uJRqpab5U2mX9euieVwiEbL`.
@@ -33,7 +33,7 @@ In this example returned results will contain global health checks and health ch
 In order to filter results by multiple tags, use multiple `tag` query parameters. For example, to filter health results by subnetID `29uVeLPJB1eQJkzRemU8g8wZDw5uJRqpab5U2mX9euieVwiEbL` and `28nrH5T2BMvNrWecFcV3mfccjs6axM1TVyqe79MCv2Mhs8kxiY` use the following query:
 
 ```sh
-curl 'http://localhost:9630/v1/health?tag=29uVeLPJB1eQJkzRemU8g8wZDw5uJRqpab5U2mX9euieVwiEbL&tag=28nrH5T2BMvNrWecFcV3mfccjs6axM1TVyqe79MCv2Mhs8kxiY'
+curl 'http://localhost:9630/v1/health/ops/health?tag=29uVeLPJB1eQJkzRemU8g8wZDw5uJRqpab5U2mX9euieVwiEbL&tag=28nrH5T2BMvNrWecFcV3mfccjs6axM1TVyqe79MCv2Mhs8kxiY'
 ```
 
 The returned results will include health checks for both subnetIDs as well as global health checks.
@@ -42,10 +42,9 @@ The returned results will include health checks for both subnetIDs as well as gl
 
 The available endpoints for GET requests are:
 
-- `/v1/health` returns a holistic report of the status of the node. **Most operators should monitor this status.**
-- `/v1/health/health` is the same as `/v1/health`.
-- `/v1/health/readiness` returns healthy once the node has finished initializing.
-- `/v1/health/liveness` returns healthy once the endpoint is available.
+- `/v1/health/ops/health` returns a holistic report of the status of the node. **Most operators should monitor this status.**
+- `/v1/health/ops/readiness` returns healthy once the node has finished initializing.
+- `/v1/health/ops/liveness` returns healthy once the endpoint is available.
 
 ## JSON RPC Request
 
@@ -71,7 +70,7 @@ curl  -H 'Content-Type: application/json' --data '{
     "params": {
         "tags": ["11111111111111111111111111111111LpoYY", "29uVeLPJB1eQJkzRemU8g8wZDw5uJRqpab5U2mX9euieVwiEbL"]
     }
-}' 'http://localhost:9630/v1/health'
+}' 'http://localhost:9630/v1/health/ops/health'
 ```
 
 **Example Response**:
@@ -203,7 +202,7 @@ curl  -H 'Content-Type: application/json' --data '{
     "params": {
         "tags": ["11111111111111111111111111111111LpoYY", "29uVeLPJB1eQJkzRemU8g8wZDw5uJRqpab5U2mX9euieVwiEbL"]
     }
-}' 'http://localhost:9630/v1/health'
+}' 'http://localhost:9630/v1/health/ops/health'
 ```
 
 **Example Response**:
@@ -249,7 +248,7 @@ curl  -H 'Content-Type: application/json' --data '{
     "jsonrpc":"2.0",
     "id"     :1,
     "method" :"health.liveness"
-}' 'http://localhost:9630/v1/health'
+}' 'http://localhost:9630/v1/health/ops/health'
 ```
 
 **Example Response**:
