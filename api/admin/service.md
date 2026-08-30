@@ -56,7 +56,7 @@ curl -X POST --data '{
 }
 ```
 
-Now, calls to the X-Chain can be made to either `/v1/bc/X` or, equivalently, to `/v1/myAlias`.
+Now, calls to the X-Chain can be made to either `/v1/chain/X` or, equivalently, to `/v1/myAlias`.
 
 ### `admin.aliasChain`
 
@@ -106,7 +106,7 @@ curl -X POST --data '{
 }
 ```
 
-Now, instead of interacting with the blockchain whose ID is `sV6o671RtkGBcno1FiaDbVcFv2sG5aVXMZYzKdP4VQAWmJQnM` by making API calls to `/v1/bc/sV6o671RtkGBcno1FiaDbVcFv2sG5aVXMZYzKdP4VQAWmJQnM`, one can also make calls to `ext/bc/myBlockchainAlias`.
+Now, instead of interacting with the blockchain whose ID is `sV6o671RtkGBcno1FiaDbVcFv2sG5aVXMZYzKdP4VQAWmJQnM` by making API calls to `/v1/chain/sV6o671RtkGBcno1FiaDbVcFv2sG5aVXMZYzKdP4VQAWmJQnM`, one can also make calls to `ext/bc/myBlockchainAlias`.
 
 ### `admin.getChainAliases`
 
