@@ -168,3 +168,41 @@ func TestNotifierReSubscribeAtPrefChange(t *testing.T) {
 		require.FailNow(t, "Timed out waiting for notification forwarder to forward message")
 	}
 }
+
+// TestNotifierWithoutLoggerDoesNotPanic pins the forwarder to surviving an
+// unset Log.
+//
+// The constructor spawns the forwarding goroutine itself, so a caller cannot
+// set Log afterwards — passing nil is fatal at the instant of construction.
+// And forwardNotification logs before it does anything else, on a goroutine
+// whose panic no caller can recover, so the nil dereference takes the whole
+// process with it rather than failing one VM.
+func TestNotifierWithoutLoggerDoesNotPanic(t *testing.T) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	notifier := notifier(func(_ context.Context, msg Message) error {
+		defer wg.Done()
+		require.Equal(t, PendingTxs, msg)
+		return nil
+	})
+
+	c := make(chan Message)
+	subscriber := func(ctx context.Context) (Message, error) {
+		select {
+		case <-ctx.Done():
+			return 0, ctx.Err()
+		case msg := <-c:
+			return msg, nil
+		}
+	}
+
+	// No logger. The forwarder still forwards.
+	nf := NewNotificationForwarder(Notifier(notifier), subscriber, nil)
+	defer nf.Close()
+
+	c <- PendingTxs
+	wg.Wait()
+
+	require.NotNil(t, nf.Log, "an unset Log must be answered before the loop starts")
+}
