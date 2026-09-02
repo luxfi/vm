@@ -38,7 +38,10 @@ func Bootstrap(
 	switch {
 	case cmd == nil:
 		return nil, nil, fmt.Errorf("%w: cmd required", runtime.ErrInvalidConfig)
-	case config.Log.IsZero():
+	// Log is an interface, so an unset one has no dynamic type and IsZero()
+	// has nothing to call. Reading the nil first is what lets a missing logger
+	// be refused here rather than dereferenced here.
+	case config.Log == nil || config.Log.IsZero():
 		return nil, nil, fmt.Errorf("%w: logger required", runtime.ErrInvalidConfig)
 	case config.Stderr == nil, config.Stdout == nil:
 		return nil, nil, fmt.Errorf("%w: stderr and stdout required", runtime.ErrInvalidConfig)
