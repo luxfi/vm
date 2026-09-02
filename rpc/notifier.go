@@ -73,6 +73,16 @@ func NewNotificationForwarder(
 }
 
 func (nf *NotificationForwarder) start() {
+	// The loop below logs before it does anything else, and it runs on a
+	// goroutine whose panic no caller can recover. Log is exported and the
+	// constructor also takes one, so there are two ways to leave it unset;
+	// answering it here covers both, because this is the one place the loop
+	// begins. Noop discards what it is given, so a caller that wanted silence
+	// still gets it.
+	if nf.Log == nil {
+		nf.Log = log.Noop()
+	}
+
 	nf.executing.Add(1)
 	nf.execCtx, nf.haltExecution = context.WithCancel(context.Background())
 	go nf.run()
