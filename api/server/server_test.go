@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
+// Copyright (C) 2019-2025, Lux Industries Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
 package server
@@ -23,7 +23,7 @@ func TestRejectMiddleware(t *testing.T) {
 		w.WriteHeader(http.StatusTeapot)
 	})
 
-	// Create a consensus context
+	// Create a Runtime
 	rt := &runtime.Runtime{
 		NetworkID: 1,
 		ChainID:   ids.Empty,
@@ -31,8 +31,8 @@ func TestRejectMiddleware(t *testing.T) {
 		Log:       log.NoLog{},
 	}
 
-	// rejectMiddleware currently just returns the handler
-	// TODO: When state checking is implemented, add more comprehensive tests
+	// rejectMiddleware passes the handler through, so the wrapped handler's own
+	// status is what reaches the recorder.
 	middleware := rejectMiddleware(testHandler, rt)
 	w := httptest.NewRecorder()
 	middleware.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/", nil))

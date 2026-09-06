@@ -1,14 +1,14 @@
-// Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
+// Copyright (C) 2019-2025, Lux Industries Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
 package server
 
 import (
-	"encoding/json"
 	"net"
 	"net/http"
 	"strings"
 
+	"github.com/go-json-experiment/json"
 	"github.com/luxfi/math/set"
 )
 
@@ -76,7 +76,7 @@ func (a *allowedHostsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	// Return error as JSON
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusForbidden)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	_ = json.MarshalWrite(w, map[string]interface{}{
 		"jsonrpc": "2.0",
 		"error": map[string]interface{}{
 			"code":    -32001,
