@@ -23,7 +23,7 @@ import (
 	"github.com/luxfi/log"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/metric/profiler"
-	"github.com/luxfi/utils/json"
+	"github.com/luxfi/util/json"
 	"github.com/luxfi/vm/api"
 	"github.com/luxfi/vm/api/server"
 	"github.com/luxfi/vm/manager"

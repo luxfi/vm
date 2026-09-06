@@ -4,7 +4,6 @@ go 1.26.5
 
 require (
 	connectrpc.com/connect v1.19.1
-	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/rpc v1.2.1
 	github.com/holiman/uint256 v1.3.2
@@ -21,16 +20,14 @@ require (
 	github.com/luxfi/math v1.5.1
 	github.com/luxfi/metric v1.8.1
 	github.com/luxfi/mock v0.1.1
-	github.com/luxfi/password v0.0.1
 	github.com/luxfi/proto v1.4.2
 	github.com/luxfi/resource v0.1.1
 	github.com/luxfi/rpc v1.1.0
 	github.com/luxfi/runtime v1.3.1
-	github.com/luxfi/timer v1.1.1
 	github.com/luxfi/tls v1.1.1
 	github.com/luxfi/trace v1.2.1
 	github.com/luxfi/upgrade v1.0.3
-	github.com/luxfi/utils v1.3.1
+	github.com/luxfi/util v1.3.4
 	github.com/luxfi/utxo v0.5.8
 	github.com/luxfi/validators v1.3.1
 	github.com/luxfi/version v1.0.1
@@ -82,7 +79,6 @@ require (
 	github.com/fxamacker/cbor/v2 v2.9.1 // indirect
 	github.com/getsentry/sentry-go v0.44.1 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
-	github.com/go-json-experiment/json v0.0.0-20260820222146-c27c302e5fc3 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
@@ -118,6 +114,8 @@ require (
 	github.com/luxfi/pq v1.1.0 // indirect
 	github.com/luxfi/pulsar v1.9.2 // indirect
 	github.com/luxfi/threshold v1.12.3 // indirect
+	github.com/luxfi/timer v1.1.1 // indirect
+	github.com/luxfi/utils v1.3.1 // indirect
 	github.com/luxfi/zap v1.2.6 // indirect
 	github.com/luxfi/zapdb v1.10.6 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
@@ -125,7 +123,6 @@ require (
 	github.com/miekg/dns v1.1.72 // indirect
 	github.com/mimoo/StrobeGo v0.0.0-20220103164710-9a04d6ca976b // indirect
 	github.com/mr-tron/base58 v1.3.0 // indirect
-	github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
@@ -139,7 +136,6 @@ require (
 	github.com/tklauser/numcpus v0.12.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	github.com/zap-proto/go v1.8.2 // indirect
 	golang.org/x/crypto v0.52.0 // indirect
 	golang.org/x/mod v0.36.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect

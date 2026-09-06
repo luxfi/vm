@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/luxfi/ids"
-	"github.com/luxfi/utils/wrappers"
+	"github.com/luxfi/util/wrappers"
 )
 
 // Wire format

@@ -16,7 +16,7 @@ import (
 	"github.com/luxfi/database/prefixdb"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
-	"github.com/luxfi/utils/wrappers"
+	"github.com/luxfi/util/wrappers"
 	lux "github.com/luxfi/utxo"
 )
 
