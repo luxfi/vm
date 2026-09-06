@@ -1,10 +1,10 @@
 // Package utils provides compatibility with old import path.
-// Deprecated: Use github.com/luxfi/utils instead.
+// Deprecated: Use github.com/luxfi/util instead.
 package utils
 
-import "github.com/luxfi/utils"
+import "github.com/luxfi/util"
 
-// Re-export types and functions from github.com/luxfi/utils
+// Re-export types and functions from github.com/luxfi/util
 type (
 	Atomic[T any] = utils.Atomic[T]
 	BytesPool     = utils.BytesPool
