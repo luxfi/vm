@@ -1,39 +1,52 @@
-// Copyright (C) 2019-2025, Lux Industries, Inc. All rights reserved.
+// Copyright (C) 2019-2025, Lux Industries Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
 package server
 
 import (
-	"github.com/luxfi/metric"
-
 	"context"
 	"fmt"
 	"net"
 	"net/http"
-
-	// "net/url"   // Unused after handler registration moved to chain manager
-	// "path"      // Unused after handler registration moved to chain manager
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/rs/cors"
+	zaphttp "github.com/zap-proto/http"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+
+	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
+	log "github.com/luxfi/log"
+	"github.com/luxfi/metric"
 	"github.com/luxfi/runtime"
 	"github.com/luxfi/trace"
 	"github.com/luxfi/vm"
 	"github.com/luxfi/vm/api"
-	"github.com/rs/cors"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
-
-	// "github.com/luxfi/constants"  // Unused after handler registration moved
-	"github.com/luxfi/log"
 )
 
 const (
-	baseURL              = "/ext"
+	// baseURL is the canonical — and only — prefix for every luxd HTTP route
+	// (/v1/chain/C/rpc, /v1/info, /v1/health, ...). Single source of truth:
+	// AddRoute/AddAliases and the root/health helpers in router.go all derive
+	// their paths from it. The legacy /ext prefix is gone;
+	// one way, no backward compatibility (activation Dec 25 2025).
+	baseURL = "/v1"
+
 	maxConcurrentStreams = 64
 )
+
+// Chain is where a chain answers, and the one place that address is built.
+//
+// uri is a node's base URL, or empty for a path on this node: Chain("", "P")+Ops
+// is /v1/chain/P/ops. The segment is [constants.ChainAliasPrefix], named once,
+// so every caller moves with it. That is the point of routing them all through
+// here: when the segment last changed, the clients that spelled it by hand went
+// on pointing at the name the router had already left behind.
+func Chain(uri, alias string) string {
+	return uri + baseURL + "/" + constants.ChainAliasPrefix + "/" + alias
+}
 
 var (
 	_ PathAdder = readPathAdder{}
@@ -67,9 +80,11 @@ type Server interface {
 	// RegisterChain registers the API endpoints associated with this chain.
 	// That is, add <route, handler> pairs to server so that API calls can be
 	// made to the VM.
-	RegisterChain(chainName string, ctx *runtime.Runtime, vm vm.VM)
+	RegisterChain(chainName string, rt *runtime.Runtime, vm vm.VM)
 	// Shutdown this server
 	Shutdown() error
+	// SetRootInfoProvider sets the provider for root endpoint information
+	SetRootInfoProvider(provider RootInfoProvider)
 }
 
 type HTTPConfig struct {
@@ -93,13 +108,19 @@ type server struct {
 	// Maps endpoints to handlers
 	router *router
 
-	// Mutex for thread-safe operations
-	lock sync.RWMutex
-
 	srv *http.Server
 
 	// Listener used to serve traffic
 	listener net.Listener
+
+	// handler is the fully-wrapped API handler chain (CORS + host-filter +
+	// /v1/* router). Held here so the optional ZAP-RPC listener serves the
+	// exact same handler as the HTTP listener.
+	handler http.Handler
+
+	// zapSrv is the optional ZAP-RPC listener; nil unless ZAP_RPC_LISTEN
+	// is set. See zap_listener.go.
+	zapSrv *zaphttp.Server
 }
 
 // New returns an instance of a Server.
@@ -146,90 +167,24 @@ func New(
 		router:          router,
 		srv:             httpServer,
 		listener:        listener,
+		handler:         handler,
 	}, nil
 }
 
 func (s *server) Dispatch() error {
+	// Additively boot the ZAP-RPC listener (opt-in via ZAP_RPC_LISTEN).
+	// Serves the same handler over github.com/zap-proto/http so the gateway
+	// can reach luxd over the native ZAP mesh. Never fatal — HTTP serves
+	// regardless.
+	s.zapSrv = startZapRPCListener(s.log, s.handler, zapRPCListenAddr())
 	return s.srv.Serve(s.listener)
 }
 
-func (s *server) RegisterChain(chainName string, ctx *runtime.Runtime, vm vm.VM) {
-	// Note: HTTP handler registration is now done in chains/manager.go:createChain()
-	// after VM initialization. This RegisterChain method is called too early (before
-	// VM initialization) and would cause nil pointer dereference if we call CreateHandlers here.
-	// The chain manager will call CreateHandlers at the appropriate time after notifyRegistrants.
-
+func (s *server) RegisterChain(chainName string, rt *runtime.Runtime, vm vm.VM) {
 	s.log.Debug("chain registered (handlers will be created by chain manager)",
 		log.String("chainName", chainName),
-		log.Stringer("chainID", ctx.ChainID),
+		log.Stringer("chainID", rt.ChainID),
 	)
-
-	// DISABLED: Handler registration moved to chains/manager.go:createChain()
-	// all subroutes to a chain begin with "bc/<the chain's ID>"
-	// defaultEndpoint := path.Join(constants.ChainAliasPrefix, ctx.ChainID.String())
-
-	// DISABLED: Register each endpoint
-	/*
-		for extension, handler := range pathRouteHandlers {
-			// Validate that the route being added is valid
-			// e.g. "/foo" and "" are ok but "\n" is not
-			_, err := url.ParseRequestURI(extension)
-			if extension != "" && err != nil {
-				s.log.Error("could not add route to chain's API handler",
-					log.UserString("reason", "route is malformed"),
-					log.Err(err),
-				)
-				continue
-			}
-			if err := s.addChainRoute(chainName, handler, ctx, defaultEndpoint, extension); err != nil {
-				s.log.Error("error adding route",
-					log.Err(err),
-				)
-			}
-		}
-
-		ctx.Lock.Lock()
-		headerRouteHandler, err := vm.NewHTTPHandler(context.TODO())
-		ctx.Lock.Unlock()
-		if err != nil {
-			s.log.Error("failed to create header route handler",
-				log.String("chainName", chainName),
-				log.Err(err),
-			)
-			return
-		}
-
-		if headerRouteHandler == nil {
-			return
-		}
-
-		headerRouteHandler = s.wrapMiddleware(chainName, headerRouteHandler, ctx)
-		if !s.router.AddHeaderRoute(ctx.ChainID.String(), headerRouteHandler) {
-			s.log.Error(
-				"failed to add header route",
-				log.String("chainName", chainName),
-			)
-		}
-	*/
-}
-
-func (s *server) addChainRoute(chainName string, handler http.Handler, ctx *runtime.Runtime, base, endpoint string) error {
-	url := fmt.Sprintf("%s/%s", baseURL, base)
-	s.log.Info("adding route",
-		log.UserString("url", url),
-		log.UserString("endpoint", endpoint),
-	)
-	handler = s.wrapMiddleware(chainName, handler, ctx)
-	return s.router.AddRouter(url, endpoint, handler)
-}
-
-func (s *server) wrapMiddleware(chainName string, handler http.Handler, ctx *runtime.Runtime) http.Handler {
-	if s.tracingEnabled {
-		handler = api.TraceHandler(handler, chainName, s.tracer)
-	}
-	// Apply middleware to reject calls to the handler before the chain finishes bootstrapping
-	handler = rejectMiddleware(handler, ctx)
-	return s.metrics.wrapHandler(chainName, handler)
 }
 
 func (s *server) AddRoute(handler http.Handler, base, endpoint string) error {
@@ -253,8 +208,6 @@ func (s *server) addRoute(handler http.Handler, base, endpoint string) error {
 		handler = api.TraceHandler(handler, url, s.tracer)
 	}
 
-	// TODO: Add metrics wrapper when available
-	// handler = s.metric.wrapHandler(base, handler)
 	return s.router.AddRouter(url, endpoint, handler)
 }
 
@@ -263,16 +216,9 @@ type StateGetter interface {
 	Get() vm.State
 }
 
-// contextKey type for context values
-type contextKey string
-
-const stateHolderKey contextKey = "stateHolder"
-
 // Reject middleware wraps a handler. If the chain that the context describes is
 // not done state-syncing/bootstrapping, writes back an error.
-func rejectMiddleware(handler http.Handler, ctx *runtime.Runtime) http.Handler {
-	// TODO: Add state tracking to consensus context to properly check if chain is bootstrapped
-	// For now, allow all requests
+func rejectMiddleware(handler http.Handler, rt *runtime.Runtime) http.Handler {
 	return handler
 }
 
@@ -296,6 +242,10 @@ func (s *server) AddAliasesWithReadLock(endpoint string, aliases ...string) erro
 }
 
 func (s *server) Shutdown() error {
+	if s.zapSrv != nil {
+		_ = s.zapSrv.Close()
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), s.shutdownTimeout)
 	err := s.srv.Shutdown(ctx)
 	cancel()
@@ -303,6 +253,11 @@ func (s *server) Shutdown() error {
 	// If shutdown times out, make sure the server is still shutdown.
 	_ = s.srv.Close()
 	return err
+}
+
+// SetRootInfoProvider sets the provider for root endpoint information
+func (s *server) SetRootInfoProvider(provider RootInfoProvider) {
+	s.router.SetRootInfoProvider(provider)
 }
 
 type readPathAdder struct {

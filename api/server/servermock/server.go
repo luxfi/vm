@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	"github.com/luxfi/runtime"
-	vm "github.com/luxfi/vm"
+	"github.com/luxfi/vm"
 	gomock "go.uber.org/mock/gomock"
 )
 
