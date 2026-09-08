@@ -33,7 +33,7 @@ import (
 )
 
 // Ops is the endpoint an app of typed operations is mounted at, beneath the base
-// its service already answers on: /v1/info/ops, /v1/chain/P/ops.
+// its service already answers on: /v1/info/ops, /v1/chain/p/ops.
 //
 // It is an endpoint rather than the base itself because [router.forceAddRouter]
 // records a prefix mount ONLY for a non-empty endpoint — a handler at the base

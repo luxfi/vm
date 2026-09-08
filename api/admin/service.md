@@ -56,7 +56,7 @@ curl -X POST --data '{
 }
 ```
 
-Now, calls to the X-Chain can be made to either `/v1/chain/X` or, equivalently, to `/v1/myAlias`.
+Now, calls to the X-Chain can be made to either `/v1/chain/x` or, equivalently, to `/v1/myAlias`.
 
 ### `admin.aliasChain`
 
