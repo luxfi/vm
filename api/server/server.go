@@ -28,7 +28,7 @@ import (
 
 const (
 	// baseURL is the canonical — and only — prefix for every luxd HTTP route
-	// (/v1/chain/C/rpc, /v1/info, /v1/health, ...). Single source of truth:
+	// (/v1/chain/c/rpc, /v1/info, /v1/health, ...). Single source of truth:
 	// AddRoute/AddAliases and the root/health helpers in router.go all derive
 	// their paths from it. The legacy /ext prefix is gone;
 	// one way, no backward compatibility (activation Dec 25 2025).
@@ -40,7 +40,7 @@ const (
 // Chain is where a chain answers, and the one place that address is built.
 //
 // uri is a node's base URL, or empty for a path on this node: Chain("", "P")+Ops
-// is /v1/chain/P/ops. The segment is [constants.ChainAliasPrefix], named once,
+// is /v1/chain/p/ops. The segment is [constants.ChainAliasPrefix], named once,
 // so every caller moves with it. That is the point of routing them all through
 // here: when the segment last changed, the clients that spelled it by hand went
 // on pointing at the name the router had already left behind.
