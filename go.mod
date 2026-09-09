@@ -1,6 +1,6 @@
 module github.com/luxfi/vm
 
-go 1.26.5
+go 1.26.8
 
 require (
 	connectrpc.com/connect v1.19.1
