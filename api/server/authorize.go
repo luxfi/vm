@@ -68,14 +68,18 @@ const Relay = "/tx"
 // Refused is the stem of every refusal this rule speaks. Exported because a
 // test has to tell it from the other 403s an operation can meet — a suite that
 // only asked whether something refused would pass with this control deleted.
+//
+// It is the Reason of a Deny, not an error: an error from this seam means the
+// check itself could not be made, and this check always can be. zip renders
+// the Deny as the 403 that carries this sentence.
 const Refused = "this changes the node, and a node answers to its operator"
 
 // Authorize is the node's one authorization decision, run at the invoke seam of
 // every typed op on every mounted app. [Mount] installs it; nothing else needs
 // to, and nothing else should.
-func Authorize(ctx context.Context, op zip.Op, _ any) error {
+func Authorize(ctx context.Context, op zip.Op, _ any) (zip.Decision, error) {
 	if Open(op) {
-		return nil
+		return zip.Decision{Effect: zip.Allow}, nil
 	}
 	return operator(ctx)
 }
@@ -109,11 +113,11 @@ func Open(op zip.Op) bool {
 // TestAnUnreadablePeerIsNotTheOperator holds it to one. Node's own code reaches
 // an operation by calling the Go method, in the same process, with no address
 // to present and nothing to prove.
-func operator(ctx context.Context) error {
+func operator(ctx context.Context) (zip.Decision, error) {
 	if here(zip.CallerOf(ctx).IP) {
-		return nil
+		return zip.Decision{Effect: zip.Allow}, nil
 	}
-	return zip.ErrForbidden(Refused)
+	return zip.Decision{Effect: zip.Deny, Clause: "operator", Reason: Refused}, nil
 }
 
 // here reports whether ip is this machine. An address that does not parse is
