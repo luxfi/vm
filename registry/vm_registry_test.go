@@ -29,10 +29,10 @@ func TestReload_Success(t *testing.T) {
 
 	resources := initVMRegistryTest(t)
 
-	factory1 := vmsmock.NewFactory(resources.ctrl)
-	factory2 := vmsmock.NewFactory(resources.ctrl)
-	factory3 := vmsmock.NewFactory(resources.ctrl)
-	factory4 := vmsmock.NewFactory(resources.ctrl)
+	factory1 := managermock.NewFactory(resources.ctrl)
+	factory2 := managermock.NewFactory(resources.ctrl)
+	factory3 := managermock.NewFactory(resources.ctrl)
+	factory4 := managermock.NewFactory(resources.ctrl)
 
 	registeredVms := map[ids.ID]manager.Factory{
 		id1: factory1,
@@ -83,10 +83,10 @@ func TestReload_PartialRegisterFailure(t *testing.T) {
 
 	resources := initVMRegistryTest(t)
 
-	factory1 := vmsmock.NewFactory(resources.ctrl)
-	factory2 := vmsmock.NewFactory(resources.ctrl)
-	factory3 := vmsmock.NewFactory(resources.ctrl)
-	factory4 := vmsmock.NewFactory(resources.ctrl)
+	factory1 := managermock.NewFactory(resources.ctrl)
+	factory2 := managermock.NewFactory(resources.ctrl)
+	factory3 := managermock.NewFactory(resources.ctrl)
+	factory4 := managermock.NewFactory(resources.ctrl)
 
 	registeredVms := map[ids.ID]manager.Factory{
 		id1: factory1,
@@ -122,7 +122,7 @@ func TestReload_PartialRegisterFailure(t *testing.T) {
 type registryTestResources struct {
 	ctrl          *gomock.Controller
 	mockVMGetter  *registrymock.VMGetter
-	mockVMManager *vmsmock.Manager
+	mockVMManager *managermock.Manager
 	vmRegistry    VMRegistry
 }
 
@@ -130,7 +130,7 @@ func initVMRegistryTest(t *testing.T) *registryTestResources {
 	ctrl := gomock.NewController(t)
 
 	mockVMGetter := registrymock.NewVMGetter(ctrl)
-	mockVMManager := vmsmock.NewManager(ctrl)
+	mockVMManager := managermock.NewManager(ctrl)
 
 	vmRegistry := NewVMRegistry(
 		VMRegistryConfig{

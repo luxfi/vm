@@ -5,6 +5,7 @@ package info
 
 import (
 	"errors"
+	"net/http"
 	"testing"
 
 	"github.com/luxfi/mock/gomock"
@@ -19,12 +20,12 @@ var errTest = errors.New("non-nil error")
 
 type getVMsTest struct {
 	info          *Info
-	mockVMManager *vmsmock.Manager
+	mockVMManager *managermock.Manager
 }
 
 func initGetVMsTest(t *testing.T) *getVMsTest {
 	ctrl := gomock.NewController(t)
-	mockVMManager := vmsmock.NewManager(ctrl)
+	mockVMManager := managermock.NewManager(ctrl)
 	return &getVMsTest{
 		info: &Info{
 			Parameters: Parameters{
@@ -55,12 +56,12 @@ func TestGetVMsSuccess(t *testing.T) {
 		id2: alias2[1:],
 	}
 
-	resources.mockVMManager.EXPECT().ListFactories().Times(1).Return(vmIDs, nil)
-	resources.mockVMManager.EXPECT().Aliases(id1).Times(1).Return(alias1, nil)
-	resources.mockVMManager.EXPECT().Aliases(id2).Times(1).Return(alias2, nil)
+	resources.mockVMManager.EXPECT().ListFactories(gomock.Any()).Times(1).Return(vmIDs, nil)
+	resources.mockVMManager.EXPECT().Aliases(gomock.Any(), id1).Times(1).Return(alias1, nil)
+	resources.mockVMManager.EXPECT().Aliases(gomock.Any(), id2).Times(1).Return(alias2, nil)
 
 	reply := GetVMsReply{}
-	require.NoError(resources.info.GetVMs(nil, nil, &reply))
+	require.NoError(resources.info.GetVMs(&http.Request{}, nil, &reply))
 	require.Equal(expectedVMRegistry, reply.VMs)
 }
 
@@ -68,10 +69,10 @@ func TestGetVMsSuccess(t *testing.T) {
 func TestGetVMsVMsListFactoriesFails(t *testing.T) {
 	resources := initGetVMsTest(t)
 
-	resources.mockVMManager.EXPECT().ListFactories().Times(1).Return(nil, errTest)
+	resources.mockVMManager.EXPECT().ListFactories(gomock.Any()).Times(1).Return(nil, errTest)
 
 	reply := GetVMsReply{}
-	err := resources.info.GetVMs(nil, nil, &reply)
+	err := resources.info.GetVMs(&http.Request{}, nil, &reply)
 	require.ErrorIs(t, err, errTest)
 }
 
@@ -84,11 +85,11 @@ func TestGetVMsGetAliasesFails(t *testing.T) {
 	vmIDs := []ids.ID{id1, id2}
 	alias1 := []string{id1.String(), "vm1-alias-1", "vm1-alias-2"}
 
-	resources.mockVMManager.EXPECT().ListFactories().Times(1).Return(vmIDs, nil)
-	resources.mockVMManager.EXPECT().Aliases(id1).Times(1).Return(alias1, nil)
-	resources.mockVMManager.EXPECT().Aliases(id2).Times(1).Return(nil, errTest)
+	resources.mockVMManager.EXPECT().ListFactories(gomock.Any()).Times(1).Return(vmIDs, nil)
+	resources.mockVMManager.EXPECT().Aliases(gomock.Any(), id1).Times(1).Return(alias1, nil)
+	resources.mockVMManager.EXPECT().Aliases(gomock.Any(), id2).Times(1).Return(nil, errTest)
 
 	reply := GetVMsReply{}
-	err := resources.info.GetVMs(nil, nil, &reply)
+	err := resources.info.GetVMs(&http.Request{}, nil, &reply)
 	require.ErrorIs(t, err, errTest)
 }

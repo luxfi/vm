@@ -23,7 +23,7 @@ import (
 
 type loadVMsTest struct {
 	admin          *Admin
-	mockVMManager  *vmsmock.Manager
+	mockVMManager  *managermock.Manager
 	mockVMRegistry *registrymock.VMRegistry
 }
 
@@ -31,7 +31,7 @@ func initLoadVMsTest(t *testing.T) *loadVMsTest {
 	ctrl := gomock.NewController(t)
 
 	mockVMRegistry := registrymock.NewVMRegistry(ctrl)
-	mockVMManager := vmsmock.NewManager(ctrl)
+	mockVMManager := managermock.NewManager(ctrl)
 
 	return &loadVMsTest{
 		admin: &Admin{Config: Config{
@@ -68,8 +68,8 @@ func TestLoadVMsSuccess(t *testing.T) {
 	}
 
 	resources.mockVMRegistry.EXPECT().Reload(gomock.Any()).Times(1).Return(newVMs, failedVMs, nil)
-	resources.mockVMManager.EXPECT().Aliases(id1).Times(1).Return(alias1, nil)
-	resources.mockVMManager.EXPECT().Aliases(id2).Times(1).Return(alias2, nil)
+	resources.mockVMManager.EXPECT().Aliases(gomock.Any(), id1).Times(1).Return(alias1, nil)
+	resources.mockVMManager.EXPECT().Aliases(gomock.Any(), id2).Times(1).Return(alias2, nil)
 
 	// execute test
 	reply := LoadVMsReply{}
@@ -107,8 +107,8 @@ func TestLoadVMsGetAliasesFails(t *testing.T) {
 	alias1 := []string{id1.String(), "vm1-alias-1", "vm1-alias-2"}
 
 	resources.mockVMRegistry.EXPECT().Reload(gomock.Any()).Times(1).Return(newVMs, failedVMs, nil)
-	resources.mockVMManager.EXPECT().Aliases(id1).Times(1).Return(alias1, nil)
-	resources.mockVMManager.EXPECT().Aliases(id2).Times(1).Return(nil, errTest)
+	resources.mockVMManager.EXPECT().Aliases(gomock.Any(), id1).Times(1).Return(alias1, nil)
+	resources.mockVMManager.EXPECT().Aliases(gomock.Any(), id2).Times(1).Return(nil, errTest)
 
 	reply := LoadVMsReply{}
 	err := resources.admin.LoadVMs(&http.Request{}, nil, &reply)
@@ -129,12 +129,12 @@ func TestListVMsSuccess(t *testing.T) {
 	alias1 := []string{id1.String(), "vm1-alias-1", "vm1-alias-2"}
 	alias2 := []string{id2.String(), "vm2-alias-1"}
 
-	resources.mockVMManager.EXPECT().ListFactories().Times(1).Return(vmIDs, nil)
-	resources.mockVMManager.EXPECT().Aliases(id1).Times(1).Return(alias1, nil)
-	resources.mockVMManager.EXPECT().Aliases(id2).Times(1).Return(alias2, nil)
+	resources.mockVMManager.EXPECT().ListFactories(gomock.Any()).Times(1).Return(vmIDs, nil)
+	resources.mockVMManager.EXPECT().Aliases(gomock.Any(), id1).Times(1).Return(alias1, nil)
+	resources.mockVMManager.EXPECT().Aliases(gomock.Any(), id2).Times(1).Return(alias2, nil)
 
 	reply := ListVMsReply{}
-	require.NoError(resources.admin.ListVMs(nil, nil, &reply))
+	require.NoError(resources.admin.ListVMs(&http.Request{}, nil, &reply))
 
 	require.Len(reply.VMs, 2)
 	require.Equal(id1.String(), reply.VMs[id1.String()].ID)
@@ -149,10 +149,10 @@ func TestListVMsListFactoriesFails(t *testing.T) {
 
 	resources := initLoadVMsTest(t)
 
-	resources.mockVMManager.EXPECT().ListFactories().Times(1).Return(nil, errTest)
+	resources.mockVMManager.EXPECT().ListFactories(gomock.Any()).Times(1).Return(nil, errTest)
 
 	reply := ListVMsReply{}
-	err := resources.admin.ListVMs(nil, nil, &reply)
+	err := resources.admin.ListVMs(&http.Request{}, nil, &reply)
 	require.ErrorIs(err, errTest)
 }
 
@@ -165,11 +165,11 @@ func TestListVMsGetAliasesFails(t *testing.T) {
 	id1 := ids.GenerateTestID()
 	vmIDs := []ids.ID{id1}
 
-	resources.mockVMManager.EXPECT().ListFactories().Times(1).Return(vmIDs, nil)
-	resources.mockVMManager.EXPECT().Aliases(id1).Times(1).Return(nil, errTest)
+	resources.mockVMManager.EXPECT().ListFactories(gomock.Any()).Times(1).Return(vmIDs, nil)
+	resources.mockVMManager.EXPECT().Aliases(gomock.Any(), id1).Times(1).Return(nil, errTest)
 
 	reply := ListVMsReply{}
-	err := resources.admin.ListVMs(nil, nil, &reply)
+	err := resources.admin.ListVMs(&http.Request{}, nil, &reply)
 	require.ErrorIs(err, errTest)
 }
 

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/luxfi/ids"
-	"github.com/luxfi/log/level"
+	"github.com/luxfi/log"
 	"github.com/luxfi/rpc"
 	"github.com/luxfi/vm/api"
 )
@@ -210,7 +210,7 @@ func TestSetLoggerLevel(t *testing.T) {
 			logLevel:     "INFO",
 			displayLevel: "INFO",
 			serviceResponse: map[string]LogAndDisplayLevels{
-				"Happy path": {LogLevel: level.Info, DisplayLevel: level.Info},
+				"Happy path": {LogLevel: log.InfoLevel, DisplayLevel: log.InfoLevel},
 			},
 			serviceErr: nil,
 			clientErr:  nil,
@@ -229,7 +229,7 @@ func TestSetLoggerLevel(t *testing.T) {
 			displayLevel:    "INFO",
 			serviceResponse: nil,
 			serviceErr:      nil,
-			clientErr:       level.ErrUnknownLevel,
+			clientErr:       log.ErrUnknownLevel,
 		},
 		{
 			name:            "Invalid display level",
@@ -237,7 +237,7 @@ func TestSetLoggerLevel(t *testing.T) {
 			displayLevel:    "invalid",
 			serviceResponse: nil,
 			serviceErr:      nil,
-			clientErr:       level.ErrUnknownLevel,
+			clientErr:       log.ErrUnknownLevel,
 		},
 	}
 	for _, tt := range tests {
@@ -280,7 +280,7 @@ func TestGetLoggerLevel(t *testing.T) {
 			name:       "Happy Path",
 			loggerName: "foo",
 			serviceResponse: map[string]LogAndDisplayLevels{
-				"foo": {LogLevel: level.Info, DisplayLevel: level.Info},
+				"foo": {LogLevel: log.InfoLevel, DisplayLevel: log.InfoLevel},
 			},
 			serviceErr: nil,
 			clientErr:  nil,

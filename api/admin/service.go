@@ -370,7 +370,17 @@ func (a *Admin) LoadVMs(r *http.Request, _ *struct{}, reply *LoadVMsReply) error
 		if err != nil {
 			return err
 		}
-		newVMs[vmID] = aliases
+		// Registration aliases every VM to its own id, and that one is not news
+		// to a caller reading it as the key. Copied rather than resliced: the
+		// aliases belong to whoever handed them over.
+		self := vmID.String()
+		named := make([]string, 0, len(aliases))
+		for _, alias := range aliases {
+			if alias != self {
+				named = append(named, alias)
+			}
+		}
+		newVMs[vmID] = named
 	}
 	reply.NewVMs = newVMs
 

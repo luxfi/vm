@@ -76,7 +76,7 @@ func TestGet_InvalidVMName(t *testing.T) {
 
 	resources.mockReader.EXPECT().ReadDir(pluginDir).Times(1).Return(invalidVMs, nil)
 	// didn't find an alias, so we'll try using this invalid vm name
-	resources.mockManager.EXPECT().Lookup("invalid-vm").Times(1).Return(ids.Empty, errTest)
+	resources.mockManager.EXPECT().Lookup(gomock.Any(), "invalid-vm").Times(1).Return(ids.Empty, errTest)
 
 	_, _, err := resources.getter.Get()
 	require.ErrorIs(t, err, errInvalidVMID)
@@ -89,9 +89,9 @@ func TestGet_GetFactoryFails(t *testing.T) {
 	vm, _ := ids.FromString("vmId")
 
 	resources.mockReader.EXPECT().ReadDir(pluginDir).Times(1).Return(oneValidVM, nil)
-	resources.mockManager.EXPECT().Lookup(registeredVMName).Times(1).Return(vm, nil)
+	resources.mockManager.EXPECT().Lookup(gomock.Any(), registeredVMName).Times(1).Return(vm, nil)
 	// Getting the factory fails
-	resources.mockManager.EXPECT().GetFactory(vm).Times(1).Return(nil, errTest)
+	resources.mockManager.EXPECT().GetFactory(gomock.Any(), vm).Times(1).Return(nil, errTest)
 
 	_, _, err := resources.getter.Get()
 	require.ErrorIs(t, err, errTest)
@@ -106,13 +106,13 @@ func TestGet_Success(t *testing.T) {
 	registeredVMId := ids.GenerateTestID()
 	unregisteredVMId := ids.GenerateTestID()
 
-	registeredVMFactory := vmsmock.NewFactory(resources.ctrl)
+	registeredVMFactory := managermock.NewFactory(resources.ctrl)
 
 	resources.mockReader.EXPECT().ReadDir(pluginDir).Times(1).Return(twoValidVMs, nil)
-	resources.mockManager.EXPECT().Lookup(registeredVMName).Times(1).Return(registeredVMId, nil)
-	resources.mockManager.EXPECT().GetFactory(registeredVMId).Times(1).Return(registeredVMFactory, nil)
-	resources.mockManager.EXPECT().Lookup(unregisteredVMName).Times(1).Return(unregisteredVMId, nil)
-	resources.mockManager.EXPECT().GetFactory(unregisteredVMId).Times(1).Return(nil, manager.ErrNotFound)
+	resources.mockManager.EXPECT().Lookup(gomock.Any(), registeredVMName).Times(1).Return(registeredVMId, nil)
+	resources.mockManager.EXPECT().GetFactory(gomock.Any(), registeredVMId).Times(1).Return(registeredVMFactory, nil)
+	resources.mockManager.EXPECT().Lookup(gomock.Any(), unregisteredVMName).Times(1).Return(unregisteredVMId, nil)
+	resources.mockManager.EXPECT().GetFactory(gomock.Any(), unregisteredVMId).Times(1).Return(nil, manager.ErrNotFound)
 
 	registeredVMs, unregisteredVMs, err := resources.getter.Get()
 
@@ -129,7 +129,7 @@ func TestGet_Success(t *testing.T) {
 type vmGetterTestResources struct {
 	ctrl        *gomock.Controller
 	mockReader  *filesystemmock.Reader
-	mockManager *vmsmock.Manager
+	mockManager *managermock.Manager
 	getter      VMGetter
 }
 
@@ -137,7 +137,7 @@ func initVMGetterTest(t *testing.T) *vmGetterTestResources {
 	ctrl := gomock.NewController(t)
 
 	mockReader := filesystemmock.NewReader(ctrl)
-	mockManager := vmsmock.NewManager(ctrl)
+	mockManager := managermock.NewManager(ctrl)
 	mockCPUTracker, err := resource.NewManager(
 		log.NewNoOpLogger(),
 		"",

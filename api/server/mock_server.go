@@ -13,8 +13,8 @@ import (
 	http "net/http"
 	reflect "reflect"
 
-	"github.com/luxfi/runtime"
-	"github.com/luxfi/vm"
+	runtime "github.com/luxfi/runtime"
+	vm "github.com/luxfi/vm"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -22,6 +22,7 @@ import (
 type MockServer struct {
 	ctrl     *gomock.Controller
 	recorder *MockServerMockRecorder
+	isgomock struct{}
 }
 
 // MockServerMockRecorder is the mock recorder for MockServer.
@@ -42,10 +43,10 @@ func (m *MockServer) EXPECT() *MockServerMockRecorder {
 }
 
 // AddAliases mocks base method.
-func (m *MockServer) AddAliases(arg0 string, arg1 ...string) error {
+func (m *MockServer) AddAliases(endpoint string, aliases ...string) error {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0}
-	for _, a := range arg1 {
+	varargs := []any{endpoint}
+	for _, a := range aliases {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "AddAliases", varargs...)
@@ -54,17 +55,17 @@ func (m *MockServer) AddAliases(arg0 string, arg1 ...string) error {
 }
 
 // AddAliases indicates an expected call of AddAliases.
-func (mr *MockServerMockRecorder) AddAliases(arg0 any, arg1 ...any) *gomock.Call {
+func (mr *MockServerMockRecorder) AddAliases(endpoint any, aliases ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0}, arg1...)
+	varargs := append([]any{endpoint}, aliases...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAliases", reflect.TypeOf((*MockServer)(nil).AddAliases), varargs...)
 }
 
 // AddAliasesWithReadLock mocks base method.
-func (m *MockServer) AddAliasesWithReadLock(arg0 string, arg1 ...string) error {
+func (m *MockServer) AddAliasesWithReadLock(endpoint string, aliases ...string) error {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0}
-	for _, a := range arg1 {
+	varargs := []any{endpoint}
+	for _, a := range aliases {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "AddAliasesWithReadLock", varargs...)
@@ -73,38 +74,38 @@ func (m *MockServer) AddAliasesWithReadLock(arg0 string, arg1 ...string) error {
 }
 
 // AddAliasesWithReadLock indicates an expected call of AddAliasesWithReadLock.
-func (mr *MockServerMockRecorder) AddAliasesWithReadLock(arg0 any, arg1 ...any) *gomock.Call {
+func (mr *MockServerMockRecorder) AddAliasesWithReadLock(endpoint any, aliases ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0}, arg1...)
+	varargs := append([]any{endpoint}, aliases...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAliasesWithReadLock", reflect.TypeOf((*MockServer)(nil).AddAliasesWithReadLock), varargs...)
 }
 
 // AddRoute mocks base method.
-func (m *MockServer) AddRoute(arg0 http.Handler, arg1, arg2 string) error {
+func (m *MockServer) AddRoute(handler http.Handler, base, endpoint string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddRoute", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "AddRoute", handler, base, endpoint)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddRoute indicates an expected call of AddRoute.
-func (mr *MockServerMockRecorder) AddRoute(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockServerMockRecorder) AddRoute(handler, base, endpoint any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRoute", reflect.TypeOf((*MockServer)(nil).AddRoute), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRoute", reflect.TypeOf((*MockServer)(nil).AddRoute), handler, base, endpoint)
 }
 
 // AddRouteWithReadLock mocks base method.
-func (m *MockServer) AddRouteWithReadLock(arg0 http.Handler, arg1, arg2 string) error {
+func (m *MockServer) AddRouteWithReadLock(handler http.Handler, base, endpoint string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddRouteWithReadLock", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "AddRouteWithReadLock", handler, base, endpoint)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddRouteWithReadLock indicates an expected call of AddRouteWithReadLock.
-func (mr *MockServerMockRecorder) AddRouteWithReadLock(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockServerMockRecorder) AddRouteWithReadLock(handler, base, endpoint any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRouteWithReadLock", reflect.TypeOf((*MockServer)(nil).AddRouteWithReadLock), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRouteWithReadLock", reflect.TypeOf((*MockServer)(nil).AddRouteWithReadLock), handler, base, endpoint)
 }
 
 // Dispatch mocks base method.
@@ -122,15 +123,27 @@ func (mr *MockServerMockRecorder) Dispatch() *gomock.Call {
 }
 
 // RegisterChain mocks base method.
-func (m *MockServer) RegisterChain(arg0 string, arg1 *runtime.Runtime, arg2 vm.VM) {
+func (m *MockServer) RegisterChain(chainName string, rt *runtime.Runtime, arg2 vm.VM) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RegisterChain", arg0, arg1, arg2)
+	m.ctrl.Call(m, "RegisterChain", chainName, rt, arg2)
 }
 
 // RegisterChain indicates an expected call of RegisterChain.
-func (mr *MockServerMockRecorder) RegisterChain(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockServerMockRecorder) RegisterChain(chainName, rt, arg2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterChain", reflect.TypeOf((*MockServer)(nil).RegisterChain), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterChain", reflect.TypeOf((*MockServer)(nil).RegisterChain), chainName, rt, arg2)
+}
+
+// SetRootInfoProvider mocks base method.
+func (m *MockServer) SetRootInfoProvider(provider RootInfoProvider) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetRootInfoProvider", provider)
+}
+
+// SetRootInfoProvider indicates an expected call of SetRootInfoProvider.
+func (mr *MockServerMockRecorder) SetRootInfoProvider(provider any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetRootInfoProvider", reflect.TypeOf((*MockServer)(nil).SetRootInfoProvider), provider)
 }
 
 // Shutdown mocks base method.
